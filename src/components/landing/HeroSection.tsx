@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Sparkles } from "lucide-react";
+import { ArrowRight, Play, Sparkles, LayoutDashboard } from "lucide-react";
+import { Link } from "react-router-dom";
 import dashboardMockup from "@/assets/dashboard-mockup.png";
 
 const HeroSection = () => {
@@ -36,10 +37,12 @@ const HeroSection = () => {
               Agendar Demonstração
               <ArrowRight className="ml-2" size={20} />
             </Button>
-            <Button size="lg" variant="outline" className="text-base px-8 py-6 h-auto group">
-              <Play size={20} className="mr-2 group-hover:text-primary transition-colors" />
-              Ver Plataforma
-            </Button>
+            <Link to="/dashboard">
+              <Button size="lg" variant="outline" className="text-base px-8 py-6 h-auto group">
+                <LayoutDashboard size={20} className="mr-2 group-hover:text-primary transition-colors" />
+                Ver Dashboard
+              </Button>
+            </Link>
           </div>
 
           {/* Social Proof */}
