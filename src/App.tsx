@@ -5,6 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import ContactPage from "./pages/ContactPage";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import DashboardHome from "./pages/dashboard/DashboardHome";
 import ClientsList from "./pages/dashboard/ClientsList";
@@ -46,6 +49,9 @@ const App = () => (
             <Routes>
               {/* Landing Page */}
               <Route path="/" element={<Index />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
 
               {/* Client Redirect Route - Pointing to Native App Download */}
               <Route path="/app" element={

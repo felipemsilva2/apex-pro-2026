@@ -18,13 +18,12 @@ const Footer = () => {
     { label: "FUNCIONALIDADES", href: "#funcionalidades" },
     { label: "PLANOS", href: "#planos" },
     { label: "DASHBOARD", href: "/dashboard" },
-    { label: "CONTATO", href: "#" },
+    { label: "CONTATO", href: "/contact" },
   ];
 
   const tacticalLinks = [
-    { label: "STATUS DO SISTEMA", href: "#" },
-    { label: "TERMOS DE USO", href: "#" },
-    { label: "PRIVACIDADE", href: "#" },
+    { label: "TERMOS DE USO", href: "/terms" },
+    { label: "PRIVACIDADE", href: "/privacy" },
   ];
 
   return (
@@ -97,9 +96,9 @@ const Footer = () => {
             <ul className="space-y-4">
               {tacticalLinks.map((link, index) => (
                 <li key={index}>
-                  <a href={link.href} className="font-display font-bold uppercase italic text-[10px] tracking-widest hover:text-white transition-colors">
+                  <Link to={link.href} className="font-display font-bold uppercase italic text-[10px] tracking-widest hover:text-white transition-colors">
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -110,19 +109,24 @@ const Footer = () => {
             <h4 className="font-display font-black text-[10px] text-primary italic uppercase tracking-[0.4em] mb-8">SUPORTE AO CLIENTE</h4>
             <ul className="space-y-4">
               <li>
-                <a href="mailto:ops@apexprotocol.pro" className="flex items-center gap-3 font-display font-bold uppercase italic text-[10px] tracking-widest hover:text-white transition-colors group">
+                <a href="mailto:ola@apexpro.fit" className="flex items-center gap-3 font-display font-bold uppercase italic text-[10px] tracking-widest hover:text-white transition-colors group">
                   <div className="p-2 bg-white/5 -skew-x-12 group-hover:bg-primary group-hover:text-black transition-colors">
                     <Mail size={14} />
                   </div>
-                  ops@apexprotocol.pro
+                  ola@apexpro.fit
                 </a>
               </li>
               <li>
-                <a href="#" className="flex items-center gap-3 font-display font-bold uppercase italic text-[10px] tracking-widest hover:text-white transition-colors group">
+                <a
+                  href="https://wa.me/556196032164?text=Olá, gostaria de saber mais sobre o Apex Pro"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 font-display font-bold uppercase italic text-[10px] tracking-widest hover:text-white transition-colors group"
+                >
                   <div className="p-2 bg-white/5 -skew-x-12 group-hover:bg-primary group-hover:text-black transition-colors">
                     <Phone size={14} />
                   </div>
-                  LINHA SEGURA: +55 (11) 99999-9999
+                  LINHA SEGURA: 61 9603-2164
                 </a>
               </li>
             </ul>

@@ -315,11 +315,16 @@
   }
 
   .section-container {
-    @apply container mx-auto px-6 sm:px-10 lg:px-16 max-w-7xl;
+    @apply container mx-auto px-4 sm:px-10 lg:px-16 max-w-7xl;
   }
 
   .apex-container {
-    @apply container mx-auto px-6 sm:px-10 lg:px-16 max-w-[1600px];
+    @apply container mx-auto px-4 sm:px-10 lg:px-16 max-w-[1600px];
+  }
+
+  /* Utility for standard mobile touch targets */
+  .touch-target {
+    @apply min-w-[44px] min-h-[44px] flex items-center justify-center;
   }
 
   .data-text-bg {

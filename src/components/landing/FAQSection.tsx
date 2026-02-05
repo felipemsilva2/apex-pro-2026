@@ -88,10 +88,10 @@ const FAQSection = () => {
                 PRECISA DE AJUDA?
               </p>
               <a
-                href={`mailto:suporte@${tenant?.subdomain || 'apexpro'}.pro`}
+                href="mailto:ola@apexpro.fit"
                 className="font-display font-black italic text-xl text-primary hover:text-white transition-colors skew-x-[12deg] block"
               >
-                SUPORTE@{tenant?.subdomain?.toUpperCase() || 'APEXPRO'}.PRO
+                OLA@APEXPRO.FIT
               </a>
             </div>
           </div>

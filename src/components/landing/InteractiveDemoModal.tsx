@@ -81,25 +81,28 @@ export const InteractiveDemoModal = ({ isOpen, onClose }: { isOpen: boolean; onC
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="max-w-[98vw] md:max-w-[90vw] w-full h-[85vh] p-0 bg-[#0A0A0B] border border-white/10 overflow-hidden flex shadow-[0_0_80px_rgba(0,0,0,0.9)] backdrop-blur-3xl outline-none select-none rounded-3xl border-white/5">
+            <DialogContent className="max-w-[98vw] md:max-w-[90vw] w-full h-[92vh] md:h-[85vh] p-0 bg-[#0A0A0B] border border-white/10 overflow-hidden flex shadow-[0_0_80px_rgba(0,0,0,0.9)] backdrop-blur-3xl outline-none select-none rounded-xl md:rounded-3xl border-white/5">
 
                 {/* Main Container with flex column for Banner + Content */}
                 <div className="flex flex-col w-full h-full relative isolate">
 
                     {/* Sandbox Banner - Fixed height container */}
-                    <div className="h-14 shrink-0 z-[100] bg-primary text-black px-8 flex items-center justify-between font-display font-black italic text-[11px] uppercase tracking-widest shadow-[0_4px_30px_rgba(212,255,0,0.3)] border-b border-black/10">
+                    <div className="h-12 md:h-14 shrink-0 z-[100] bg-primary text-black px-4 md:px-8 flex items-center justify-between font-display font-black italic text-[9px] md:text-[11px] uppercase tracking-widest shadow-[0_4px_30px_rgba(212,255,0,0.3)] border-b border-black/10">
                         <div className="flex items-center gap-4">
                             <span className="flex items-center gap-2">
                                 <span className="w-2.5 h-2.5 rounded-full bg-black animate-pulse" />
-                                MODO DEMONSTRAÇÃO ATIVO
+                                <span className="hidden xs:inline">MODO DEMONSTRAÇÃO ATIVO</span>
+                                <span className="xs:hidden">DEMO ATIVA</span>
                             </span>
                             <span className="hidden lg:block opacity-40 font-bold border-l border-black/20 pl-4 tracking-tighter uppercase italic">Interface Real // Sistema Apex Pro</span>
                         </div>
                         <button
                             onClick={onClose}
-                            className="flex items-center gap-2 hover:bg-black/10 px-4 py-2 transition-all rounded-sm border border-black/10 font-black italic"
+                            className="flex items-center gap-2 hover:bg-black/10 px-2 md:px-4 py-1.5 md:py-2 transition-all rounded-sm border border-black/10 font-black italic"
                         >
-                            FECHAR PREVIEW <X size={16} strokeWidth={3} />
+                            <span className="hidden xs:inline">FECHAR PREVIEW</span>
+                            <span className="xs:hidden">SAIR</span>
+                            <X size={16} strokeWidth={3} />
                         </button>
                     </div>
 
@@ -120,17 +123,19 @@ export const InteractiveDemoModal = ({ isOpen, onClose }: { isOpen: boolean; onC
 
                         {/* Real Dashboard Content */}
                         <main className="flex-1 overflow-y-auto custom-scrollbar bg-[#0A0A0B] relative apex-container h-full">
-                            <div className="p-8 lg:p-16 lg:pt-20 min-h-full">
+                            <div className="p-4 md:p-8 lg:p-16 lg:pt-20 min-h-full">
                                 <DashboardHome />
                             </div>
 
                             {/* Conversion Overlay CTA */}
-                            <div className="sticky bottom-10 left-0 right-0 z-[110] flex justify-center pointer-events-none pb-12">
+                            <div className="sticky bottom-4 md:bottom-10 left-0 right-0 z-[110] flex justify-center pointer-events-none pb-6 md:pb-12 px-4">
                                 <button
                                     onClick={() => window.location.href = '/signup'}
-                                    className="pointer-events-auto bg-primary shadow-[0_30px_70px_rgba(212,255,0,0.5)] px-14 py-5 text-black font-display font-black italic uppercase text-xs -skew-x-12 hover:scale-110 active:scale-95 transition-all flex items-center gap-4 border-2 border-black/10"
+                                    className="pointer-events-auto bg-primary shadow-[0_30px_70px_rgba(212,255,0,0.5)] px-6 md:px-14 py-4 md:py-5 text-black font-display font-black italic uppercase text-[10px] md:text-xs -skew-x-12 hover:scale-110 active:scale-95 transition-all flex items-center gap-4 border-2 border-black/10"
                                 >
-                                    ATIVAR MEU COMANDO AGORA <ArrowRight size={18} />
+                                    <span className="hidden xs:inline">ATIVAR MEU COMANDO AGORA</span>
+                                    <span className="xs:hidden">ATIVAR AGORA</span>
+                                    <ArrowRight size={16} />
                                 </button>
                             </div>
                         </main>

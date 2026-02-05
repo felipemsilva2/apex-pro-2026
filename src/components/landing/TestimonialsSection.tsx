@@ -49,7 +49,7 @@ const TestimonialsSection = () => {
                 PROVA SOCIAL AGRESSIVA
               </span>
             </div>
-            <h2 className="text-4xl sm:text-6xl lg:text-[70px] font-display font-black mb-6 italic leading-[0.9] tracking-tighter uppercase">
+            <h2 className="text-3xl sm:text-6xl lg:text-[70px] font-display font-black mb-6 italic leading-[0.9] tracking-tighter uppercase">
               QUEM DOMINA <br /><span className="text-primary text-blur-sm">O JOGO</span> USA.
             </h2>
             <p className="font-display font-bold uppercase italic text-sm tracking-[0.2em] text-white/50 max-w-xl mx-auto lg:mx-0">
@@ -82,7 +82,7 @@ const TestimonialsSection = () => {
                   <h4 className="font-display font-black italic uppercase text-lg leading-none mb-1 text-white">
                     {testimonial.name}
                   </h4>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-primary/60">
+                  <p className="text-[11px] lg:text-[9px] font-bold uppercase tracking-widest text-primary/60">
                     {testimonial.role}
                   </p>
                 </div>
@@ -106,7 +106,7 @@ const TestimonialsSection = () => {
                     RESULTADO REAL
                   </span>
                 </div>
-                <div className="text-[10px] font-black uppercase italic tracking-widest text-white px-2 py-1 bg-white/5 -skew-x-12 ring-1 ring-white/10">
+                <div className="text-[11px] lg:text-[10px] font-black uppercase italic tracking-widest text-white px-2 py-1 bg-white/5 -skew-x-12 ring-1 ring-white/10">
                   {testimonial.metric}
                 </div>
               </div>

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowRight, Eye, EyeOff, Dumbbell } from "lucide-react";
 
 const REMEMBER_KEY = "apex_remember_login";
 
@@ -20,6 +20,20 @@ export default function LoginPage() {
     const location = useLocation();
 
     const from = location.state?.from?.pathname || "/dashboard";
+    const isNewUser = location.state?.newUser;
+
+    // Determine greeting
+    const [hasRemembered, setHasRemembered] = useState(false);
+
+    useEffect(() => {
+        setHasRemembered(!!localStorage.getItem(REMEMBER_KEY));
+    }, []);
+
+    const greeting = isNewUser
+        ? { first: "BEM-VINDO AO ", second: "TIME" }
+        : hasRemembered
+            ? { first: "BEM-VINDO ", second: "DE VOLTA" }
+            : { first: "ACESSE SUA ", second: "CONTA" };
 
     // Load remembered login on mount
     useEffect(() => {
@@ -96,14 +110,14 @@ export default function LoginPage() {
                 <div className="text-center mb-10">
                     <Link to="/" className="inline-flex items-center gap-3 group mb-8">
                         <div className="w-12 h-12 bg-primary flex items-center justify-center -skew-x-12 group-hover:scale-110 transition-transform">
-                            <span className="text-black font-display font-black text-2xl italic leading-none">A</span>
+                            <Dumbbell className="text-black" size={24} />
                         </div>
                         <span className="font-display font-black text-3xl text-white italic uppercase tracking-tighter">
                             APEX<span className="text-primary text-blur-sm">PRO</span>
                         </span>
                     </Link>
-                    <h1 className="text-3xl font-display font-black italic text-white leading-none tracking-tight mb-3">
-                        Bem-vindo <span className="text-primary">de volta</span>
+                    <h1 className="text-3xl font-display font-black italic text-white leading-none tracking-tight mb-3 uppercase">
+                        {greeting.first} <span className="text-primary">{greeting.second}</span>
                     </h1>
                     <p className="text-white/40 text-sm">
                         Entre na sua conta para continuar

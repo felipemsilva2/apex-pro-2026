@@ -10,33 +10,33 @@ import {
 const features = [
   {
     icon: Users,
-    title: "GESTÃO DE ALUNOS",
-    description: "Controle total dos seus alunos, histórico de cargas e evolução em tempo real.",
-  },
-  {
-    icon: Utensils,
-    title: "BIBLIOTECA DE TREINOS",
-    description: "Criação de planos de hipertrofia com periodização avançada e vídeos profissionais.",
+    title: "GESTÃO INTEGRADA",
+    description: "Controle total da rotina dos seus alunos com inteligência e acompanhamento real.",
   },
   {
     icon: Activity,
-    title: "APP DO ALUNO",
-    description: "Seus alunos treinam em um app com sua marca, cores e total profissionalismo.",
+    title: "PRESCRIÇÃO COMPLETA",
+    description: "Crie protocolos de treino e planos alimentares dinâmicos em uma interface única.",
+  },
+  {
+    icon: Utensils,
+    title: "MÓDULO DE DIETA",
+    description: "Biblioteca de alimentos e macros integrados para resultados consistentes.",
   },
   {
     icon: Zap,
-    title: "CONTROLE DE CARGAS",
-    description: "Acompanhe a progressão de força e desempenho com gráficos de clareza máxima.",
+    title: "PROTOCOLOS AVANÇADOS",
+    description: "Gerencie protocolos hormonais e de suplementação com segurança e clareza.",
   },
   {
     icon: Shield,
     title: "COMUNICAÇÃO DIRETA",
-    description: "Chat integrado para ajustes de treino, feedback e suporte constante aos alunos.",
+    description: "Chat profissional integrado para feedbacks e suporte constante sem poluição.",
   },
   {
     icon: Target,
-    title: "ESCALA E GESTÃO",
-    description: "Ferramentas para gerenciar centenas de alunos sem perder a exclusividade do atendimento.",
+    title: "AUTORIDADE DE MARCA",
+    description: "Tenha seu próprio aplicativo nas lojas e eleve o nível do seu atendimento.",
   },
 ];
 
@@ -53,10 +53,10 @@ const FeaturesSection = () => {
             <div className="flex items-center gap-4 mb-6 justify-center lg:justify-start">
               <span className="h-px w-12 bg-primary"></span>
               <span className="font-display font-black italic uppercase text-[10px] tracking-[0.4em] text-primary">
-                O DIFERENCIAL QUE NINGUÉM MAIS TEM
+                EXPERIÊNCIA COMPLETA EM UM SÓ LUGAR
               </span>
             </div>
-            <h2 className="text-4xl sm:text-6xl lg:text-[70px] font-display font-black mb-6 italic leading-[0.9] tracking-tighter uppercase">
+            <h2 className="text-3xl sm:text-6xl lg:text-[70px] font-display font-black mb-6 italic leading-[0.9] tracking-tighter uppercase">
               SEU <span className="text-primary text-blur-sm">APP PRÓPRIO</span> NAS LOJAS <br />
               <span className="text-white">100% GRÁTIS</span>
             </h2>
@@ -83,11 +83,11 @@ const FeaturesSection = () => {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {[
             { icon: Zap, title: "Personalização Total", desc: "Seu logo, suas cores, sua identidade visual completa." },
-            { icon: Activity, title: "Push Notifications", desc: "Mande avisos direto no celular do aluno. Engajamento real." },
-            { icon: Shield, title: "Offline-First", desc: "O aluno treina sem internet. Sem desculpas para falhar." },
-            { icon: Zap, title: "Check-in com GIF", desc: "Cada exercício tem sua demonstração em GIF integrada." },
-            { icon: Shield, title: "Chat Integrado", desc: "Comunicação direta e profissional. Sem poluição no WhatsApp." },
-            { icon: Target, title: "Autoridade Máxima", desc: "Você vira referência quando o aluno baixa SEU app nas lojas." }
+            { icon: Utensils, title: "Gestão Alimentar", desc: "Planos de dieta integrados ao acompanhamento de treino." },
+            { icon: Shield, title: "Protocolos Claros", desc: "Organização impecável de rotinas hormonais e suplementação." },
+            { icon: Zap, title: "Check-in Inteligente", desc: "Acompanhamento diário da rotina e evolução do aluno." },
+            { icon: Shield, title: "Privacidade e Foco", desc: "Ambiente profissional para sua consultoria prosperar." },
+            { icon: Target, title: "Resultados Reais", desc: "A junção de treino e dieta em um app que gera engajamento." }
           ].map((feature, index) => (
             <div
               key={index}

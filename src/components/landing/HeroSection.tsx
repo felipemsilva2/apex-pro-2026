@@ -18,7 +18,7 @@ const HeroSection = () => {
     }
   };
   return (
-    <section className="relative pt-32 lg:pt-48 pb-24 lg:pb-32 overflow-hidden bg-black">
+    <section className="relative pt-24 lg:pt-48 pb-24 lg:pb-32 overflow-hidden bg-black">
       {/* Background Kinetic Elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/4 opacity-40" />
@@ -27,7 +27,7 @@ const HeroSection = () => {
         {/* Giant Data Text - Positioned to side to not obscure text */}
         <div className="absolute top-1/2 -right-20 -translate-y-1/2 hidden xl:block">
           <span className="data-text-bg rotate-90 origin-center translate-x-1/2">
-            GESTÃO_APEX
+            ECOSSISTEMA_INTEGRADO
           </span>
         </div>
       </div>
@@ -37,25 +37,25 @@ const HeroSection = () => {
           <div className="flex items-center justify-center gap-4 mb-8 animate-fade-in mx-auto">
             <span className="h-px w-8 bg-primary"></span>
             <span className="font-display font-black italic uppercase text-[10px] tracking-[0.4em] text-primary">
-              iOS & ANDROID - 100% NO SEU NOME
+              PLATAFORMA COMPLETA: TREINO, DIETA E PROTOCOLOS
             </span>
             <span className="h-px w-8 bg-primary"></span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl lg:text-[72px] font-display font-black mb-8 animate-fade-in uppercase italic leading-[0.95] tracking-tighter">
+          <h1 className="text-3xl sm:text-6xl lg:text-[72px] font-display font-black mb-8 animate-fade-in uppercase italic leading-[0.95] tracking-tighter">
             SEU PRÓPRIO APP <br />
-            <span className="text-primary text-blur-sm">DE TREINO NAS LOJAS</span>
+            <span className="text-primary text-blur-sm">COMPLETO NAS LOJAS</span>
           </h1>
 
-          <p className="font-display font-bold uppercase italic text-sm lg:text-base tracking-[0.15em] text-white mb-10 max-w-2xl mx-auto border-y border-primary/20 py-8 animate-fade-in decoration-primary/30 underline-offset-8" style={{ animationDelay: '0.1s' }}>
-            Pare de perder alunos para planilhas do Excel. <br />
-            <span className="text-primary">Dê a eles um APP PROFISSIONAL que eles vão ABRIR TODO DIA.</span>
+          <p className="font-display font-bold uppercase italic text-sm lg:text-base tracking-[0.15em] text-white mb-10 max-w-3xl mx-auto border-y border-primary/20 py-8 animate-fade-in decoration-primary/30 underline-offset-8" style={{ animationDelay: '0.1s' }}>
+            Não entregue apenas treinos. Entregue um ecossistema completo que acompanha a rotina do seu aluno: <br />
+            <span className="text-primary">Treino, Dieta e Protocolos integrados em uma experiência profissional.</span>
           </p>
 
           <div className="flex flex-col items-center gap-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <button
               onClick={() => navigate("/signup")}
-              className="btn-athletic text-[12px] px-16 py-6 shadow-[0_20px_50px_rgba(212,255,0,0.4)] group scale-110 active:scale-95 transition-all"
+              className="btn-athletic text-[12px] px-8 lg:px-16 py-4 lg:py-6 shadow-[0_20px_50px_rgba(212,255,0,0.4)] group scale-110 active:scale-95 transition-all"
             >
               <span className="flex items-center gap-3">
                 TESTAR GRÁTIS POR 30 DIAS
@@ -72,7 +72,7 @@ const HeroSection = () => {
                 className="flex items-center gap-2 group opacity-50 hover:opacity-100 transition-opacity mt-4"
               >
                 <LayoutDashboard size={14} className="text-primary" />
-                <span className="font-display font-black italic uppercase text-[9px] tracking-widest text-white border-b border-primary/30 pb-1">
+                <span className="font-display font-black italic uppercase text-[11px] lg:text-[9px] tracking-widest text-white border-b border-primary/30 pb-1">
                   VER PREVIEW DO DASHBOARD
                 </span>
               </button>

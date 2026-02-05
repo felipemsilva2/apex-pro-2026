@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { TenantService } from "@/api/services/tenantService";
-import { Loader2, User, Mail, Lock, ShieldCheck } from "lucide-react";
+import { Loader2, User, Mail, Lock, ShieldCheck, Dumbbell } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function SignUpPage() {
     const [searchParams] = useSearchParams();
@@ -22,6 +23,7 @@ export default function SignUpPage() {
     const [role, setRole] = useState<'coach' | 'client'>('coach');
     const [tenantId, setTenantId] = useState<string | null>(null);
     const [businessName, setBusinessName] = useState("");
+    const [termsAccepted, setTermsAccepted] = useState(false);
 
     useEffect(() => {
         if (token) {
@@ -47,6 +49,12 @@ export default function SignUpPage() {
 
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!termsAccepted) {
+            toast.error("Você precisa aceitar os Termos de Uso e Política de Privacidade.");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -69,7 +77,7 @@ export default function SignUpPage() {
                     toast.success("Ambiente criado com sucesso!", {
                         description: `Seu usuário de acesso é "${email}". Faça login para configurar sua marca.`
                     });
-                    navigate("/login");
+                    navigate("/login", { state: { newUser: true } });
                     return;
                 }
 
@@ -114,7 +122,7 @@ export default function SignUpPage() {
 
             if (authData.user) {
                 toast.success("Conta criada! Verifique seu e-mail para confirmar.");
-                navigate("/login");
+                navigate("/login", { state: { newUser: true } });
             }
         } catch (error: any) {
             console.error("Signup error:", error);
@@ -150,7 +158,7 @@ export default function SignUpPage() {
                 <div className="text-center mb-8">
                     <Link to="/" className="inline-flex items-center gap-3 group mb-6">
                         <div className="w-12 h-12 bg-primary flex items-center justify-center -skew-x-12 group-hover:scale-110 transition-transform">
-                            <span className="text-black font-display font-black text-2xl italic leading-none">A</span>
+                            <Dumbbell className="text-black" size={24} />
                         </div>
                         <span className="font-display font-black text-3xl text-white italic uppercase tracking-tighter">
                             APEX<span className="text-primary text-blur-sm">PRO</span>
@@ -233,10 +241,31 @@ export default function SignUpPage() {
                         </div>
                     </div>
 
+                    <div className="flex items-start space-x-3 pt-2">
+                        <Checkbox
+                            id="terms"
+                            checked={termsAccepted}
+                            onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                            className="mt-1 border-white/20 data-[state=checked]:bg-primary data-[state=checked]:text-black"
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                            <label
+                                htmlFor="terms"
+                                className="text-[10px] font-bold uppercase italic tracking-widest text-white/50 leading-relaxed cursor-pointer select-none"
+                            >
+                                Li e aceito os{" "}
+                                <Link to="/terms" target="_blank" className="text-primary/80 hover:text-primary underline underline-offset-2">Termos de Uso</Link>
+                                {" "}e a{" "}
+                                <Link to="/privacy" target="_blank" className="text-primary/80 hover:text-primary underline underline-offset-2">Política de Privacidade</Link>
+                                .
+                            </label>
+                        </div>
+                    </div>
+
                     <Button
                         type="submit"
-                        disabled={loading}
-                        className="w-full btn-athletic h-14 group text-base mt-2"
+                        disabled={loading || !termsAccepted}
+                        className="w-full btn-athletic h-14 group text-base mt-2 disabled:opacity-30 disabled:grayscale"
                     >
                         {loading ? (
                             <Loader2 className="animate-spin" size={20} />

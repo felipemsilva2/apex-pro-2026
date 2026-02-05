@@ -1,4 +1,5 @@
-import { Check, Star, Zap, Shield, Target } from "lucide-react";
+import { Zap, Check, ArrowRight, Shield, Target } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const PricingSection = () => {
@@ -12,16 +13,16 @@ const PricingSection = () => {
           <div className="flex items-center gap-4 justify-center mb-6">
             <span className="h-px w-12 bg-primary"></span>
             <span className="font-display font-black italic uppercase text-[10px] tracking-[0.4em] text-primary">
-              QUANTO CUSTA PARECER PROFISSIONAL?
+              INVISTA NA SUA ESTRUTURA PROFISSIONAL
             </span>
             <span className="h-px w-12 bg-primary"></span>
           </div>
-          <h2 className="text-4xl sm:text-6xl lg:text-[70px] font-display font-black mb-6 italic leading-[0.9] tracking-tighter uppercase">
+          <h2 className="text-3xl sm:text-6xl lg:text-[70px] font-display font-black mb-6 italic leading-[0.9] tracking-tighter uppercase">
             PLANO ÚNICO <br />
-            <span className="text-primary text-blur-sm">TUDO LIBERADO</span>
+            <span className="text-primary text-blur-sm">ECOSSISTEMA COMPLETO</span>
           </h2>
-          <p className="font-display font-bold uppercase italic text-sm tracking-[0.2em] text-white/40 max-w-2xl mx-auto">
-            Preço traumático para a concorrência. Valor justo para o profissional.
+          <p className="font-display font-bold uppercase italic text-sm tracking-widest text-white/40 max-w-2xl mx-auto">
+            O valor mais justo do mercado para a gestão definitiva da sua consultoria.
           </p>
         </div>
 
@@ -39,7 +40,7 @@ const PricingSection = () => {
             <div className="text-center mb-12">
               <div className="flex items-baseline justify-center gap-2 mb-2">
                 <span className="text-xl font-black text-primary italic uppercase tracking-tighter">R$</span>
-                <span className="text-8xl font-display font-black text-white italic uppercase leading-none tracking-tighter">
+                <span className="text-6xl lg:text-8xl font-display font-black text-white italic uppercase leading-none tracking-tighter">
                   39,90
                 </span>
                 <span className="text-xs font-bold text-white/30 uppercase tracking-widest">/mês</span>
@@ -60,29 +61,31 @@ const PricingSection = () => {
 
             <ul className="space-y-6 mb-12 text-left">
               {[
-                { label: "App nativo nas lojas (valor: R$ 199/mês)", green: "GRÁTIS" },
-                { label: "Alunos ilimitados", green: "CHECK" },
-                { label: "Whitelabel completo (sua marca)", green: "CHECK" },
-                { label: "Protocolos e planos ilimitados", green: "CHECK" },
-                { label: "Dashboard profissional", green: "CHECK" },
-                { label: "Suporte em português", green: "CHECK" }
+                { label: "App nativo nas lojas (Seu Nome)", green: "INCLUSO" },
+                { label: "Módulo de Dieta e Macronutrientes", green: "LIBERADO" },
+                { label: "Gestão de Protocolos Hormonais", green: "LIBERADO" },
+                { label: "Alunos Ilimitados", green: "CHECK" },
+                { label: "Treinos com vídeos e GIFs", green: "CHECK" },
+                { label: "Dashboard de Resultados", green: "CHECK" }
               ].map((item, i) => (
                 <li key={i} className="flex items-center justify-between gap-4 border-b border-white/5 pb-2">
-                  <span className="font-display font-bold uppercase italic text-[10px] tracking-widest text-white/60">{item.label}</span>
-                  <span className="font-display font-black italic uppercase text-[10px] text-primary">{item.green}</span>
+                  <span className="font-display font-bold uppercase italic text-[11px] lg:text-[10px] tracking-widest text-white/60">{item.label}</span>
+                  <span className="font-display font-black italic uppercase text-[11px] lg:text-[10px] text-primary">{item.green}</span>
                 </li>
               ))}
             </ul>
 
             <div className="space-y-6 pt-4">
-              <button
+              <Button
                 onClick={() => window.location.href = '/signup'}
-                className="w-full py-6 bg-primary text-black font-display font-black italic uppercase text-sm tracking-[0.3em] hover:scale-105 active:scale-95 shadow-[0_20px_50px_rgba(212,255,0,0.3)] transition-all flex items-center justify-center gap-3"
-                style={{ clipPath: 'polygon(15px 0, 100% 0, calc(100% - 15px) 100%, 0 100%)' }}
+                className="w-full btn-athletic h-16 group text-base"
               >
                 COMEÇAR TESTE GRÁTIS AGORA
-                <Zap size={18} />
-              </button>
+                <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
+              </Button>
+              <p className="mt-4 text-[9px] font-bold text-white/20 uppercase tracking-[0.2em] text-center">
+                Ao iniciar, você concorda com nossos <Link to="/terms" className="underline hover:text-white transition-colors">Termos</Link> e <Link to="/privacy" className="underline hover:text-white transition-colors">Privacidade</Link>.
+              </p>
 
               <div className="text-center space-y-2">
                 <p className="font-display font-bold uppercase italic text-[9px] tracking-widest text-white/30">

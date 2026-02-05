@@ -14,7 +14,7 @@ const Header = () => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] bg-black/60 backdrop-blur-xl border-b border-white/10 h-20">
+    <header className="fixed top-0 left-0 right-0 z-[100] bg-black/60 backdrop-blur-xl border-b border-white/10 h-16 lg:h-20">
       <div className="section-container h-full">
         <div className="flex items-center justify-between h-full">
           {/* Logo - Apex Style */}
@@ -42,17 +42,14 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-6">
-            <Link to="/dashboard" className="text-[10px] font-black text-white/40 hover:text-white transition-colors italic uppercase tracking-widest">
-              ACESSAR COMANDO
+            <Link to="/login" className="btn-athletic text-[10px] px-8 py-3 shadow-[0_5px_20px_rgba(212,255,0,0.2)]">
+              ACESSAR
             </Link>
-            <button className="btn-athletic text-[10px] px-8 py-3 shadow-[0_5px_20px_rgba(212,255,0,0.2)]">
-              INICIAR PROTOCOLO
-            </button>
           </div>
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden p-2 text-primary"
+            className="lg:hidden touch-target text-primary"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -62,7 +59,7 @@ const Header = () => {
 
         {/* Mobile Menu - Apex Overlay */}
         {isMenuOpen && (
-          <div className="lg:hidden fixed inset-0 top-20 bg-black/95 backdrop-blur-2xl z-50 animate-fade-in border-t border-white/5 p-8">
+          <div className="lg:hidden fixed inset-0 top-16 bg-black/95 backdrop-blur-2xl z-50 animate-fade-in border-t border-white/5 p-8">
             <nav className="flex flex-col gap-8">
               {navLinks.map((link) => (
                 <a
@@ -75,11 +72,8 @@ const Header = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-4 pt-8 border-t border-white/10">
-                <button className="btn-athletic w-full py-4">
-                  INICIAR PROTOCOLO
-                </button>
-                <Link to="/dashboard" className="text-center text-[11px] font-black text-primary italic uppercase tracking-widest py-2">
-                  ACESSAR COMANDO
+                <Link to="/login" className="btn-athletic w-full py-4 text-center">
+                  ACESSAR
                 </Link>
               </div>
             </nav>
