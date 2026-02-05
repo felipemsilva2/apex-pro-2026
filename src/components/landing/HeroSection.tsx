@@ -34,7 +34,7 @@ const HeroSection = () => {
 
       <div className="section-container relative z-10 flex flex-col items-center text-center">
         <div className="max-w-4xl">
-          <div className="flex items-center justify-center gap-4 mb-8 animate-fade-in mx-auto">
+          <div className="hidden sm:flex items-center justify-center gap-4 mb-8 animate-fade-in mx-auto">
             <span className="h-px w-8 bg-primary"></span>
             <span className="font-display font-black italic uppercase text-[10px] tracking-[0.4em] text-primary">
               PLATAFORMA COMPLETA: TREINO, DIETA E PROTOCOLOS
@@ -47,8 +47,8 @@ const HeroSection = () => {
             <span className="text-primary text-blur-sm">COMPLETO NAS LOJAS</span>
           </h1>
 
-          <p className="font-display font-bold uppercase italic text-sm lg:text-base tracking-[0.15em] text-white mb-10 max-w-3xl mx-auto border-y border-primary/20 py-8 animate-fade-in decoration-primary/30 underline-offset-8" style={{ animationDelay: '0.1s' }}>
-            Não entregue apenas treinos. Entregue um ecossistema completo que acompanha a rotina do seu aluno: <br />
+          <p className="font-display font-bold uppercase italic text-sm lg:text-base tracking-[0.15em] text-white mb-10 max-w-3xl mx-auto border-y border-primary/20 py-6 lg:py-8 animate-fade-in decoration-primary/30 underline-offset-8" style={{ animationDelay: '0.1s' }}>
+            <span className="hidden sm:inline">Não entregue apenas treinos. Entregue um ecossistema completo que acompanha a rotina do seu aluno: <br /></span>
             <span className="text-primary">Treino, Dieta e Protocolos integrados em uma experiência profissional.</span>
           </p>
 
