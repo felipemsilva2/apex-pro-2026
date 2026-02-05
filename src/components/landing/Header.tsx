@@ -59,7 +59,7 @@ const Header = () => {
 
         {/* Mobile Menu - Apex Overlay */}
         {isMenuOpen && (
-          <div className="lg:hidden fixed inset-0 top-16 bg-black/95 backdrop-blur-2xl z-50 animate-fade-in border-t border-white/5 p-8">
+          <div className="lg:hidden fixed inset-0 top-16 bg-[#09090b] z-[100] animate-fade-in border-t border-white/5 p-8">
             <nav className="flex flex-col gap-8">
               {navLinks.map((link) => (
                 <a
