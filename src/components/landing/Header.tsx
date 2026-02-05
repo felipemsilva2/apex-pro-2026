@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, LayoutDashboard, Dumbbell } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,7 +15,10 @@ const Header = () => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] bg-black/60 backdrop-blur-xl border-b border-white/10 h-16 lg:h-20">
+    <header className={cn(
+      "fixed top-0 left-0 right-0 z-[100] transition-colors duration-300 border-b border-white/10 h-16 lg:h-20",
+      isMenuOpen ? "bg-black" : "bg-black/60 backdrop-blur-xl"
+    )}>
       <div className="section-container h-full">
         <div className="flex items-center justify-between h-full">
           {/* Logo - Apex Style */}
@@ -59,7 +63,7 @@ const Header = () => {
 
         {/* Mobile Menu - Apex Overlay */}
         {isMenuOpen && (
-          <div className="lg:hidden fixed inset-0 top-16 bg-[#09090b] z-[100] animate-fade-in border-t border-white/5 p-8">
+          <div className="lg:hidden fixed inset-0 top-16 bg-black z-[100] animate-fade-in border-t border-white/5 p-8">
             <nav className="flex flex-col gap-8">
               {navLinks.map((link) => (
                 <a
