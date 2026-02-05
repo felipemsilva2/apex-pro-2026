@@ -1,37 +1,39 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutDashboard, Dumbbell } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { label: "Funcionalidades", href: "#funcionalidades" },
-    { label: "Como Funciona", href: "#como-funciona" },
-    { label: "Depoimentos", href: "#depoimentos" },
-    { label: "Planos", href: "#planos" },
-    { label: "FAQ", href: "#faq" },
+    { label: "FUNCIONALIDADES", href: "#funcionalidades" },
+    { label: "SOBRE", href: "#como-funciona" },
+    { label: "DEPOIMENTOS", href: "#depoimentos" },
+    { label: "PLANOS", href: "#planos" },
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
-      <div className="section-container">
-        <div className="flex items-center justify-between h-16 lg:h-20">
-          {/* Logo */}
-          <a href="#" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">N</span>
+    <header className="fixed top-0 left-0 right-0 z-[100] bg-black/60 backdrop-blur-xl border-b border-white/10 h-20">
+      <div className="section-container h-full">
+        <div className="flex items-center justify-between h-full">
+          {/* Logo - Apex Style */}
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-primary flex items-center justify-center -skew-x-12 group-hover:scale-110 transition-transform">
+              <Dumbbell className="text-black" size={24} />
             </div>
-            <span className="font-bold text-xl text-foreground">NutriManage<span className="text-primary">Pro</span></span>
-          </a>
+            <span className="font-display font-black text-2xl text-white italic uppercase tracking-tighter">
+              APEX<span className="text-primary text-blur-sm">PRO</span>
+            </span>
+          </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
+          {/* Desktop Navigation - Tactical */}
+          <nav className="hidden lg:flex items-center gap-10">
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
+                className="text-primary/40 hover:text-primary transition-all text-[10px] font-black italic uppercase tracking-[0.3em]"
               >
                 {link.label}
               </a>
@@ -39,18 +41,18 @@ const Header = () => {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden lg:flex items-center gap-4">
-            <Button variant="ghost" className="text-muted-foreground">
-              Entrar
-            </Button>
-            <Button className="btn-primary">
-              Agendar Demo
-            </Button>
+          <div className="hidden lg:flex items-center gap-6">
+            <Link to="/dashboard" className="text-[10px] font-black text-white/40 hover:text-white transition-colors italic uppercase tracking-widest">
+              ACESSAR COMANDO
+            </Link>
+            <button className="btn-athletic text-[10px] px-8 py-3 shadow-[0_5px_20px_rgba(212,255,0,0.2)]">
+              INICIAR PROTOCOLO
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
           <button
-            className="lg:hidden p-2 text-foreground"
+            className="lg:hidden p-2 text-primary"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -58,29 +60,33 @@ const Header = () => {
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Apex Overlay */}
         {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-border animate-fade-up">
-            <nav className="flex flex-col gap-4">
+          <div className="lg:hidden fixed inset-0 top-20 bg-black/95 backdrop-blur-2xl z-50 animate-fade-in border-t border-white/5 p-8">
+            <nav className="flex flex-col gap-8">
               {navLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
-                  className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium py-2"
+                  className="text-2xl font-display font-black text-white italic uppercase tracking-tighter border-l-2 border-primary/20 pl-6 hover:border-primary transition-all"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button variant="ghost" className="justify-start">
-                  Entrar
-                </Button>
-                <Button className="btn-primary">
-                  Agendar Demo
-                </Button>
+              <div className="flex flex-col gap-4 pt-8 border-t border-white/10">
+                <button className="btn-athletic w-full py-4">
+                  INICIAR PROTOCOLO
+                </button>
+                <Link to="/dashboard" className="text-center text-[11px] font-black text-primary italic uppercase tracking-widest py-2">
+                  ACESSAR COMANDO
+                </Link>
               </div>
             </nav>
+            {/* Decoration */}
+            <div className="absolute bottom-12 right-8 opacity-10">
+              <span className="font-display font-black text-6xl italic leading-none text-white uppercase">APEX</span>
+            </div>
           </div>
         )}
       </div>

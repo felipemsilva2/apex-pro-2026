@@ -4,68 +4,75 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Plus } from "lucide-react";
+import { useTenant } from "@/contexts/TenantContext";
 
 const faqs = [
   {
-    question: "Preciso de conhecimentos técnicos para usar a plataforma?",
+    question: "O app é meu mesmo?",
     answer:
-      "Não! O NutriManage Pro foi desenvolvido para ser extremamente intuitivo. Se você sabe usar WhatsApp e planilhas, consegue usar nossa plataforma sem problemas. Além disso, oferecemos tutoriais em vídeo e suporte dedicado para ajudá-lo nos primeiros passos.",
+      "Sim. Publicamos na Apple Store e Google Play com seu nome, sua foto e seu logo. Para o aluno, o app é SEU e de mais ninguém.",
   },
   {
-    question: "Meus clientes precisam baixar algum aplicativo?",
+    question: "Como funciona os 30 dias grátis?",
     answer:
-      "Seus clientes podem acessar a plataforma pelo navegador do celular ou baixar nosso app disponível para iOS e Android. O app terá sua marca e identidade visual, proporcionando uma experiência profissional e personalizada.",
+      "Você cadastra, configura seu app e usa TUDO por 30 dias. Se não gostar, cancela com um clique. Não cobramos nada antes do 31º dia.",
   },
   {
-    question: "Posso usar minha própria marca (whitelabel)?",
+    question: "Preciso ter CNPJ?",
     answer:
-      "Sim! A partir do plano Profissional, você pode personalizar completamente a plataforma com seu logo, cores e identidade visual. Seus clientes verão apenas sua marca, sem nenhuma referência ao NutriManage Pro.",
+      "Não. Você pode publicar como pessoa física sem nenhum problema técnico ou burocrático.",
   },
   {
-    question: "Como funciona o suporte ao cliente?",
+    question: "Já tenho muitos alunos, como migrar?",
     answer:
-      "Oferecemos suporte por e-mail no plano Básico, suporte prioritário com chat ao vivo no plano Profissional, e um gerente de conta dedicado no plano Enterprise. Nossa equipe é 100% brasileira e responde em português.",
-  },
-  {
-    question: "Existe período de teste gratuito?",
-    answer:
-      "Sim! Oferecemos 14 dias de teste grátis em todos os planos, sem necessidade de cartão de crédito. Você pode explorar todas as funcionalidades e decidir se a plataforma atende suas necessidades.",
-  },
-  {
-    question: "Posso cancelar minha assinatura a qualquer momento?",
-    answer:
-      "Com certeza! Não temos fidelidade ou multa por cancelamento. Você pode cancelar sua assinatura a qualquer momento diretamente pelo painel, sem burocracia. Além disso, oferecemos garantia de 30 dias com devolução do dinheiro.",
+      "Nosso suporte faz a importação da sua planilha de alunos gratuitamente. Em 24h todos estarão no seu novo app estrategicamente posicionados.",
   },
 ];
 
 const FAQSection = () => {
+  const { tenant } = useTenant();
   return (
-    <section id="faq" className="py-16 lg:py-24">
-      <div className="section-container">
-        <div className="text-center mb-12 lg:mb-16">
-          <span className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            FAQ
-          </span>
-          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Perguntas Frequentes
+    <section id="faq" className="py-24 lg:py-32 bg-[#080808] relative overflow-hidden">
+      {/* Background Decoration */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="section-container relative z-10">
+        <div className="text-center mb-16 lg:mb-24">
+          <div className="flex items-center gap-4 justify-center mb-6">
+            <span className="h-px w-12 bg-primary/50"></span>
+            <span className="font-display font-black italic uppercase text-[10px] tracking-[0.4em] text-primary">
+              CENTRAL DE RESPOSTAS
+            </span>
+            <span className="h-px w-12 bg-primary/50"></span>
+          </div>
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-display font-black mb-6 italic uppercase tracking-tighter text-white">
+            DÚVIDAS FREQUENTES <br />
+            <span className="text-primary text-blur-sm">(SEM ENROLAÇÃO)</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Tire suas dúvidas sobre o NutriManage Pro
+          <p className="font-display font-bold uppercase italic text-sm tracking-[0.2em] text-white/40 max-w-xl mx-auto">
+            Direto ao ponto. O que você precisa saber para tomar sua decisão agora.
           </p>
         </div>
 
         <div className="max-w-3xl mx-auto">
-          <Accordion type="single" collapsible className="space-y-4">
+          <Accordion type="single" collapsible className="space-y-6">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="card-elevated px-6 border rounded-xl data-[state=open]:border-primary/30"
+                className="athletic-card border border-white/5 bg-white/[0.02] px-6 py-2 overflow-hidden data-[state=open]:border-primary/40 data-[state=open]:bg-white/[0.04] transition-all duration-300"
               >
-                <AccordionTrigger className="text-left text-foreground font-semibold hover:no-underline py-5">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground pb-5">
+                <div className="flex items-start gap-4">
+                  <span className="mt-7 font-display font-black text-primary italic text-xl">Q.</span>
+                  <AccordionTrigger className="text-left hover:no-underline py-6 group flex-1">
+                    <span className="font-display font-bold italic uppercase text-lg text-white/80 group-hover:text-primary transition-colors pr-8">
+                      {faq.question}
+                    </span>
+                  </AccordionTrigger>
+                </div>
+                <AccordionContent className="text-base text-white/50 pb-6 font-sans leading-relaxed border-t border-white/5 pt-4 mt-2 ml-10">
+                  <span className="font-display font-black text-white/30 italic mr-2 text-sm">R:</span>
                   {faq.answer}
                 </AccordionContent>
               </AccordionItem>
@@ -73,17 +80,21 @@ const FAQSection = () => {
           </Accordion>
         </div>
 
-        {/* Still have questions */}
-        <div className="mt-12 text-center">
-          <p className="text-muted-foreground mb-4">
-            Ainda tem dúvidas? Estamos aqui para ajudar!
-          </p>
-          <a
-            href="mailto:contato@nutrimanagepro.com"
-            className="text-primary hover:text-primary/80 font-medium"
-          >
-            contato@nutrimanagepro.com
-          </a>
+        {/* Still have questions - Tactical Contact */}
+        <div className="mt-20 text-center">
+          <div className="inline-block p-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent">
+            <div className="bg-black/50 backdrop-blur-md border border-white/5 px-8 py-6 skew-x-[-12deg]">
+              <p className="font-display font-bold uppercase italic text-[10px] tracking-widest text-white/40 mb-2 skew-x-[12deg]">
+                PRECISA DE AJUDA?
+              </p>
+              <a
+                href={`mailto:suporte@${tenant?.subdomain || 'apexpro'}.pro`}
+                className="font-display font-black italic text-xl text-primary hover:text-white transition-colors skew-x-[12deg] block"
+              >
+                SUPORTE@{tenant?.subdomain?.toUpperCase() || 'APEXPRO'}.PRO
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </section>

@@ -1,72 +1,72 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Zap, CheckCircle2 } from "lucide-react";
+
+import { useTenant } from "@/contexts/TenantContext";
 
 const CTASection = () => {
+  const { tenant } = useTenant();
   return (
-    <section className="py-16 lg:py-24 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-primary" />
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
+    <section className="py-24 lg:py-40 relative overflow-hidden bg-primary px-4 sm:px-0">
+      {/* Background kinetic textures */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(rgba(0,0,0,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.2)_1px,transparent_1px)] bg-[size:40px_40px]" />
       </div>
 
-      <div className="section-container relative">
-        <div className="max-w-3xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-primary-foreground text-sm font-medium mb-6">
-            <Sparkles size={16} />
-            <span>Teste Grátis por 14 Dias</span>
+      <div className="absolute top-0 right-0 opacity-20 hidden lg:block">
+        <span className="font-display font-black text-[200px] leading-none text-black italic uppercase select-none translate-x-1/4 -translate-y-1/4">
+          EMPIRE
+        </span>
+      </div>
+
+      <div className="section-container relative z-10">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Urgency Badge */}
+          <div className="inline-flex items-center gap-2 px-6 py-2 bg-black text-primary font-display font-black italic text-[10px] uppercase tracking-[0.3em] -skew-x-12 mb-10 shadow-2xl">
+            <Zap size={14} className="fill-current animate-pulse" />
+            <span>VAGAS LIMITADAS PARA O PLANO DE R$ 39,90</span>
           </div>
 
           {/* Headline */}
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-primary-foreground mb-6">
-            Profissionalize Seu Atendimento Hoje Mesmo
+          <h2 className="text-4xl sm:text-6xl lg:text-8xl font-display font-black text-black mb-8 italic uppercase tracking-tighter leading-[0.85]">
+            O PRÓXIMO PASSO <br />
+            <span className="text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.3)]">PARA O SEU IMPÉRIO</span>
           </h2>
 
-          {/* Subheadline */}
-          <p className="text-lg lg:text-xl text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-            Junte-se a mais de 2.500 nutricionistas que já transformaram seus negócios com o NutriManage Pro
-          </p>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
-              size="lg"
-              className="bg-white text-primary hover:bg-white/90 text-base px-8 py-6 h-auto font-semibold"
-            >
-              Começar Teste Grátis
-              <ArrowRight className="ml-2" size={20} />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white/30 text-primary-foreground hover:bg-white/10 text-base px-8 py-6 h-auto"
-            >
-              Agendar Demonstração
-            </Button>
+          {/* Scarcity Text */}
+          <div className="bg-black/5 border-l-4 border-black p-4 mb-12 max-w-lg mx-auto transform -skew-x-6">
+            <p className="font-display font-black italic uppercase text-sm tracking-widest text-black">
+              Apenas 7 vagas disponíveis com esse valor hoje.
+            </p>
           </div>
 
-          {/* Trust badges */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-primary-foreground/70 text-sm">
-            <span className="flex items-center gap-2">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Sem cartão de crédito
-            </span>
-            <span className="flex items-center gap-2">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Cancele quando quiser
-            </span>
-            <span className="flex items-center gap-2">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              Suporte em português
-            </span>
+          {/* CTAs */}
+          <div className="flex flex-col items-center justify-center gap-8">
+            <button
+              onClick={() => window.location.href = '/signup'}
+              className="w-full sm:w-auto bg-black text-primary px-16 py-8 font-display font-black italic uppercase text-xl tracking-[0.2em] shadow-[0_30px_70px_rgba(0,0,0,0.4)] hover:scale-105 active:scale-95 transition-all group"
+              style={{ clipPath: 'polygon(25px 0, 100% 0, calc(100% - 25px) 100%, 0 100%)' }}
+            >
+              <span className="flex items-center justify-center gap-4">
+                QUERO MEU APP PRÓPRIO AGORA
+                <ArrowRight size={24} strokeWidth={3} className="group-hover:translate-x-2 transition-transform" />
+              </span>
+            </button>
+
+            {/* Value Checklist */}
+            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+              {[
+                "Liberação imediata",
+                "30 dias grátis",
+                "Sem contrato de fidelidade"
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="w-5 h-5 bg-black rounded-sm flex items-center justify-center -skew-x-12">
+                    <CheckCircle2 size={12} className="text-primary" />
+                  </div>
+                  <span className="font-display font-black italic uppercase text-[10px] tracking-widest text-black/80">{item}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

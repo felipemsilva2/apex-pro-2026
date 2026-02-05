@@ -1,13 +1,23 @@
+import { useNavigate } from "react-router-dom";
 import { AlertTriangle, Info, MessageCircle, ChevronRight, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Alert } from "@/data/mockData";
+
+export interface Alert {
+  id: string;
+  title: string;
+  description: string;
+  type: 'warning' | 'info' | 'message';
+  date: string;
+  clients?: string[];
+}
 
 interface AlertsPanelProps {
   alerts: Alert[];
 }
 
 const AlertsPanel = ({ alerts }: AlertsPanelProps) => {
+  const navigate = useNavigate();
   const getAlertIcon = (type: string) => {
     switch (type) {
       case "warning":
@@ -51,15 +61,18 @@ const AlertsPanel = ({ alerts }: AlertsPanelProps) => {
   };
 
   return (
-    <div className="dashboard-card">
-      <div className="flex items-center justify-between mb-5">
+    <div className="athletic-card group">
+      <div className="kinetic-border" />
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="font-semibold text-foreground">Alertas e Pendências</h3>
-          <p className="text-sm text-muted-foreground">{alerts.length} itens requerem atenção</p>
+          <h3 className="stat-label">Ações Requeridas</h3>
+          <p className="text-xl font-display font-black italic uppercase tracking-tighter mt-1">
+            Status de <span className="text-primary">Alerta</span>
+          </p>
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {alerts.map((alert, index) => {
           const Icon = getAlertIcon(alert.type);
           const colors = getAlertColors(alert.type);
@@ -68,39 +81,43 @@ const AlertsPanel = ({ alerts }: AlertsPanelProps) => {
             <div
               key={alert.id}
               className={cn(
-                "flex items-start gap-3 p-3 rounded-lg border transition-colors hover:bg-muted/50 cursor-pointer",
-                colors.border,
-                "animate-fade-in"
+                "group flex items-start gap-4 p-4 border border-white/5 bg-white/5 hover:border-primary/40 transition-all duration-300",
+                "animate-fade-in relative overflow-hidden cursor-pointer"
               )}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <div className={cn("p-2 rounded-lg", colors.bg)}>
+              <div className={cn("p-2 -skew-x-12", colors.bg.replace('/10', '/20'))}>
                 <Icon className={cn("w-4 h-4", colors.icon)} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm text-foreground">{alert.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{alert.description}</p>
+                <p className="font-display font-bold text-xs text-foreground uppercase italic">{alert.title}</p>
+                <p className="text-[10px] text-muted-foreground mt-1 font-medium">{alert.description}</p>
                 {alert.clients && (
-                  <div className="flex items-center gap-1 mt-2">
-                    <Users size={12} className="text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
-                      {alert.clients.slice(0, 2).join(", ")}
-                      {alert.clients.length > 2 && ` +${alert.clients.length - 2}`}
+                  <div className="flex items-center gap-2 mt-3">
+                    <div className="flex -space-x-2">
+                      {alert.clients.slice(0, 3).map((client, i) => (
+                        <div key={i} className="w-5 h-5 bg-primary/20 border border-primary/40 flex items-center justify-center text-[8px] font-black italic -skew-x-12">
+                          {client[0]}
+                        </div>
+                      ))}
+                    </div>
+                    <span className="text-[9px] font-bold text-primary uppercase tracking-widest opacity-80">
+                      {alert.clients.length} Alunos Afetados
                     </span>
                   </div>
                 )}
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                <ChevronRight size={16} />
-              </Button>
             </div>
           );
         })}
       </div>
 
-      <Button variant="outline" className="w-full mt-4" size="sm">
-        Ver Todos os Alertas
-      </Button>
+      <button
+        onClick={() => navigate('/dashboard/clients')}
+        className="w-full mt-6 py-2 border border-white/10 text-[10px] font-display font-black italic uppercase tracking-widest hover:bg-white/5 transition-colors"
+      >
+        REVISAR TODOS OS ALERTAS
+      </button>
     </div>
   );
 };

@@ -1,242 +1,251 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTenant } from "@/contexts/TenantContext";
 import {
   LayoutDashboard,
   Users,
-  ClipboardList,
   Calendar,
-  BarChart3,
-  MessageCircle,
   Settings,
   Bell,
-  Moon,
-  Sun,
   ChevronLeft,
+  FileText,
+  MessageSquare,
+  Menu,
+  X,
+  Shield,
+  Activity,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { mockNutritionist, mockMessages } from "@/data/mockData";
+import { mockCoach, mockMessages } from "@/data/mockData";
 import { useState } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface DashboardSidebarProps {
   collapsed: boolean;
   onCollapse: (collapsed: boolean) => void;
 }
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: Users, label: "Clientes", path: "/dashboard/clientes" },
-  { icon: ClipboardList, label: "Planos", path: "/dashboard/planos" },
-  { icon: Calendar, label: "Agenda", path: "/dashboard/agenda" },
-  { icon: BarChart3, label: "Relatórios", path: "/dashboard/relatorios" },
-  { icon: MessageCircle, label: "Mensagens", path: "/dashboard/mensagens", badge: mockMessages.filter(m => m.unread).length },
-  { icon: Settings, label: "Configurações", path: "/dashboard/configuracoes" },
-];
-
 const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
+  const { signOut, profile } = useAuth();
+
   const location = useLocation();
-  const [isDark, setIsDark] = useState(false);
   const unreadCount = mockMessages.filter(m => m.unread).length;
+  const { tenant } = useTenant();
 
-  const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.classList.toggle("dark");
-  };
-
-  const SidebarContent = ({ item, isActive }: { item: typeof menuItems[0]; isActive: boolean }) => (
-    <>
-      <item.icon size={20} />
-      {!collapsed && (
-        <>
-          <span className="flex-1">{item.label}</span>
-          {item.badge && item.badge > 0 && (
-            <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
-              {item.badge}
-            </Badge>
-          )}
-        </>
-      )}
-    </>
-  );
+  const menuItems = [
+    { icon: LayoutDashboard, label: "VISÃO GERAL", path: "/dashboard" },
+    { icon: Users, label: "MEUS ALUNOS", path: "/dashboard/clients" },
+    { icon: Calendar, label: "AGENDA", path: "/dashboard/agenda" },
+    { icon: FileText, label: "TREINOS & DIETA", path: "/dashboard/plans" },
+    { icon: MessageSquare, label: "CHAT", path: "/dashboard/messages", badge: unreadCount },
+    { icon: Settings, label: "CONFIGURAÇÕES", path: "/dashboard/settings" },
+  ];
 
   return (
     <aside
+      data-tour="sidebar-nav"
       className={cn(
-        "fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 z-40",
+        "fixed left-0 top-0 h-screen z-40 bg-black border-r border-white/5 transition-all duration-500 group/sidebar overflow-hidden flex flex-col",
         collapsed ? "w-16" : "w-64"
       )}
     >
-      {/* Logo */}
-      <div className={cn(
-        "flex items-center h-16 px-4 border-b border-sidebar-border",
-        collapsed ? "justify-center" : "justify-between"
-      )}>
+      {/* Brand */}
+      <div className="p-6 h-20 flex items-center justify-between border-b border-white/5 shrink-0 relative overflow-hidden">
+        <div className="scanline opacity-20" />
         {!collapsed ? (
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">N</span>
+          <div className="flex items-center gap-3 animate-fade-in">
+            {tenant?.logo_url ? (
+              <img src={tenant.logo_url} alt="Logo" className="w-8 h-8 object-contain" />
+            ) : (
+              <div className="w-8 h-8 bg-primary flex items-center justify-center -skew-x-12">
+                <span className="text-black font-display font-black text-lg italic">{tenant?.business_name?.charAt(0) || 'A'}</span>
+              </div>
+            )}
+            <div className="min-w-0 flex-1 flex flex-col justify-center">
+              <span className="font-display font-black text-lg text-white italic uppercase tracking-tighter leading-none break-words line-clamp-2">
+                {tenant?.business_name || 'APEX'}<span className="text-primary text-blur-sm">{!tenant?.business_name && 'PRO'}</span>
+              </span>
             </div>
-            <span className="font-bold text-foreground">NutriManage</span>
           </div>
         ) : (
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">N</span>
-          </div>
-        )}
-        {!collapsed && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => onCollapse(true)}
-          >
-            <ChevronLeft size={16} />
-          </Button>
-        )}
-      </div>
-
-      {/* Profile */}
-      <div className={cn(
-        "p-4 border-b border-sidebar-border",
-        collapsed && "flex justify-center"
-      )}>
-        {collapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Avatar className="h-10 w-10 cursor-pointer">
-                <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                  {mockNutritionist.avatar}
-                </AvatarFallback>
-              </Avatar>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p className="font-medium">{mockNutritionist.name}</p>
-              <p className="text-xs text-muted-foreground">{mockNutritionist.crn}</p>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                {mockNutritionist.avatar}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm text-foreground truncate">
-                {mockNutritionist.name}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {mockNutritionist.crn}
-              </p>
-            </div>
+          <div className="w-10 h-10 bg-primary flex items-center justify-center -skew-x-12 mx-auto">
+            {tenant?.logo_url ? (
+              <img src={tenant.logo_url} alt="Logo" className="w-8 h-8 object-contain" />
+            ) : (
+              <span className="text-black font-display font-black text-2xl italic">{tenant?.business_name?.charAt(0) || 'A'}</span>
+            )}
           </div>
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-thin">
-        {menuItems.map((item) => {
-          const isActive = location.pathname === item.path || 
-            (item.path !== "/dashboard" && location.pathname.startsWith(item.path));
-
-          const linkContent = (
-            <NavLink
-              to={item.path}
-              className={cn(
-                "sidebar-item",
-                isActive && "sidebar-item-active",
-                collapsed && "justify-center px-0"
-              )}
-            >
-              <SidebarContent item={item} isActive={isActive} />
-            </NavLink>
-          );
-
-          return collapsed ? (
-            <Tooltip key={item.path}>
-              <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-              <TooltipContent side="right" className="flex items-center gap-2">
-                {item.label}
-                {item.badge && item.badge > 0 && (
-                  <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
-                    {item.badge}
-                  </Badge>
-                )}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        {/* Profile */}
+        <div className={cn(
+          "mx-4 my-2 p-4 bg-white/5 border border-white/10 relative overflow-hidden shrink-0",
+          collapsed ? "px-0 flex justify-center" : ""
+        )}>
+          <div className="absolute top-0 right-0 w-8 h-8 bg-primary/10 -rotate-45 translate-x-4 -translate-y-4" />
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Avatar className="h-10 w-10 border border-primary/20">
+                  <AvatarFallback className="bg-primary/20 text-primary text-xs font-display font-bold">
+                    {profile?.full_name?.substring(0, 2).toUpperCase() || 'CO'}
+                  </AvatarFallback>
+                </Avatar>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p className="font-display font-bold uppercase italic text-xs">{profile?.full_name || 'Coach'}</p>
               </TooltipContent>
             </Tooltip>
           ) : (
-            <div key={item.path}>{linkContent}</div>
-          );
-        })}
-      </nav>
+            <div className="flex items-center gap-3 relative z-10">
+              <Avatar className="h-10 w-10 border border-primary/20">
+                <AvatarFallback className="bg-primary/20 text-primary text-xs font-display font-bold">
+                  {profile?.full_name?.substring(0, 2).toUpperCase() || 'CO'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="font-display font-bold text-xs text-foreground truncate uppercase italic">
+                  {profile?.full_name || 'Coach'}
+                </p>
+                <p className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-80">
+                  Personal Trainer
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
 
-      {/* Bottom actions */}
-      <div className="p-3 border-t border-sidebar-border space-y-1">
-        {/* Notifications */}
-        {collapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" className="w-full justify-center relative" size="icon">
-                <Bell size={20} />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+        {/* Navigation */}
+        <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto scrollbar-thin">
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path ||
+              (item.path !== "/dashboard" && location.pathname.startsWith(item.path));
+
+            const linkContent = (
+              <NavLink
+                to={item.path}
+                className={cn(
+                  "sidebar-item hover:text-primary transition-all duration-300 group relative",
+                  isActive && "sidebar-item-active",
+                  collapsed && "justify-center px-0"
                 )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Notificações</TooltipContent>
-          </Tooltip>
-        ) : (
-          <Button variant="ghost" className="w-full justify-start gap-3">
-            <Bell size={20} />
-            <span className="flex-1 text-left">Notificações</span>
-            {unreadCount > 0 && (
-              <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
-                {unreadCount}
-              </Badge>
-            )}
-          </Button>
-        )}
-
-        {/* Theme toggle */}
-        {collapsed ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" className="w-full justify-center" size="icon" onClick={toggleTheme}>
-                {isDark ? <Sun size={20} /> : <Moon size={20} />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{isDark ? "Modo claro" : "Modo escuro"}</TooltipContent>
-          </Tooltip>
-        ) : (
-          <Button variant="ghost" className="w-full justify-start gap-3" onClick={toggleTheme}>
-            {isDark ? <Sun size={20} /> : <Moon size={20} />}
-            <span>{isDark ? "Modo claro" : "Modo escuro"}</span>
-          </Button>
-        )}
-
-        {/* Collapse/Expand */}
-        {collapsed && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                className="w-full justify-center"
-                size="icon"
-                onClick={() => onCollapse(false)}
               >
-                <ChevronLeft size={20} className="rotate-180" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Expandir menu</TooltipContent>
-          </Tooltip>
-        )}
+                <item.icon size={18} className={cn("transition-all duration-300 group-hover:scale-110 group-hover:text-primary z-10", isActive && "text-primary neon-glow")} />
+                {!collapsed && (
+                  <span className="flex-1 font-display font-bold uppercase italic text-[11px] tracking-wider z-10 leading-none">{item.label}</span>
+                )}
+                {"badge" in item && item.badge !== undefined && item.badge > 0 && !collapsed && (
+                  <div className="h-4 min-w-4 px-1 bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center -skew-x-12 z-10 shadow-[0_0_10px_rgba(212,255,0,0.3)]">
+                    {item.badge}
+                  </div>
+                )}
+                {isActive && (
+                  <>
+                    <div className="absolute left-0 top-0 w-1 h-full bg-primary neon-glow z-20" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent z-0" />
+                  </>
+                )}
+              </NavLink>
+            );
+
+            return collapsed ? (
+              <Tooltip key={item.path}>
+                <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                <TooltipContent side="right" className="flex items-center gap-2 bg-card border-primary/20 text-foreground font-display font-bold italic uppercase text-xs">
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <div key={item.path}>{linkContent}</div>
+            );
+          })}
+        </nav>
+
+        {/* Bottom actions */}
+        <div className="p-3 border-t border-white/5 space-y-1 shrink-0">
+          {/* Notifications */}
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" className="w-full justify-center relative text-white/40 hover:text-primary" size="icon">
+                  <Bell size={18} />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_10px_rgba(212,255,0,0.5)]" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Notificações</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button variant="ghost" className="w-full justify-start gap-3 text-white/40 hover:text-primary group">
+              <Bell size={18} />
+              <span className="flex-1 text-left font-display font-bold uppercase italic text-[10px] tracking-widest transition-colors">Notificações</span>
+              {unreadCount > 0 && (
+                <div className="h-4 min-w-4 px-1 bg-primary text-black text-[10px] font-black flex items-center justify-center -skew-x-12">
+                  {unreadCount}
+                </div>
+              )}
+            </Button>
+          )}
+
+
+          {/* Logout */}
+          {!collapsed && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <div className="flex items-center gap-3 text-white/40 hover:text-primary transition-colors cursor-pointer group px-2">
+                  <LogOut size={20} className="group-hover:-translate-x-1 transition-transform" />
+                  <span className="font-display font-black italic uppercase text-[10px] tracking-widest">DESCONECTAR SISTEMA</span>
+                </div>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-zinc-950 border border-white/10 p-6 rounded-none">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="font-display font-black italic uppercase text-white text-xl">Confirmar Saída</AlertDialogTitle>
+                  <AlertDialogDescription className="text-zinc-400 text-xs uppercase tracking-wider font-medium">
+                    Tem certeza que deseja encerrar sua sessão?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="gap-2">
+                  <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white rounded-none font-display font-bold uppercase tracking-widest text-[10px] h-10 border-0">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={signOut} className="bg-primary text-black hover:bg-primary/90 rounded-none font-display font-black italic uppercase tracking-widest text-[10px] h-10 border-0">Confirmar Saída</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+
+          {/* Expand */}
+          {collapsed && (
+            <Button
+              variant="ghost"
+              className="w-full justify-center text-white/40 hover:text-primary pt-2"
+              size="icon"
+              onClick={() => onCollapse(false)}
+            >
+              <ChevronLeft size={18} className="rotate-180" />
+            </Button>
+          )}
+        </div>
       </div>
     </aside>
   );

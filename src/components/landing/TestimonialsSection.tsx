@@ -1,87 +1,113 @@
-import { Star, Quote } from "lucide-react";
+import { Star, Quote, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const testimonials = [
   {
-    name: "Dra. Camila Santos",
-    role: "Nutricionista Esportiva",
-    location: "São Paulo, SP",
-    image: "CS",
+    name: "RAFAEL COSTA",
+    role: "PERSONAL TRAINER",
+    location: "GOIÂNIA, GO",
+    image: "RC",
     rating: 5,
-    text: "Antes eu perdia horas montando planilhas e enviando PDFs pelo WhatsApp. Agora meus clientes têm tudo no app e eu acompanho em tempo real. Triplicei minha carteira de clientes em 6 meses!",
-    highlight: "3x mais clientes",
+    text: "Antes eu passava treino no Zap e metade nem abria. Agora eles têm MEU APP no celular deles. Virei referência na cidade. Fila de espera de 20 pessoas.",
+    highlight: "DOBREI MEUS ALUNOS EM 3 MESES",
+    metric: "FILA DE ESPERA",
   },
   {
-    name: "Dr. Rafael Oliveira",
-    role: "Nutrólogo",
-    location: "Rio de Janeiro, RJ",
-    image: "RO",
+    name: "JULIANA ALVES",
+    role: "NUTRICIONISTA",
+    location: "SÃO PAULO, SP",
+    image: "JA",
     rating: 5,
-    text: "O fato de ser whitelabel foi decisivo. Meus pacientes veem minha marca, não sabem que uso uma plataforma. Isso transmite muito profissionalismo e confiança.",
-    highlight: "100% sua marca",
+    text: "Taxa de retenção subiu de 60% para 92%. O app tá sempre na mão deles, eles treinam mais, veem resultado, e ficam comigo anos.",
+    highlight: "MEUS ALUNOS NÃO CANCELAM MAIS",
+    metric: "92% RETENÇÃO",
   },
   {
-    name: "Dra. Fernanda Lima",
-    role: "Nutricionista Clínica",
-    location: "Belo Horizonte, MG",
-    image: "FL",
+    name: "PEDRO HENRIQUE",
+    role: "COACH ONLINE",
+    location: "CURITIBA, PR",
+    image: "PH",
     rating: 5,
-    text: "Economizo pelo menos 10 horas por semana em tarefas administrativas. O dashboard de métricas é incrível - meus clientes adoram ver a própria evolução em gráficos.",
-    highlight: "10h economizadas/semana",
+    text: "Meus alunos acham que eu tenho empresa grande. É só eu, mas com o app personalizado ninguém imagina. Cobro 3x mais agora.",
+    highlight: "PAREÇO UM PROFISSIONAL DE R$ 10K/MÊS",
+    metric: "TICKER 3X+",
   },
 ];
 
 const TestimonialsSection = () => {
   return (
-    <section id="depoimentos" className="py-16 lg:py-24 bg-muted/30">
-      <div className="section-container">
-        <div className="text-center mb-12 lg:mb-16">
-          <span className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            Depoimentos
-          </span>
-          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            O Que Nossos Clientes Dizem
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Junte-se a milhares de nutricionistas que transformaram seus negócios
-          </p>
+    <section id="depoimentos" className="py-24 lg:py-32 bg-[#050505] relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+
+      <div className="section-container relative z-10">
+        <div className="flex flex-col lg:flex-row items-end justify-between gap-12 mb-20 text-center lg:text-left">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-4 mb-6 justify-center lg:justify-start">
+              <span className="h-px w-12 bg-primary"></span>
+              <span className="font-display font-black italic uppercase text-[10px] tracking-[0.4em] text-primary">
+                PROVA SOCIAL AGRESSIVA
+              </span>
+            </div>
+            <h2 className="text-4xl sm:text-6xl lg:text-[70px] font-display font-black mb-6 italic leading-[0.9] tracking-tighter uppercase">
+              QUEM DOMINA <br /><span className="text-primary text-blur-sm">O JOGO</span> USA.
+            </h2>
+            <p className="font-display font-bold uppercase italic text-sm tracking-[0.2em] text-white/50 max-w-xl mx-auto lg:mx-0">
+              Junte-se à elite de profissionais que pararam de amadorismo e escalaram com autoridade.
+            </p>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
             <div
               key={index}
-              className="card-elevated p-6 lg:p-8 relative group hover:border-primary/30 transition-all duration-300"
+              className="athletic-card group p-8 bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-500 animate-fade-in relative"
+              style={{ animationDelay: `${index * 0.15}s` }}
             >
-              {/* Quote icon */}
-              <Quote className="absolute top-6 right-6 text-primary/10" size={40} />
-              
-              {/* Rating */}
-              <div className="flex gap-1 mb-4">
-                {Array.from({ length: testimonial.rating }).map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-accent fill-accent" />
-                ))}
+              <div className="kinetic-border" />
+
+              {/* Quote Marker */}
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-100 transition-opacity">
+                <Quote className="text-primary w-8 h-8 rotate-180" strokeWidth={1} />
               </div>
 
-              {/* Highlight badge */}
-              <div className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-                {testimonial.highlight}
-              </div>
-
-              {/* Text */}
-              <p className="text-foreground leading-relaxed mb-6">
-                "{testimonial.text}"
-              </p>
-
-              {/* Author */}
-              <div className="flex items-center gap-4 pt-4 border-t border-border">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                  {testimonial.image}
+              {/* Header */}
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-14 h-14 bg-white/5 border border-white/10 -skew-x-12 flex items-center justify-center text-primary font-display font-black italic text-xl group-hover:scale-110 transition-transform duration-300 relative overflow-hidden">
+                  <span className="relative z-10">{testimonial.image}</span>
+                  <div className="absolute inset-0 bg-primary/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">{testimonial.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {testimonial.role} • {testimonial.location}
+                  <h4 className="font-display font-black italic uppercase text-lg leading-none mb-1 text-white">
+                    {testimonial.name}
+                  </h4>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-primary/60">
+                    {testimonial.role}
                   </p>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="mb-8 relative z-10">
+                <h5 className="font-display font-black italic uppercase text-sm text-primary mb-4 tracking-tighter line-clamp-1">
+                  "{testimonial.highlight}"
+                </h5>
+                <p className="font-sans text-sm leading-relaxed text-white/60 group-hover:text-white/80 transition-colors italic">
+                  "{testimonial.text}"
+                </p>
+              </div>
+
+              {/* Footer / Metric */}
+              <div className="pt-6 border-t border-white/5 flex items-center justify-between group-hover:border-primary/20 transition-colors">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3 h-3 text-primary" />
+                  <span className="text-[9px] font-black uppercase italic tracking-widest text-primary">
+                    RESULTADO REAL
+                  </span>
+                </div>
+                <div className="text-[10px] font-black uppercase italic tracking-widest text-white px-2 py-1 bg-white/5 -skew-x-12 ring-1 ring-white/10">
+                  {testimonial.metric}
                 </div>
               </div>
             </div>

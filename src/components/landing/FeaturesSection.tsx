@@ -1,83 +1,114 @@
-import { 
-  Users, 
-  Utensils, 
-  Dumbbell, 
-  BarChart3, 
-  MessageCircle, 
-  Palette,
-  Smartphone 
+import {
+  Users,
+  Utensils,
+  Activity,
+  Zap,
+  Shield,
+  Target
 } from "lucide-react";
 
 const features = [
   {
     icon: Users,
-    title: "Gestão Completa de Clientes",
-    description: "Prontuários digitais, histórico de atendimentos e evolução de cada paciente em um só lugar.",
+    title: "GESTÃO DE ALUNOS",
+    description: "Controle total dos seus alunos, histórico de cargas e evolução em tempo real.",
   },
   {
     icon: Utensils,
-    title: "Planos Alimentares Personalizados",
-    description: "Crie dietas customizadas com banco de alimentos completo, cálculo automático de macros e receitas.",
+    title: "BIBLIOTECA DE TREINOS",
+    description: "Criação de planos de hipertrofia com periodização avançada e vídeos profissionais.",
   },
   {
-    icon: Dumbbell,
-    title: "Montagem de Treinos",
-    description: "Biblioteca de exercícios com vídeos, montagem de treinos e acompanhamento de carga progressiva.",
+    icon: Activity,
+    title: "APP DO ALUNO",
+    description: "Seus alunos treinam em um app com sua marca, cores e total profissionalismo.",
   },
   {
-    icon: BarChart3,
-    title: "Dashboard de Métricas",
-    description: "Acompanhe a evolução de peso, medidas, fotos e metas de cada cliente com gráficos detalhados.",
+    icon: Zap,
+    title: "CONTROLE DE CARGAS",
+    description: "Acompanhe a progressão de força e desempenho com gráficos de clareza máxima.",
   },
   {
-    icon: MessageCircle,
-    title: "Comunicação Integrada",
-    description: "Chat direto com seus clientes, lembretes automáticos e notificações de acompanhamento.",
+    icon: Shield,
+    title: "COMUNICAÇÃO DIRETA",
+    description: "Chat integrado para ajustes de treino, feedback e suporte constante aos alunos.",
   },
   {
-    icon: Palette,
-    title: "100% Whitelabel",
-    description: "Sua marca, suas cores, seu logo. Seus clientes veem apenas a sua identidade visual.",
-  },
-  {
-    icon: Smartphone,
-    title: "App Mobile para Clientes",
-    description: "Seus pacientes acessam treinos, dietas e registram progresso pelo celular.",
+    icon: Target,
+    title: "ESCALA E GESTÃO",
+    description: "Ferramentas para gerenciar centenas de alunos sem perder a exclusividade do atendimento.",
   },
 ];
 
 const FeaturesSection = () => {
   return (
-    <section id="funcionalidades" className="py-16 lg:py-24">
-      <div className="section-container">
-        <div className="text-center mb-12 lg:mb-16">
-          <span className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            Funcionalidades
-          </span>
-          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            Tudo Que Você Precisa Para{" "}
-            <span className="gradient-text">Escalar Seu Negócio</span>
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Ferramentas profissionais projetadas especificamente para nutricionistas que querem crescer
-          </p>
+    <section id="funcionalidades" className="py-24 lg:py-32 bg-[#050505] relative overflow-hidden">
+      {/* Background HUD Grid */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{ backgroundImage: 'linear-gradient(#D4FF00 1px, transparent 1px), linear-gradient(90deg, #D4FF00 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+
+      <div className="section-container relative z-10">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-12 mb-20 animate-fade-in text-center lg:text-left">
+          <div className="max-w-4xl">
+            <div className="flex items-center gap-4 mb-6 justify-center lg:justify-start">
+              <span className="h-px w-12 bg-primary"></span>
+              <span className="font-display font-black italic uppercase text-[10px] tracking-[0.4em] text-primary">
+                O DIFERENCIAL QUE NINGUÉM MAIS TEM
+              </span>
+            </div>
+            <h2 className="text-4xl sm:text-6xl lg:text-[70px] font-display font-black mb-6 italic leading-[0.9] tracking-tighter uppercase">
+              SEU <span className="text-primary text-blur-sm">APP PRÓPRIO</span> NAS LOJAS <br />
+              <span className="text-white">100% GRÁTIS</span>
+            </h2>
+            <div className="bg-primary/10 border-l-4 border-primary p-6 mt-8 max-w-2xl">
+              <p className="font-display font-bold uppercase italic text-sm tracking-widest text-white/90">
+                Outros cobram <span className="line-through text-red-500">R$ 199/mês</span> por isso. <br />
+                Você tem <span className="text-primary underline decoration-primary/30">DE GRAÇA</span> no ApexPro.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col items-center lg:items-end gap-4">
+            <div className="flex gap-4">
+              <div className="p-4 bg-white/5 border border-white/10 -skew-x-12">
+                <p className="font-display font-black italic uppercase text-[10px] tracking-widest text-white">App Store</p>
+              </div>
+              <div className="p-4 bg-white/5 border border-white/10 -skew-x-12">
+                <p className="font-display font-black italic uppercase text-[10px] tracking-widest text-white">Google Play</p>
+              </div>
+            </div>
+            <p className="font-display font-black text-[100px] leading-none text-white/5 italic uppercase select-none hidden xl:block">NATIVO</p>
+          </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {features.map((feature, index) => (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[
+            { icon: Zap, title: "Personalização Total", desc: "Seu logo, suas cores, sua identidade visual completa." },
+            { icon: Activity, title: "Push Notifications", desc: "Mande avisos direto no celular do aluno. Engajamento real." },
+            { icon: Shield, title: "Offline-First", desc: "O aluno treina sem internet. Sem desculpas para falhar." },
+            { icon: Zap, title: "Check-in com GIF", desc: "Cada exercício tem sua demonstração em GIF integrada." },
+            { icon: Shield, title: "Chat Integrado", desc: "Comunicação direta e profissional. Sem poluição no WhatsApp." },
+            { icon: Target, title: "Autoridade Máxima", desc: "Você vira referência quando o aluno baixa SEU app nas lojas." }
+          ].map((feature, index) => (
             <div
               key={index}
-              className="group card-elevated p-6 hover:border-primary/30 transition-all duration-300"
+              className="athletic-card group p-8 bg-white/[0.02] hover:bg-white/[0.05] transition-all duration-500 animate-fade-in"
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
-                <feature.icon className="text-primary" size={28} />
+              <div className="kinetic-border" />
+
+              <div className="relative z-10">
+                <div className="w-14 h-14 bg-primary/10 border border-primary/20 -skew-x-12 flex items-center justify-center mb-8 group-hover:bg-primary transition-all duration-300">
+                  <feature.icon className="text-primary group-hover:text-black transition-colors" size={28} />
+                </div>
+
+                <h3 className="font-display font-black text-2xl text-white italic uppercase mb-4 tracking-tighter group-hover:text-primary transition-colors">
+                  {feature.title}
+                </h3>
+
+                <p className="font-display font-bold uppercase italic text-[11px] leading-relaxed tracking-widest text-white/40 group-hover:text-white/70 transition-colors border-l-2 border-white/10 pl-4">
+                  {feature.desc}
+                </p>
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {feature.description}
-              </p>
             </div>
           ))}
         </div>

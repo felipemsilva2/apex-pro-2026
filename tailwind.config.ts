@@ -14,7 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        display: ['Syne', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -41,6 +42,13 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+        },
+        surface: {
+          DEFAULT: "#1A1A1C",
+          foreground: "#FFFFFF",
+        },
+        indigo: {
+          600: "#2E3192",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
