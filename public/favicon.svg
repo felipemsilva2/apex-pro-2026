@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <rect width="256" height="256" fill="transparent"/>
+  <!-- Dumbbell / Halter Icon in Brand Lime Green -->
+  <path d="M48,80 L80,80 L80,176 L48,176 Z" fill="#D4FF00"/>
+  <path d="M176,80 L208,80 L208,176 L176,176 Z" fill="#D4FF00"/>
+  <path d="M80,120 L176,120 L176,136 L80,136 Z" fill="#D4FF00"/>
+  <path d="M32,96 L48,96 L48,160 L32,160 Z" fill="#D4FF00" opacity="0.8"/>
+  <path d="M208,96 L224,96 L224,160 L208,160 Z" fill="#D4FF00" opacity="0.8"/>
+</svg>
