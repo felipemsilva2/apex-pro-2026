@@ -7,12 +7,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Missing Supabase environment variables');
 }
 
-// Diagnostic logs for Production (Explicitly showing parts to avoid expansion)
-console.log(`[Supabase DEBUG] URL: ${supabaseUrl}`);
-console.log(`[Supabase DEBUG] KEY LENGTH: ${supabaseAnonKey?.length || 0}`);
-console.log(`[Supabase DEBUG] KEY START: ${supabaseAnonKey?.substring(0, 10)}...`);
-console.log(`[Supabase DEBUG] KEY END: ...${supabaseAnonKey?.substring(supabaseAnonKey?.length - 10)}`);
-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
         autoRefreshToken: true,
