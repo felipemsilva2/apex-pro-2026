@@ -5,7 +5,12 @@ import { supabase, type Tenant } from './supabase';
  * Supports subdomains and custom domains.
  */
 export async function detectTenant(): Promise<Tenant | null> {
-    const hostname = window.location.hostname;
+    let hostname = window.location.hostname;
+
+    // Normalize hostname: remove 'www.' if present
+    if (hostname.startsWith('www.')) {
+        hostname = hostname.replace('www.', '');
+    }
 
     // Localhost / IP testing support
     const isIp = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(hostname);
