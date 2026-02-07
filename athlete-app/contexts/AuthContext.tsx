@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase } from '../lib/supabase';
 import { getTenantBranding, getEffectiveColors, type Tenant } from '../lib/whitelabel';
 import type { User } from '@supabase/supabase-js';
+import { useRealtimeSync } from '../hooks/useRealtimeSync';
 
 interface AuthContextType {
     user: User | null;
@@ -14,6 +15,15 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/**
+ * RealtimeManager
+ * Inner component to hook into Supabase Realtime safely within the QueryClient context
+ */
+function RealtimeManager() {
+    useRealtimeSync();
+    return null;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
@@ -106,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return (
         <AuthContext.Provider value={{ user, profile, tenant, brandColors, loading, signIn, signOut }}>
+            {user && <RealtimeManager />}
             {children}
         </AuthContext.Provider>
     );

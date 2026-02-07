@@ -54,7 +54,7 @@ const HeroSection = () => {
 
           <div className="flex flex-col items-center gap-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             <button
-              onClick={() => navigate("/signup")}
+              onClick={() => navigate("/checkout")}
               className="btn-athletic text-[12px] px-8 lg:px-16 py-4 lg:py-6 shadow-[0_20px_50px_rgba(212,255,0,0.4)] group scale-110 active:scale-95 transition-all"
             >
               <span className="flex items-center gap-3">

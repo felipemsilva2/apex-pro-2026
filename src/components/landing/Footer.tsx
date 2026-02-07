@@ -22,6 +22,7 @@ const Footer = () => {
   ];
 
   const tacticalLinks = [
+    { label: "PATCH NOTES", href: "/changelog" },
     { label: "TERMOS DE USO", href: "/terms" },
     { label: "PRIVACIDADE", href: "/privacy" },
   ];

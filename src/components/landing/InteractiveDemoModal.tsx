@@ -130,7 +130,7 @@ export const InteractiveDemoModal = ({ isOpen, onClose }: { isOpen: boolean; onC
                             {/* Conversion Overlay CTA */}
                             <div className="sticky bottom-4 md:bottom-10 left-0 right-0 z-[110] flex justify-center pointer-events-none pb-6 md:pb-12 px-4">
                                 <button
-                                    onClick={() => window.location.href = '/signup'}
+                                    onClick={() => window.location.href = '/checkout'}
                                     className="pointer-events-auto bg-primary shadow-[0_30px_70px_rgba(212,255,0,0.5)] px-6 md:px-14 py-4 md:py-5 text-black font-display font-black italic uppercase text-[10px] md:text-xs -skew-x-12 hover:scale-110 active:scale-95 transition-all flex items-center gap-4 border-2 border-black/10"
                                 >
                                     <span className="hidden xs:inline">ATIVAR MEU COMANDO AGORA</span>

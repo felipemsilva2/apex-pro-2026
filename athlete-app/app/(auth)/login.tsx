@@ -49,7 +49,7 @@ export default function LoginScreen() {
             style={styles.container}
         >
             <View style={styles.inner}>
-                {/* Tactical HUD Header */}
+                {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.badge}>
                         <Shield size={12} color={brandColors.primary} />
@@ -84,7 +84,7 @@ export default function LoginScreen() {
                     </View>
 
                     <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>CÓDIGO DE ACESSO (SENHA)</Text>
+                        <Text style={styles.inputLabel}>SENHA DE ACESSO</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="••••••••"
@@ -109,7 +109,7 @@ export default function LoginScreen() {
                                 <ActivityIndicator color={brandColors.secondary} />
                             ) : (
                                 <>
-                                    <Text style={[styles.buttonText, { color: brandColors.secondary }]}>ENTRAR NO TREINO</Text>
+                                    <Text style={[styles.buttonText, { color: brandColors.secondary }]}>ENTRAR</Text>
                                     <ChevronRight size={18} color={brandColors.secondary} />
                                 </>
                             )}
@@ -119,7 +119,7 @@ export default function LoginScreen() {
 
                 {/* Footer info */}
                 <View style={styles.footer}>
-                    <Text style={styles.version}>VERSION 1.0.4 Alpha // HUD-OS</Text>
+                    <Text style={styles.version}>VERSION 1.0.4 Alpha // PLATAFORMA</Text>
                     <Text style={styles.copyright}>© 2026 APEXPRO PERFORMANCE</Text>
                 </View>
             </View>

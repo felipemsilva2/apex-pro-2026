@@ -53,13 +53,7 @@ export const ConfirmationModal = ({
 
                     {children}
 
-                    {type === 'warning' && !children && (
-                        <View style={[styles.warningBox, { borderColor: `${brandColors.primary}20`, backgroundColor: `${brandColors.primary}05` }]}>
-                            <Text style={[styles.warningText, { color: brandColors.primary }]}>
-                                Atenção: Para garantir a integridade da média semanal, você só poderá atualizar este dado novamente daqui a 24 horas.
-                            </Text>
-                        </View>
-                    )}
+
 
                     {showFooter && (
                         <View style={styles.footer}>

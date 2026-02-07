@@ -28,6 +28,10 @@ export type Tenant = {
     business_name: string;
     tagline: string | null;
     contact_email: string | null;
+    billing_email: string | null;
+    subscription_status: 'active' | 'past_due' | 'blocked' | 'trialing' | 'canceled' | null;
+    overdue_since: string | null;
+    trial_end: string | null;
     plan_tier: 'free' | 'pro' | 'elite' | null;
     created_at: string;
     updated_at: string;
@@ -46,7 +50,6 @@ export type Profile = {
     bio: string | null;
     education: string | null;
     instagram: string | null;
-    linkedin: string | null;
     website: string | null;
     created_at: string;
     updated_at: string;

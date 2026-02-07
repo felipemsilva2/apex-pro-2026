@@ -8,9 +8,14 @@ import {
     ScrollView,
     KeyboardAvoidingView,
     Platform,
-    ActivityIndicator
+    ActivityIndicator,
+    Image,
+    Alert
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import { decode } from 'base64-arraybuffer';
+import { supabase } from '../lib/supabase';
 import { Container, Header, ConfirmationModal } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { useUpdateAthleteProfile } from '../hooks/useAthleteData';
@@ -23,7 +28,8 @@ import {
     Activity,
     Save,
     X,
-    ChevronDown
+    ChevronDown,
+    Camera
 } from 'lucide-react-native';
 import { TextInputMask } from 'react-native-masked-text';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -45,14 +51,62 @@ export default function ProfileEditScreen() {
         current_weight: profile?.current_weight?.toString().replace('.', ',') || '',
         target_weight: profile?.target_weight?.toString().replace('.', ',') || '',
         height: profile?.height?.toString().replace('.', ',') || '',
+        avatar_url: profile?.avatar_url || '',
     });
 
     const [isSaving, setIsSaving] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showGenderModal, setShowGenderModal] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handlePickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+            base64: true,
+        });
+
+        if (!result.canceled && result.assets[0].base64) {
+            setIsUploading(true);
+            try {
+                const asset = result.assets[0];
+                const fileExt = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+                const fileName = `${profile?.id}-${Math.random()}.${fileExt}`;
+                const filePath = `avatars/${fileName}`;
+
+                const { data, error } = await supabase.storage
+                    .from('avatars')
+                    .upload(filePath, decode(asset.base64!), {
+                        contentType: `image/${fileExt === 'jpg' ? 'jpeg' : fileExt}`,
+                    });
+
+                if (error) throw error;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('avatars')
+                    .getPublicUrl(filePath);
+
+                setFormData(prev => ({ ...prev, avatar_url: publicUrl }));
+            } catch (error: any) {
+                console.error('Error uploading image:', error);
+                Alert.alert('Erro no Upload', 'Não foi possível carregar sua imagem.');
+            } finally {
+                setIsUploading(false);
+            }
+        }
+    };
 
     const handleSave = async () => {
+        if (!profile?.id) {
+            setErrorMessage('Perfil não carregado. Tente reiniciar o aplicativo.');
+            setModalVisible(true);
+            return;
+        }
+
         setIsSaving(true);
         try {
             // Clean up phone number: remove masking characters (keep only digits)
@@ -70,10 +124,12 @@ export default function ProfileEditScreen() {
                 current_weight: formData.current_weight ? parseFloat(normalizedCurrentWeight) : null,
                 target_weight: formData.target_weight ? parseFloat(normalizedTargetWeight) : null,
                 height: formData.height ? parseFloat(normalizedHeight) : null,
+                avatar_url: formData.avatar_url,
             });
             router.back();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving profile:', error);
+            setErrorMessage(error.message || 'Não foi possível salvar os dados. Verifique sua conexão e tente novamente.');
             setModalVisible(true);
         } finally {
             setIsSaving(false);
@@ -155,6 +211,33 @@ export default function ProfileEditScreen() {
                 style={{ flex: 1 }}
             >
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+
+                    {/* Avatar Upload Section */}
+                    <View style={styles.avatarSection}>
+                        <TouchableOpacity
+                            style={[styles.avatarUploadContainer, { borderColor: brandColors.primary }]}
+                            onPress={handlePickImage}
+                            disabled={isUploading}
+                        >
+                            {formData.avatar_url ? (
+                                <Image source={{ uri: formData.avatar_url }} style={styles.avatarImage} />
+                            ) : (
+                                <View style={[styles.avatarPlaceholder, { backgroundColor: `${brandColors.primary}10` }]}>
+                                    <User size={40} color={brandColors.primary} />
+                                </View>
+                            )}
+                            {isUploading ? (
+                                <View style={styles.uploadOverlay}>
+                                    <ActivityIndicator color="#FFF" />
+                                </View>
+                            ) : (
+                                <View style={[styles.editIconContainer, { backgroundColor: brandColors.primary }]}>
+                                    <Camera size={16} color={brandColors.secondary} />
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                        <Text style={styles.avatarLabel}>FOTO DE PERFIL</Text>
+                    </View>
 
                     {renderInput(
                         "NOME COMPLETO",
@@ -347,7 +430,7 @@ export default function ProfileEditScreen() {
             <ConfirmationModal
                 visible={modalVisible}
                 title="ERRO DE SINCRONIZAÇÃO"
-                message="Não foi possível salvar os dados. Verifique sua conexão e tente novamente."
+                message={errorMessage || "Não foi possível salvar os dados. Verifique sua conexão e tente novamente."}
                 type="warning"
                 onConfirm={() => setModalVisible(false)}
                 onCancel={() => setModalVisible(false)}
@@ -362,6 +445,59 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 20,
         paddingBottom: 40,
+    },
+    avatarSection: {
+        alignItems: 'center',
+        marginBottom: 32,
+        marginTop: 10,
+    },
+    avatarUploadContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        borderWidth: 2,
+        padding: 5,
+        position: 'relative',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 55,
+    },
+    avatarPlaceholder: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 55,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    uploadOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        borderRadius: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    editIconContainer: {
+        position: 'absolute',
+        bottom: 5,
+        right: 5,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#000',
+    },
+    avatarLabel: {
+        fontSize: 10,
+        fontWeight: '900',
+        color: 'rgba(255,255,255,0.3)',
+        letterSpacing: 2,
+        marginTop: 12,
     },
     row: {
         flexDirection: 'row',

@@ -50,7 +50,7 @@ export const CustomBottomNav: React.FC = () => {
 
     const handleTabPress = (tabName: string) => {
         if (tabName === 'index') {
-            router.push('/(tabs)/');
+            router.push('/(tabs)');
         } else {
             router.push(`/(tabs)/${tabName}` as any);
         }

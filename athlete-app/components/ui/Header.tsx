@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { ChevronLeft, ShieldCheck } from 'lucide-react-native';
+import { SvgUri } from 'react-native-svg';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
@@ -37,15 +38,27 @@ export const Header: React.FC<HeaderProps> = ({
                 </TouchableOpacity>
             )}
 
-            <View style={styles.content}>
+            <View style={[
+                styles.content,
+                variant === 'hero' && styles.heroContentRow
+            ]}>
                 {variant === 'brand' && tenant ? (
                     <View style={styles.brandContent}>
                         {tenant.logo_url ? (
-                            <Image
-                                source={{ uri: tenant.logo_url }}
-                                style={styles.brandLogo}
-                                resizeMode="contain"
-                            />
+                            tenant.logo_url.toLowerCase().endsWith('.svg') ? (
+                                <SvgUri
+                                    uri={tenant.logo_url}
+                                    width={140}
+                                    height={50}
+                                    preserveAspectRatio="xMinYMin meet"
+                                />
+                            ) : (
+                                <Image
+                                    source={{ uri: tenant.logo_url }}
+                                    style={styles.brandLogo}
+                                    resizeMode="contain"
+                                />
+                            )
                         ) : (
                             <View>
                                 <Text style={[styles.brandTitle, { color: '#FFF' }]}>
@@ -57,28 +70,55 @@ export const Header: React.FC<HeaderProps> = ({
                         {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
                     </View>
                 ) : (
-                    <View style={styles.titleContainer}>
-                        <Text
-                            style={[
-                                styles.title,
-                                variant === 'hero' && styles.heroTitle,
-                            ]}
-                            numberOfLines={1}
-                        >
-                            {title || 'ApexPRO'}
-                        </Text>
-                        <View
-                            style={[
-                                styles.line,
-                                { backgroundColor: `${brandColors.primary}4D` },
-                            ]}
-                        />
-                        {subtitle && (
-                            <Text style={styles.subtitle} numberOfLines={2}>
-                                {subtitle}
-                            </Text>
+                    <>
+                        {variant === 'hero' ? (
+                            <View style={styles.heroProfileRow}>
+                                <View style={[styles.heroAvatarContainer, { borderColor: brandColors.primary }]}>
+                                    {tenant?.logo_url ? (
+                                        tenant.logo_url.toLowerCase().endsWith('.svg') ? (
+                                            <SvgUri
+                                                uri={tenant.logo_url}
+                                                width={64}
+                                                height={64}
+                                                preserveAspectRatio="xMidYMid meet"
+                                            />
+                                        ) : (
+                                            <Image
+                                                source={{ uri: tenant.logo_url }}
+                                                style={styles.heroAvatar}
+                                                resizeMode="cover"
+                                            />
+                                        )
+                                    ) : (
+                                        <ShieldCheck size={32} color={brandColors.primary} />
+                                    )}
+                                </View>
+                                <View style={styles.heroTextContainer}>
+                                    {title && <Text style={styles.heroTitle} numberOfLines={1}>{title}</Text>}
+                                    {subtitle && <Text style={styles.heroSubtitle} numberOfLines={1}>{subtitle}</Text>}
+                                </View>
+                            </View>
+                        ) : (
+                            <View style={styles.titleContainer}>
+                                {title && (
+                                    <Text style={styles.title} numberOfLines={1}>
+                                        {title}
+                                    </Text>
+                                )}
+                                <View
+                                    style={[
+                                        styles.line,
+                                        { backgroundColor: `${brandColors.primary}4D` },
+                                    ]}
+                                />
+                                {subtitle && (
+                                    <Text style={styles.subtitle} numberOfLines={2}>
+                                        {subtitle}
+                                    </Text>
+                                )}
+                            </View>
                         )}
-                    </View>
+                    </>
                 )}
             </View>
 
@@ -92,11 +132,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 12,
-        paddingHorizontal: 16,
+        paddingHorizontal: 20, // Standard app padding
         minHeight: 60,
     },
     heroContainer: {
         paddingVertical: 24,
+        paddingHorizontal: 20, // Keep consistent with standard
         minHeight: 100,
     },
     backButton: {
@@ -105,8 +146,13 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
+        alignItems: 'flex-start',
+    },
+    heroContentRow: {
+        flex: 1,
     },
     titleContainer: {
+        width: '100%',
         marginBottom: 4,
     },
     title: {
@@ -118,8 +164,44 @@ const styles = StyleSheet.create({
         textTransform: 'uppercase',
     },
     heroTitle: {
-        fontSize: 28,
-        marginBottom: 8,
+        fontSize: 24,
+        fontWeight: '900',
+        fontStyle: 'italic',
+        color: '#FFFFFF',
+        textTransform: 'uppercase',
+        lineHeight: 28,
+    },
+    heroProfileRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingRight: 12,
+    },
+    heroAvatarContainer: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        borderWidth: 2,
+        padding: 2,
+        overflow: 'hidden',
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        marginRight: 16,
+    },
+    heroAvatar: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 31,
+    },
+    heroTextContainer: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    heroSubtitle: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: 'rgba(255,255,255,0.6)',
+        letterSpacing: 0.5,
+        textTransform: 'uppercase',
+        marginTop: 2,
     },
     line: {
         height: 2,
@@ -144,9 +226,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     brandLogo: {
-        height: 32,
+        height: 40,
         width: 120,
-        marginBottom: 4,
     },
     brandTitle: {
         fontSize: 22,

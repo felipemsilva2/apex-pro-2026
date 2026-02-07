@@ -1,8 +1,12 @@
-import { Zap, Check, ArrowRight, Shield, Target } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Zap, Check, ArrowRight, Shield, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const PricingSection = () => {
+  const [selectedCycle, setSelectedCycle] = useState<'MENSAL' | 'ANUAL'>('MENSAL');
+
   return (
     <section id="planos" className="py-24 lg:py-32 bg-black relative overflow-hidden">
       {/* HUD Decoration */}
@@ -26,6 +30,29 @@ const PricingSection = () => {
           </p>
         </div>
 
+        <div className="flex justify-center mb-12">
+          <div className="flex gap-2 p-1 bg-white/5 border border-white/10 w-fit -skew-x-12">
+            <button
+              onClick={() => setSelectedCycle('MENSAL')}
+              className={cn(
+                "px-8 py-3 font-display font-black italic text-[11px] uppercase tracking-[0.2em] transition-all",
+                selectedCycle === 'MENSAL' ? "bg-primary text-black" : "text-white/40 hover:text-white"
+              )}
+            >
+              Faturamento Mensal
+            </button>
+            <button
+              onClick={() => setSelectedCycle('ANUAL')}
+              className={cn(
+                "px-8 py-3 font-display font-black italic text-[11px] uppercase tracking-[0.2em] transition-all",
+                selectedCycle === 'ANUAL' ? "bg-primary text-black" : "text-white/40 hover:text-white"
+              )}
+            >
+              Plano Anual (-20%)
+            </button>
+          </div>
+        </div>
+
         <div className="max-w-xl mx-auto relative">
           {/* Price Kinetic Glow */}
           <div className="absolute -inset-4 bg-primary/10 blur-[100px] rounded-full animate-pulse" />
@@ -41,21 +68,18 @@ const PricingSection = () => {
               <div className="flex items-baseline justify-center gap-2 mb-2">
                 <span className="text-xl font-black text-primary italic uppercase tracking-tighter">R$</span>
                 <span className="text-6xl lg:text-8xl font-display font-black text-white italic uppercase leading-none tracking-tighter">
-                  39,90
+                  {selectedCycle === 'MENSAL' ? '39,90' : '31,90'}
                 </span>
                 <span className="text-xs font-bold text-white/30 uppercase tracking-widest">/mês</span>
               </div>
               <p className="text-primary/60 font-display font-black italic uppercase text-[9px] tracking-[0.2em]">
-                (MENOS QUE 2 CAFÉS POR SEMANA)
+                {selectedCycle === 'MENSAL' ? '(MENOS QUE 2 CAFÉS POR SEMANA)' : '(ECONOMIA DE R$ 96 NO ANO)'}
               </p>
             </div>
 
             <div className="bg-white/5 p-6 border-y border-white/10 mb-10 -mx-8 lg:-mx-12">
               <p className="font-display font-black italic uppercase text-xs text-center text-white">
-                PLANO ANUAL: R$ 31,90/mês
-              </p>
-              <p className="text-[9px] font-bold text-primary/50 text-center uppercase tracking-widest mt-1">
-                ECONOMIZE R$ 96/ANO
+                {selectedCycle === 'MENSAL' ? 'MIGRE PARA O ANUAL POR R$ 31,90/mês' : 'VALOR TOTAL: R$ 382,80/ano'}
               </p>
             </div>
 
@@ -77,7 +101,7 @@ const PricingSection = () => {
 
             <div className="space-y-6 pt-4">
               <Button
-                onClick={() => window.location.href = '/signup'}
+                onClick={() => window.location.href = `/checkout?plan=${selectedCycle === 'ANUAL' ? 'ANUAL' : 'MENSAL'}`}
                 className="w-full btn-athletic h-16 group text-base"
               >
                 COMEÇAR TESTE GRÁTIS AGORA
@@ -89,7 +113,7 @@ const PricingSection = () => {
 
               <div className="text-center space-y-2">
                 <p className="font-display font-bold uppercase italic text-[9px] tracking-widest text-white/30">
-                  Após 30 dias: cobrança automática de R$ 39,90
+                  Após 30 dias: cobrança automática de {selectedCycle === 'MENSAL' ? 'R$ 39,90' : 'R$ 382,80'}
                 </p>
                 <p className="font-display font-black italic uppercase text-[9px] tracking-[0.2em] text-primary/60">
                   Cancele quando quiser. Sem multas. Sem pegadinhas.

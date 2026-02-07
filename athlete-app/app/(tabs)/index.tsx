@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Container, Header, StatCard, LoadingSpinner, ConfirmationModal } from '../../components/ui';
 import { useAuth } from '../../contexts/AuthContext';
@@ -31,16 +31,26 @@ export default function HomeScreen() {
 
   const visiblePrimary = getVisibleColor(brandColors.primary);
 
-  // Use professional hook to get up-to-date data with invalidation support
-  const { data: serverProfile, isLoading: loadingProfile } = useAthleteProfile();
+  // Pre-fetch coach profile data to warm the cache
+  const { data: coach, refetch: refetchCoach, isRefetching: isRefetchingCoach } = useCoachProfile();
+
+  const { data: serverProfile, isLoading: loadingProfile, refetch: refetchProfile, isRefetching: isRefetchingProfile } = useAthleteProfile();
   const profile = serverProfile || contextProfile;
 
-  const { data: workouts, isLoading: loadingWorkouts } = useAthleteWorkouts();
-  const { data: diet, isLoading: loadingDiet } = useAthleteDiet();
+  const { data: workouts, isLoading: loadingWorkouts, refetch: refetchWorkouts, isRefetching: isRefetchingWorkouts } = useAthleteWorkouts();
+  const { data: diet, isLoading: loadingDiet, refetch: refetchDiet, isRefetching: isRefetchingDiet } = useAthleteDiet();
   const updateProfile = useUpdateAthleteProfile();
 
-  // Pre-fetch coach profile data to warm the cache
-  useCoachProfile();
+  const isRefetching = isRefetchingProfile || isRefetchingWorkouts || isRefetchingDiet || isRefetchingCoach;
+
+  const handleRefresh = async () => {
+    await Promise.all([
+      refetchProfile(),
+      refetchWorkouts(),
+      refetchDiet(),
+      refetchCoach()
+    ]);
+  };
 
   const [newWeight, setNewWeight] = useState(profile?.current_weight?.toString().replace('.', ',') || '');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -159,18 +169,37 @@ export default function HomeScreen() {
   };
 
   if (isLoading) {
-    return <LoadingSpinner message="Carregando HUD..." />;
+    return <LoadingSpinner message="Carregando..." />;
   }
 
   return (
-    <Container variant="page">
+    <Container variant="page" seamless>
       <Header
         title={`Olá, ${profile?.full_name?.split(' ')[0] || 'Atleta'}`}
-        subtitle={tenant?.business_name ? `ALUNO ${tenant.business_name}`.toUpperCase() : "TACTICAL COMMAND CENTER"}
+        subtitle={`PERSONAL ${(coach?.full_name || tenant?.business_name || "PRO").replace(/^personal\s+/i, '').toUpperCase()}`}
         variant="hero"
+        rightAction={
+          <TouchableOpacity
+            onPress={() => router.push('/settings')}
+            style={{ padding: 4 }}
+          >
+            <User size={28} color={visiblePrimary} />
+          </TouchableOpacity>
+        }
       />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20 }} // Add padding back for scrollable content
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={handleRefresh}
+            tintColor={brandColors.primary}
+            colors={[brandColors.primary]}
+          />
+        }
+      >
         {/* Profile Alert Banner */}
         {isIncompleteProfile && (
           <TouchableOpacity
@@ -180,28 +209,14 @@ export default function HomeScreen() {
           >
             <View style={[styles.alertIndicator, { backgroundColor: visiblePrimary }]} />
             <View style={styles.alertContent}>
-              <Text style={[styles.alertTitle, { color: visiblePrimary }]}>SISTEMA: CONFIGURAÇÃO PENDENTE</Text>
+              <Text style={[styles.alertTitle, { color: visiblePrimary }]}>AVISO: PERFIL INCOMPLETO</Text>
               <Text style={styles.alertText}>Faltam dados biométricos essenciais para otimizar seus resultados.</Text>
             </View>
             <ChevronRight size={16} color={visiblePrimary} />
           </TouchableOpacity>
         )}
 
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          <StatCard
-            label="Peso Atual"
-            value={formatWeight(profile?.current_weight)}
-            unit="kg"
-            icon={<Scale size={20} color={visiblePrimary} />}
-          />
-          <StatCard
-            label="Meta"
-            value={formatWeight(profile?.target_weight)}
-            unit="kg"
-            icon={<Target size={20} color={visiblePrimary} />}
-          />
-        </View>
+
 
         {/* Quick Weight Check-in */}
         <View style={[styles.section, { borderColor: `${visiblePrimary}20` }]}>
@@ -233,7 +248,7 @@ export default function HomeScreen() {
 
         {/* Core Tactical Actions - 2x2 Grid */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>OPERAÇÕES PRINCIPAIS</Text>
+          <Text style={styles.sectionTitle}>MENU PRINCIPAL</Text>
           <View style={styles.gridRow}>
             <TouchableOpacity
               style={[styles.gridItem, { borderColor: `${visiblePrimary}30` }]}
@@ -270,42 +285,12 @@ export default function HomeScreen() {
             >
               <Calendar size={24} color={visiblePrimary} />
               <Text style={styles.gridItemTitle}>AGENDA</Text>
-              <Text style={styles.gridItemSubtitle}>PRÓXIMAS MISSÕES</Text>
+              <Text style={styles.gridItemSubtitle}>AGENDA E CONSULTAS</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Support & Profile - Compact List */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>CONFIGURAÇÃO E COMANDO</Text>
 
-          <View style={styles.compactRow}>
-            <TouchableOpacity
-              style={[styles.compactItem, { borderColor: 'rgba(255,255,255,0.05)' }]}
-              onPress={() => router.push('/profile_edit')}
-            >
-              <User size={18} color="rgba(255,255,255,0.6)" />
-              <Text style={styles.compactItemText}>MEU PERFIL</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.compactItem, { borderColor: 'rgba(255,255,255,0.05)' }]}
-              onPress={() => router.push('/coach_profile')}
-            >
-              <Award size={18} color="rgba(255,255,255,0.6)" />
-              <Text style={styles.compactItemText}>MEU TREINADOR</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Secondary Logout - subtle */}
-          <TouchableOpacity
-            style={styles.subtleLogout}
-            onPress={handleLogout}
-          >
-            <Power size={14} color="rgba(255, 68, 68, 0.5)" />
-            <Text style={styles.subtleLogoutText}>ENCERRAR SESSÃO OPERACIONAL</Text>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
       {/* Chat FAB */}
@@ -392,12 +377,10 @@ const styles = StyleSheet.create({
   },
   gridItem: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.02)',
-    borderWidth: 1,
     padding: 16,
-    borderRadius: 4,
-    alignItems: 'center',
-    gap: 8,
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.03)',
   },
   gridItemTitle: {
     color: '#FFF',

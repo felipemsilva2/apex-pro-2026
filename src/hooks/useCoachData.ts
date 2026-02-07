@@ -1090,6 +1090,62 @@ export function useCreateHormonalProtocol() {
     });
 }
 
+/**
+ * Mutation to update a hormonal protocol
+ */
+export function useUpdateHormonalProtocol() {
+    const queryClient = useQueryClient();
+    const { profile } = useAuth();
+    const { tenant } = useTenant();
+
+    return useMutation({
+        mutationFn: async ({ id, compounds, ...protocol }: Partial<HormonalProtocol> & { id: string, compounds: Partial<HormonalCompound>[] }) => {
+            const tenantId = profile?.tenant_id || tenant?.id;
+            if (!tenantId) throw new Error("Tenant ID not found");
+
+            // 1. Update Protocol
+            const { error: protocolError } = await supabase
+                .from('hormonal_protocols')
+                .update(protocol)
+                .eq('id', id);
+
+            if (protocolError) throw protocolError;
+
+            // 2. Refresh Compounds (Delete + Insert)
+            // First, delete current compounds
+            const { error: deleteError } = await supabase
+                .from('hormonal_compounds')
+                .delete()
+                .eq('protocol_id', id);
+
+            if (deleteError) throw deleteError;
+
+            // Then, insert new ones
+            if (compounds.length > 0) {
+                const compoundsData = compounds.map(c => ({
+                    ...c,
+                    protocol_id: id
+                }));
+
+                const { error: compoundsError } = await supabase
+                    .from('hormonal_compounds')
+                    .insert(compoundsData);
+
+                if (compoundsError) throw compoundsError;
+            }
+
+            return { id, client_id: protocol.client_id };
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['client-hormonal-protocols', data.client_id] });
+            toast.success("Protocolo hormonal atualizado!");
+        },
+        onError: (error: any) => {
+            toast.error("Erro ao atualizar protocolo: " + error.message);
+        }
+    });
+}
+
 
 
 /**

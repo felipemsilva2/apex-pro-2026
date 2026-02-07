@@ -359,6 +359,7 @@ const ClientDetail = () => {
                   protocol={workout}
                   type="workout"
                   onDelete={(id) => deleteProtocolMutation.mutate({ id, type: 'workout' })}
+                  onEdit={(id) => navigate(`/dashboard/plans/${id}`)}
                 />
               </Link>
             ))}
@@ -385,6 +386,7 @@ const ClientDetail = () => {
                   protocol={plan}
                   type="meal"
                   onDelete={(id) => deleteProtocolMutation.mutate({ id, type: 'meal' })}
+                  onEdit={(id) => navigate(`/dashboard/meal-plans/${id}`)}
                 />
               </Link>
             ))}

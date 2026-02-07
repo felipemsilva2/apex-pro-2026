@@ -163,7 +163,7 @@ export default function ProgressScreen() {
                             </View>
                         ) : (
                             <View style={styles.contentContainer}>
-                                <Text style={styles.listTitle}>HISTÓRICO COMPLETO</Text>
+                                <Text style={styles.listTitle}>HISTÓRICO DE CHECK-INS</Text>
                                 {assessments?.map((assessment, index) => (
                                     <AssessmentRow
                                         key={assessment.id}
@@ -200,6 +200,7 @@ const styles = StyleSheet.create({
     },
     section: {
         marginBottom: 24,
+        gap: 12,
     },
     contentContainer: {
         gap: 24,

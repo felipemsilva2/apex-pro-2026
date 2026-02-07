@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Palette, RefreshCw, CreditCard, Bell, Users, Camera, Save, Loader2, Crown, CheckCircle2, UserPlus, ExternalLink, Globe, Instagram, Linkedin, Link2, Upload, Image, Trash2 } from "lucide-react";
+import { User, Palette, RefreshCw, CreditCard, Bell, Users, Camera, Save, Loader2, Crown, CheckCircle2, UserPlus, ExternalLink, Globe, Instagram, Link2, Upload, Image, Trash2, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,8 +32,8 @@ const SettingsPage = () => {
     bio: "",
     education: "",
     instagram: "",
-    linkedin: "",
     website: "",
+    spotify_playlist_url: "",
   });
 
   const [brandSettings, setBrandSettings] = useState({
@@ -52,8 +52,8 @@ const SettingsPage = () => {
         bio: (profile as any).bio || "",
         education: (profile as any).education || "",
         instagram: (profile as any).instagram || "",
-        linkedin: (profile as any).linkedin || "",
         website: (profile as any).website || "",
+        spotify_playlist_url: (profile as any).spotify_playlist_url || "",
       });
     }
   }, [profile]);
@@ -81,8 +81,8 @@ const SettingsPage = () => {
           bio: profileData.bio,
           education: profileData.education,
           instagram: profileData.instagram,
-          linkedin: profileData.linkedin,
           website: profileData.website,
+          spotify_playlist_url: profileData.spotify_playlist_url,
         })
         .eq('id', profile.id);
 
@@ -399,18 +399,6 @@ const SettingsPage = () => {
 
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
-                      <Linkedin size={12} /> LINKEDIN
-                    </Label>
-                    <Input
-                      value={profileData.linkedin}
-                      onChange={(e) => setProfileData(s => ({ ...s, linkedin: e.target.value }))}
-                      placeholder="LINKEDIN.COM/IN/SEUPERFIL"
-                      className="bg-black/50 border-white/10 rounded-none font-display font-bold italic h-10 text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
                       <Link2 size={12} /> WEBSITE
                     </Label>
                     <Input
@@ -418,6 +406,18 @@ const SettingsPage = () => {
                       onChange={(e) => setProfileData(s => ({ ...s, website: e.target.value }))}
                       placeholder="WWW.SEUSITE.COM.BR"
                       className="bg-black/50 border-white/10 rounded-none font-display font-bold italic h-10 text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 flex items-center gap-2">
+                      <Music size={12} /> SPOTIFY PLAYLIST
+                    </Label>
+                    <Input
+                      value={profileData.spotify_playlist_url}
+                      onChange={(e) => setProfileData(s => ({ ...s, spotify_playlist_url: e.target.value }))}
+                      placeholder="HTTPS://OPEN.SPOTIFY.COM/PLAYLIST/..."
+                      className="bg-black/50 border-white/10 rounded-none font-display font-bold italic h-10 text-xs text-primary"
                     />
                   </div>
                 </div>

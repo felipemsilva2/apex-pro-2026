@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Modal, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Container, Header, LoadingSpinner, EmptyState } from '../../components/ui';
 import { useWorkoutDetail } from '../../hooks/useAthleteData';
 import { useAuth } from '../../contexts/AuthContext';
 import { WorkoutExerciseCard } from '../../components/WorkoutExerciseCard';
-import { Play, CheckCircle2, Clock, RotateCcw, Dumbbell, X } from 'lucide-react-native';
+import { Play, CheckCircle2, Clock, RotateCcw, Dumbbell, X, Zap } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 /**
@@ -16,21 +16,44 @@ export default function WorkoutDetailScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
     const { brandColors } = useAuth();
-    const { data: workout, isLoading } = useWorkoutDetail(id as string);
+    const { data: workout, isLoading, refetch, isRefetching } = useWorkoutDetail(id as string);
     const [selectedExercise, setSelectedExercise] = useState<any>(null); // Para modal de GIF full
-    const [completedExercises, setCompletedExercises] = useState<Set<number>>(new Set());
+    const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
+    const [activeDay, setActiveDay] = useState<string | null>(null);
 
-    const toggleExercise = (index: number) => {
+    const toggleExercise = (id: string) => {
         setCompletedExercises(prev => {
             const next = new Set(prev);
-            if (next.has(index)) {
-                next.delete(index);
+            if (next.has(id)) {
+                next.delete(id);
             } else {
-                next.add(index);
+                next.add(id);
             }
             return next;
         });
     };
+
+    const exercises = workout?.exercises || [];
+
+    // Group exercises by day
+    const exercisesByDay = exercises.reduce((acc: any, ex: any) => {
+        const day = ex.day || 'segunda';
+        if (!acc[day]) acc[day] = [];
+        acc[day].push(ex);
+        return acc;
+    }, {});
+
+    const availableDays = Object.keys(exercisesByDay).sort((a, b) => {
+        const dayOrder: any = { segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6, domingo: 7 };
+        return dayOrder[a] - dayOrder[b];
+    });
+
+    // Set initial active day once data is loaded
+    React.useEffect(() => {
+        if (!activeDay && availableDays.length > 0) {
+            setActiveDay(availableDays[0]);
+        }
+    }, [availableDays, activeDay]);
 
     if (isLoading) {
         return <LoadingSpinner message="Carregando treino..." />;
@@ -49,7 +72,18 @@ export default function WorkoutDetailScreen() {
         );
     }
 
-    const exercises = workout.exercises || [];
+    const dayLabels: any = {
+        segunda: 'SEG',
+        terca: 'TER',
+        quarta: 'QUA',
+        quinta: 'QUI',
+        sexta: 'SEX',
+        sabado: 'SÁB',
+        domingo: 'DOM'
+    };
+
+    const currentExercises = exercisesByDay[activeDay] || [];
+    const currentDayFocus = workout.day_focus?.[activeDay];
 
     return (
         <Container variant="page">
@@ -60,13 +94,58 @@ export default function WorkoutDetailScreen() {
                 variant="default"
             />
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-                {/* Workout Header Info */}
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 100 }}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={isRefetching}
+                        onRefresh={refetch}
+                        tintColor={brandColors.primary}
+                        colors={[brandColors.primary]}
+                    />
+                }
+            >
+                {/* Daily Tabs */}
+                {availableDays.length > 1 && (
+                    <View style={styles.tabsWrapper}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContent}>
+                            {availableDays.map(day => (
+                                <TouchableOpacity
+                                    key={day}
+                                    onPress={() => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                        setActiveDay(day);
+                                    }}
+                                    style={[
+                                        styles.dayTab,
+                                        activeDay === day && { backgroundColor: brandColors.primary }
+                                    ]}
+                                >
+                                    <Text style={[
+                                        styles.dayTabText,
+                                        activeDay === day ? { color: brandColors.secondary } : { color: 'rgba(255,255,255,0.4)' }
+                                    ]}>
+                                        {dayLabels[day] || day.toUpperCase()}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                )}
+
+                {/* Day Focus / Summary */}
                 <View style={[styles.summaryCard, { borderColor: 'rgba(255,255,255,0.05)' }]}>
                     <View style={styles.summaryItem}>
                         <Dumbbell size={16} color={brandColors.primary} />
-                        <Text style={styles.summaryText}>{exercises.length} Exercícios</Text>
+                        <Text style={styles.summaryText}>{currentExercises.length} Exercícios</Text>
                     </View>
+                    {currentDayFocus && (
+                        <View style={styles.summaryItem}>
+                            <Zap size={16} color={brandColors.primary} />
+                            <Text style={styles.summaryText}>{currentDayFocus}</Text>
+                        </View>
+                    )}
                     <View style={styles.summaryItem}>
                         <Clock size={16} color={brandColors.primary} />
                         <Text style={styles.summaryText}>~60 min</Text>
@@ -74,32 +153,42 @@ export default function WorkoutDetailScreen() {
                 </View>
 
                 {/* Exercises List */}
-                {exercises.map((exercise: any, index: number) => (
-                    <WorkoutExerciseCard
-                        key={exercise.id || index}
-                        exercise={exercise}
-                        index={index}
-                        isCompleted={completedExercises.has(index)}
-                        onToggleComplete={() => toggleExercise(index)}
-                        onPressMedia={(ex) => setSelectedExercise({
-                            ...ex,
-                            gifUrl: ex.gifUrl,
-                            exerciseName: ex.exerciseName
-                        })}
+                {currentExercises.length > 0 ? (
+                    currentExercises.map((exercise: any, index: number) => (
+                        <WorkoutExerciseCard
+                            key={exercise.id || index}
+                            exercise={exercise}
+                            index={index}
+                            isCompleted={completedExercises.has(exercise.id)}
+                            onToggleComplete={() => toggleExercise(exercise.id)}
+                            onPressMedia={(ex) => setSelectedExercise({
+                                ...ex,
+                                gifUrl: ex.gifUrl,
+                                exerciseName: ex.exerciseName
+                            })}
+                        />
+                    ))
+                ) : (
+                    <EmptyState
+                        icon={<Dumbbell size={40} color={brandColors.primary} />}
+                        title="Dia de Descanso"
+                        description="Nenhum exercício programado para este dia."
                     />
-                ))}
+                )}
 
-                <TouchableOpacity
-                    style={[styles.completeButton, { backgroundColor: brandColors.primary }]}
-                    onPress={() => {
-                        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                        // TODO: Implement completion logic
-                        router.back();
-                    }}
-                >
-                    <CheckCircle2 color={brandColors.secondary} size={20} />
-                    <Text style={[styles.completeText, { color: brandColors.secondary }]}>CONCLUIR TREINO</Text>
-                </TouchableOpacity>
+                {currentExercises.length > 0 && (
+                    <TouchableOpacity
+                        style={[styles.completeButton, { backgroundColor: brandColors.primary }]}
+                        onPress={() => {
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                            // TODO: Implement completion logic
+                            router.back();
+                        }}
+                    >
+                        <CheckCircle2 color={brandColors.secondary} size={20} />
+                        <Text style={[styles.completeText, { color: brandColors.secondary }]}>CONCLUIR TREINO</Text>
+                    </TouchableOpacity>
+                )}
 
             </ScrollView>
 
@@ -275,6 +364,26 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontStyle: 'italic',
         fontWeight: '600',
+    },
+    tabsWrapper: {
+        marginBottom: 20,
+    },
+    tabsContent: {
+        paddingHorizontal: 4,
+        gap: 8,
+    },
+    dayTab: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 4,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        transform: [{ skewX: '-10deg' }],
+    },
+    dayTabText: {
+        fontSize: 12,
+        fontWeight: '900',
+        fontStyle: 'italic',
+        transform: [{ skewX: '10deg' }],
     },
     completeButton: {
         flexDirection: 'row',

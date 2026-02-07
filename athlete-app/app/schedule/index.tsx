@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAthleteAppointments } from '@/hooks/useAthleteData';
@@ -12,7 +12,7 @@ import { Calendar } from 'lucide-react-native';
 export default function ScheduleScreen() {
     const { tenant, brandColors } = useAuth();
     const router = useRouter();
-    const { data: appointments, isLoading } = useAthleteAppointments();
+    const { data: appointments, isLoading, refetch, isRefetching } = useAthleteAppointments();
 
     return (
         <Container variant="page">
@@ -33,7 +33,7 @@ export default function ScheduleScreen() {
                             <Calendar size={32} color="rgba(255,255,255,0.2)" />
                         </View>
                         <Text style={styles.emptyText}>SEM MISSÕES AGENDADAS</Text>
-                        <Text style={styles.emptySubtext}>AGUARDE NOVAS ORDENS DO COMANDO</Text>
+                        <Text style={styles.emptySubtext}>AGUARDE NOVAS ATUALIZAÇÕES</Text>
                     </View>
                 ) : (
                     <FlatList
@@ -44,6 +44,14 @@ export default function ScheduleScreen() {
                         )}
                         contentContainerStyle={styles.list}
                         showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={isRefetching}
+                                onRefresh={refetch}
+                                tintColor={brandColors.primary}
+                                colors={[brandColors.primary]}
+                            />
+                        }
                     />
                 )}
             </View>

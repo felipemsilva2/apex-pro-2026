@@ -42,7 +42,7 @@ const CTASection = () => {
           {/* CTAs */}
           <div className="flex flex-col items-center justify-center gap-8">
             <button
-              onClick={() => window.location.href = '/signup'}
+              onClick={() => window.location.href = '/checkout'}
               className="w-full sm:w-auto bg-black text-primary px-16 py-8 font-display font-black italic uppercase text-xl tracking-[0.2em] shadow-[0_30px_70px_rgba(0,0,0,0.4)] hover:scale-105 active:scale-95 transition-all group"
               style={{ clipPath: 'polygon(25px 0, 100% 0, calc(100% - 25px) 100%, 0 100%)' }}
             >

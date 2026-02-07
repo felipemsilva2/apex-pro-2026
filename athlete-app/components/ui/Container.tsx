@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 interface ContainerProps {
     variant?: 'page' | 'card' | 'section';
+    seamless?: boolean; // If true, removes horizontal padding for edge-to-edge content
     children: React.ReactNode;
     style?: StyleProp<ViewStyle>;
 }
@@ -16,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const Container: React.FC<ContainerProps> = ({
     variant = 'page',
+    seamless = false,
     children,
     style,
 }) => {
@@ -26,7 +28,8 @@ export const Container: React.FC<ContainerProps> = ({
         styles.base,
         variant === 'page' && [
             styles.page,
-            { paddingTop: insets.top, paddingBottom: insets.bottom }
+            { paddingTop: insets.top, paddingBottom: insets.bottom },
+            seamless && { paddingHorizontal: 0 }
         ],
         variant === 'card' && [styles.card, { borderColor: `${brandColors.primary}20` }],
         variant === 'section' && styles.section,
@@ -43,7 +46,7 @@ const styles = StyleSheet.create({
     page: {
         flex: 1,
         backgroundColor: '#0A0A0B',
-        padding: 16,
+        paddingHorizontal: 20,
     },
     card: {
         backgroundColor: 'rgba(255,255,255,0.03)',

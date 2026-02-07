@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
     View,
     Text,
@@ -6,38 +6,49 @@ import {
     TouchableOpacity,
     ScrollView,
     Image,
-    Linking
+    Linking,
+    Share,
+    Alert,
+    RefreshControl
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Container, Header, LoadingSpinner } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import { useCoachProfile } from '../hooks/useAthleteData';
 import { getBadgeStyle, getVisibleColor } from '../lib/whitelabel';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 import {
     Award,
     Instagram,
-    Linkedin,
     Globe,
     BookOpen,
     Info,
     Mail,
     X,
-    ExternalLink
+    ExternalLink,
+    Music,
+    Share2
 } from 'lucide-react-native';
 
 /**
  * Coach Profile Screen - Displays personal trainer's professional information
+ * Premium Digital Business Card Layout
  */
 export default function CoachProfileScreen() {
     const { tenant, brandColors } = useAuth();
     const router = useRouter();
-    const { data: coach, isLoading } = useCoachProfile();
+    const { data: coachData, isLoading, refetch, isRefetching } = useCoachProfile();
+    const viewRef = useRef(null);
+
+    // Explicitly cast or handle the type for the coach data
+    const coach = coachData as any;
 
     const primaryBadge = getBadgeStyle(brandColors.primary);
     const visiblePrimary = getVisibleColor(brandColors.primary);
 
     if (isLoading) {
-        return <LoadingSpinner message="LOCALIZANDO COMANDANTE..." />;
+        return <LoadingSpinner message="CARREGANDO PERFIL..." />;
     }
 
     const openSocial = (url: string | null) => {
@@ -46,23 +57,69 @@ export default function CoachProfileScreen() {
         }
     };
 
+    const handleShare = async () => {
+        try {
+            // Check if sharing is available
+            const isAvailable = await Sharing.isAvailableAsync();
+            if (!isAvailable) {
+                Alert.alert('Erro', 'O compartilhamento não está disponível neste dispositivo.');
+                return;
+            }
+
+            // Capture the Master Card view as an image
+            const uri = await captureRef(viewRef, {
+                format: 'png',
+                quality: 1.0,
+            });
+
+            // Share the image
+            await Sharing.shareAsync(uri, {
+                mimeType: 'image/png',
+                dialogTitle: 'Compartilhar Perfil do Treinador',
+                UTI: 'public.png',
+            });
+        } catch (error) {
+            console.error('Error sharing image:', error);
+            Alert.alert('Erro', 'Não foi possível gerar a imagem para compartilhamento.');
+        }
+    };
+
     return (
         <Container variant="page">
             <Header
                 title="MEU TREINADOR"
-                subtitle="DADOS DO COMANDO TÁTICO"
+                subtitle="CARTÃO PROFISSIONAL"
                 onBack={() => router.back()}
                 rightAction={
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <X size={24} color="rgba(255,255,255,0.5)" />
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 16 }}>
+                        <TouchableOpacity onPress={handleShare}>
+                            <Share2 size={24} color={brandColors.primary} />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => router.back()}>
+                            <X size={24} color="rgba(255,255,255,0.5)" />
+                        </TouchableOpacity>
+                    </View>
                 }
             />
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-                {/* Profile Header Card */}
-                <View style={[styles.profileCard, { borderColor: `${brandColors.primary}40`, backgroundColor: 'rgba(255,255,255,0.02)' }]}>
-                    <View style={styles.profileHeader}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={isRefetching}
+                        onRefresh={refetch}
+                        tintColor={brandColors.primary}
+                        colors={[brandColors.primary]}
+                    />
+                }
+            >
+                {/* --- MASTER CARD (The "Instagrammable" Card) --- */}
+                <View ref={viewRef} style={[styles.masterCard, { borderColor: `${brandColors.primary}40`, backgroundColor: '#000' }]}>
+                    {/* Background Glow Effect */}
+                    <View style={[styles.glowEffect, { backgroundColor: brandColors.primary }]} />
+
+                    <View style={styles.masterHeader}>
                         <View style={[styles.avatarContainer, { borderColor: brandColors.primary }]}>
                             {coach?.avatar_url ? (
                                 <Image source={{ uri: coach.avatar_url }} style={styles.avatar} />
@@ -72,109 +129,108 @@ export default function CoachProfileScreen() {
                                 </View>
                             )}
                         </View>
-                        <View style={styles.profileInfo}>
+                        <View style={styles.masterBasicInfo}>
                             <Text style={styles.coachName}>{coach?.full_name || tenant?.business_name}</Text>
                             <View style={styles.badgeRow}>
-                                <View style={[styles.badge, {
-                                    backgroundColor: primaryBadge.background,
-                                    borderColor: primaryBadge.border,
-                                    borderWidth: 1
-                                }]}>
-                                    <Text style={[styles.badgeText, { color: primaryBadge.text }]}>PROFISSIONAL</Text>
+                                <View style={[styles.badge, { backgroundColor: brandColors.primary }]}>
+                                    <Text style={[styles.badgeText, { color: visiblePrimary }]}>TREINADOR PRO</Text>
                                 </View>
                                 {coach?.cref && (
-                                    <View style={[styles.badge, {
-                                        backgroundColor: 'rgba(255,255,255,0.03)',
-                                        borderColor: 'rgba(255,255,255,0.1)',
-                                        borderWidth: 1
-                                    }]}>
-                                        <Text style={[styles.badgeText, { color: 'rgba(255,255,255,0.7)' }]}>CREF: {coach.cref}</Text>
+                                    <View style={styles.crefBadge}>
+                                        <Text style={styles.crefText}>CREF: {coach.cref}</Text>
                                     </View>
                                 )}
                             </View>
                         </View>
                     </View>
 
-                    {/* Specialty Section */}
+                    {/* Integrated Specialties */}
                     {coach?.specialty && (
-                        <View style={styles.section}>
-                            <View style={styles.sectionHeader}>
-                                <Award size={14} color={visiblePrimary} />
-                                <Text style={[styles.sectionTitle, { color: visiblePrimary }]}>ESPECIALIDADE</Text>
+                        <View style={styles.masterSection}>
+                            <View style={styles.masterSectionHeader}>
+                                <Award size={14} color={brandColors.primary} />
+                                <Text style={[styles.masterSectionTitle, { color: brandColors.primary }]}>ESPECIALIDADE</Text>
                             </View>
-                            <Text style={styles.sectionContent}>{coach.specialty}</Text>
+                            <Text style={styles.masterSpecialtyText}>{coach.specialty}</Text>
                         </View>
                     )}
-                </View>
 
-                {/* Grid Info */}
-                <View style={styles.infoGrid}>
+                    {/* Integrated Bio */}
+                    {coach?.bio && (
+                        <View style={styles.masterSection}>
+                            <View style={styles.masterSectionHeader}>
+                                <Info size={14} color={brandColors.primary} />
+                                <Text style={[styles.masterSectionTitle, { color: brandColors.primary }]}>SOBRE O PROFISSIONAL</Text>
+                            </View>
+                            <Text style={styles.masterBioText}>{coach.bio}</Text>
+                        </View>
+                    )}
+
+                    {/* Integrated Education */}
                     {coach?.education && (
-                        <View style={styles.gridCard}>
-                            <View style={styles.sectionHeader}>
-                                <BookOpen size={14} color={visiblePrimary} />
-                                <Text style={[styles.sectionTitle, { color: visiblePrimary }]}>FORMAÇÃO</Text>
+                        <View style={styles.masterSection}>
+                            <View style={styles.masterSectionHeader}>
+                                <BookOpen size={14} color={brandColors.primary} />
+                                <Text style={[styles.masterSectionTitle, { color: brandColors.primary }]}>FORMAÇÃO ACADÊMICA</Text>
                             </View>
-                            <Text style={styles.gridContent}>{coach.education}</Text>
+                            <Text style={styles.masterEducationText}>{coach.education}</Text>
                         </View>
                     )}
 
+                    {/* Contact Info Footer inside Master Card */}
                     {tenant?.contact_email && (
-                        <View style={styles.gridCard}>
-                            <View style={styles.sectionHeader}>
-                                <Mail size={14} color={visiblePrimary} />
-                                <Text style={[styles.sectionTitle, { color: visiblePrimary }]}>CONTATO</Text>
-                            </View>
-                            <Text style={styles.gridContent} numberOfLines={1} ellipsizeMode="tail">
-                                {tenant.contact_email}
-                            </Text>
+                        <View style={styles.masterFooter}>
+                            <Mail size={12} color="rgba(255,255,255,0.4)" />
+                            <Text style={styles.masterFooterText}>{tenant.contact_email}</Text>
                         </View>
                     )}
                 </View>
 
-                {/* Bio Section */}
-                {coach?.bio && (
-                    <View style={styles.bioContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Info size={14} color={visiblePrimary} />
-                            <Text style={[styles.sectionTitle, { color: visiblePrimary }]}>BIOGRAFIA PROFISSIONAL</Text>
-                        </View>
-                        <Text style={styles.bioText}>{coach.bio}</Text>
-                    </View>
-                )}
-
-                {/* Social Links */}
-                <View style={styles.socialSection}>
-                    <Text style={styles.socialLabel}>REDES SOCIAIS E LINKS</Text>
-                    <View style={styles.socialGrid}>
+                {/* --- CONNECT SECTION (Socials & Links) --- */}
+                <View style={styles.connectSection}>
+                    <Text style={styles.connectLabel}>CONECTAR E LINKS</Text>
+                    <View style={styles.connectGrid}>
                         {coach?.instagram && (
                             <TouchableOpacity
                                 style={[styles.socialButton, { borderColor: 'rgba(255,255,255,0.1)' }]}
                                 onPress={() => openSocial(coach.instagram)}
                             >
-                                <Instagram size={20} color="#FFF" />
+                                <View style={styles.socialIconBox}>
+                                    <Instagram size={20} color="#FFF" />
+                                </View>
                                 <Text style={styles.socialButtonText}>INSTAGRAM</Text>
-                                <ExternalLink size={12} color="rgba(255,255,255,0.3)" />
+                                <ExternalLink size={14} color="rgba(255,255,255,0.3)" />
                             </TouchableOpacity>
                         )}
-                        {coach?.linkedin && (
-                            <TouchableOpacity
-                                style={[styles.socialButton, { borderColor: 'rgba(255,255,255,0.1)' }]}
-                                onPress={() => openSocial(coach.linkedin)}
-                            >
-                                <Linkedin size={20} color="#FFF" />
-                                <Text style={styles.socialButtonText}>LINKEDIN</Text>
-                                <ExternalLink size={12} color="rgba(255,255,255,0.3)" />
-                            </TouchableOpacity>
-                        )}
+
                         {coach?.website && (
                             <TouchableOpacity
                                 style={[styles.socialButton, { borderColor: 'rgba(255,255,255,0.1)' }]}
                                 onPress={() => openSocial(coach.website)}
                             >
-                                <Globe size={20} color="#FFF" />
+                                <View style={styles.socialIconBox}>
+                                    <Globe size={20} color="#FFF" />
+                                </View>
                                 <Text style={styles.socialButtonText}>WEBSITE</Text>
-                                <ExternalLink size={12} color="rgba(255,255,255,0.3)" />
+                                <ExternalLink size={14} color="rgba(255,255,255,0.3)" />
+                            </TouchableOpacity>
+                        )}
+
+                        {/* Spotify Playlist Section (Standalone) */}
+                        {coach?.spotify_playlist_url && (
+                            <TouchableOpacity
+                                onPress={() => openSocial(coach.spotify_playlist_url)}
+                                style={styles.spotifyButton}
+                                activeOpacity={0.8}
+                            >
+                                <View style={styles.spotifyIconBox}>
+                                    <Music size={22} color="#1DB954" />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.spotifyTitle}>SPOTIFY PLAYLIST</Text>
+                                    <Text style={styles.spotifySubtitle}>Ouça a seleção musical do personal</Text>
+                                </View>
+                                <ExternalLink size={16} color="#1DB954" />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -182,157 +238,216 @@ export default function CoachProfileScreen() {
 
                 <View style={{ height: 40 }} />
             </ScrollView>
-        </Container>
+        </Container >
     );
 }
 
 const styles = StyleSheet.create({
     scrollContent: {
-        padding: 16,
-    },
-    profileCard: {
-        borderWidth: 1,
-        borderRadius: 4,
         padding: 20,
-        marginBottom: 16,
+        paddingBottom: 40,
     },
-    profileHeader: {
+    // --- Master Card Styles ---
+    masterCard: {
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderWidth: 1,
+        borderRadius: 24,
+        padding: 24,
+        overflow: 'hidden',
+        position: 'relative',
+        marginBottom: 32,
+    },
+    glowEffect: {
+        position: 'absolute',
+        top: -100,
+        right: -100,
+        width: 300,
+        height: 300,
+        borderRadius: 150,
+        opacity: 0.1,
+    },
+    masterHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 16,
-        marginBottom: 20,
+        gap: 20,
+        marginBottom: 32,
     },
     avatarContainer: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
-        borderWidth: 2,
-        padding: 3,
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        borderWidth: 3,
+        padding: 4,
         overflow: 'hidden',
     },
     avatar: {
         width: '100%',
         height: '100%',
-        borderRadius: 36,
+        borderRadius: 43,
     },
     avatarPlaceholder: {
         width: '100%',
         height: '100%',
-        borderRadius: 36,
+        borderRadius: 43,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    profileInfo: {
+    masterBasicInfo: {
         flex: 1,
-        justifyContent: 'center',
     },
     coachName: {
-        color: '#FFF',
-        fontSize: 22,
+        color: 'white',
+        fontSize: 24,
         fontWeight: '900',
-        fontStyle: 'italic',
         textTransform: 'uppercase',
-        marginBottom: 6,
-        lineHeight: 24,
+        marginBottom: 8,
+        letterSpacing: -0.5,
     },
     badgeRow: {
         flexDirection: 'row',
+        gap: 10,
         flexWrap: 'wrap',
-        gap: 6,
     },
     badge: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 2,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 6,
     },
     badgeText: {
-        fontSize: 9,
+        fontSize: 10,
         fontWeight: '900',
         letterSpacing: 1,
     },
-    section: {
-        marginTop: 0,
+    crefBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 6,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
-    sectionHeader: {
+    crefText: {
+        color: 'rgba(255,255,255,0.6)',
+        fontSize: 10,
+        fontWeight: '800',
+    },
+    masterSection: {
+        marginBottom: 24,
+    },
+    masterSectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        marginBottom: 8,
+        marginBottom: 10,
     },
-    sectionTitle: {
+    masterSectionTitle: {
         fontSize: 10,
         fontWeight: '900',
-        letterSpacing: 2,
+        letterSpacing: 1.5,
+        textTransform: 'uppercase',
     },
-    sectionContent: {
-        color: '#FFF',
-        fontSize: 14,
+    masterSpecialtyText: {
+        color: 'white',
+        fontSize: 16,
         fontWeight: '700',
-        lineHeight: 20,
-    },
-    infoGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 12,
-        marginBottom: 16,
-    },
-    gridCard: {
-        flex: 1,
-        minWidth: '45%', // Allow wrapping on very small screens
-        backgroundColor: 'rgba(255,255,255,0.02)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
-        padding: 16,
-        borderRadius: 4,
-    },
-    gridContent: {
-        color: '#FFF',
-        fontSize: 12,
-        fontWeight: '600',
-        lineHeight: 18,
-    },
-    bioContainer: {
-        backgroundColor: 'rgba(255,255,255,0.02)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
-        padding: 16,
-        borderRadius: 4,
-        marginBottom: 24,
-    },
-    bioText: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 14,
-        fontWeight: '500',
         lineHeight: 22,
     },
-    socialSection: {
-        gap: 12,
+    masterBioText: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 14,
+        fontWeight: '400',
+        lineHeight: 22,
     },
-    socialLabel: {
+    masterEducationText: {
+        color: 'rgba(255,255,255,0.6)',
+        fontSize: 13,
+        fontWeight: '500',
+        lineHeight: 20,
+    },
+    masterFooter: {
+        marginTop: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        opacity: 0.5,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.05)',
+        paddingTop: 20,
+    },
+    masterFooterText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    // --- Connect Section Styles ---
+    connectSection: {
+        gap: 16,
+    },
+    connectLabel: {
         color: 'rgba(255,255,255,0.3)',
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: '900',
         letterSpacing: 2,
         textAlign: 'center',
+        textTransform: 'uppercase',
         marginBottom: 4,
     },
-    socialGrid: {
-        gap: 8,
+    connectGrid: {
+        gap: 12,
     },
     socialButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
-        padding: 14,
+        padding: 16,
         backgroundColor: 'rgba(255,255,255,0.03)',
         borderWidth: 1,
-        borderRadius: 4,
+        borderRadius: 16,
+        gap: 16,
+    },
+    socialIconBox: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     socialButtonText: {
         flex: 1,
-        color: '#FFF',
-        fontSize: 12,
+        color: 'white',
+        fontSize: 13,
         fontWeight: '800',
         letterSpacing: 1,
-    }
+    },
+    spotifyButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: 'rgba(29, 185, 84, 0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(29, 185, 84, 0.2)',
+        borderRadius: 16,
+        gap: 16,
+        marginTop: 4,
+    },
+    spotifyIconBox: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        backgroundColor: 'rgba(29, 185, 84, 0.1)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    spotifyTitle: {
+        color: '#1DB954',
+        fontSize: 12,
+        fontWeight: '900',
+        letterSpacing: 1,
+    },
+    spotifySubtitle: {
+        color: 'rgba(255,255,255,0.4)',
+        fontSize: 11,
+        fontWeight: '400',
+        marginTop: 2,
+    },
 });

@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 
 export type ClientDocument = {
@@ -43,8 +43,9 @@ export function useDocuments() {
         if (!profile?.id || !tenant?.id) throw new Error("Usuário não autenticado");
 
         const category = params.category || 'lab_exam';
-        const fileExt = params.fileName.split('.').pop();
-        const path = `${profile.id}/${Date.now()}_${params.fileName.replace(/\s+/g, '_')}`;
+        const fileExt = params.fileName.split('.').pop() || 'file';
+        const formattedFileName = params.fileName.replace(/\s+/g, '_');
+        const path = `${profile.id}/${Date.now()}_${formattedFileName}`;
 
         // 1. Upload to Storage
         const base64 = await FileSystem.readAsStringAsync(params.uri, { encoding: 'base64' });

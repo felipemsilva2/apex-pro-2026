@@ -15,6 +15,7 @@ import {
   Shield,
   Activity,
   LogOut,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,7 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
     { icon: Calendar, label: "AGENDA", path: "/dashboard/agenda" },
     { icon: FileText, label: "TREINOS & DIETA", path: "/dashboard/plans" },
     { icon: MessageSquare, label: "CHAT", path: "/dashboard/messages", badge: unreadCount },
+    { icon: CreditCard, label: "ASSINATURA", path: "/dashboard/billing" },
     { icon: Settings, label: "CONFIGURAÇÕES", path: "/dashboard/settings" },
   ];
 
@@ -73,13 +75,13 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
         <div className="scanline opacity-20" />
         {!collapsed ? (
           <div className="flex items-center gap-3 animate-fade-in">
-            {tenant?.logo_url ? (
-              <img src={tenant.logo_url} alt="Logo" className="w-8 h-8 object-contain" />
-            ) : (
-              <div className="w-8 h-8 bg-primary flex items-center justify-center -skew-x-12">
-                <span className="text-black font-display font-black text-lg italic">{tenant?.business_name?.charAt(0) || 'A'}</span>
-              </div>
-            )}
+            <div className="w-10 h-10 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center overflow-hidden shrink-0">
+              {tenant?.logo_url ? (
+                <img src={tenant.logo_url} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-primary font-display font-black text-lg italic">{tenant?.business_name?.charAt(0) || 'A'}</span>
+              )}
+            </div>
             <div className="min-w-0 flex-1 flex flex-col justify-center">
               <span className="font-display font-black text-lg text-white italic uppercase tracking-tighter leading-none break-words line-clamp-2">
                 {tenant?.business_name || 'APEX'}<span className="text-primary text-blur-sm">{!tenant?.business_name && 'PRO'}</span>
@@ -87,11 +89,11 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
             </div>
           </div>
         ) : (
-          <div className="w-10 h-10 bg-primary flex items-center justify-center -skew-x-12 mx-auto">
+          <div className="w-10 h-10 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center overflow-hidden mx-auto">
             {tenant?.logo_url ? (
-              <img src={tenant.logo_url} alt="Logo" className="w-8 h-8 object-contain" />
+              <img src={tenant.logo_url} alt="Logo" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-black font-display font-black text-2xl italic">{tenant?.business_name?.charAt(0) || 'A'}</span>
+              <span className="text-primary font-display font-black text-xl italic">{tenant?.business_name?.charAt(0) || 'A'}</span>
             )}
           </div>
         )}

@@ -1,9 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,8 @@ import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { useCreateHormonalProtocol } from "@/hooks/useCoachData";
+import { useUpdateHormonalProtocol } from "@/hooks/useCoachData";
+import { HormonalProtocol, HormonalCompound } from "@/lib/supabase";
 
 const compoundSchema = z.object({
     name: z.string().min(1, "Nome do composto é obrigatório"),
@@ -33,22 +34,30 @@ const protocolSchema = z.object({
 
 type ProtocolFormValues = z.infer<typeof protocolSchema>;
 
-interface CreateHormonalProtocolDialogProps {
-    clientId: string;
-    trigger?: React.ReactNode;
+interface EditHormonalProtocolDialogProps {
+    protocol: HormonalProtocol;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
 }
 
-export function CreateHormonalProtocolDialog({ clientId, trigger }: CreateHormonalProtocolDialogProps) {
-    const [open, setOpen] = useState(false);
-    const createProtocol = useCreateHormonalProtocol();
+export function EditHormonalProtocolDialog({ protocol, open, onOpenChange }: EditHormonalProtocolDialogProps) {
+    const updateProtocol = useUpdateHormonalProtocol();
 
     const form = useForm<ProtocolFormValues>({
         resolver: zodResolver(protocolSchema),
         defaultValues: {
-            name: "",
-            description: "",
-            start_date: format(new Date(), "yyyy-MM-dd"),
-            compounds: [{ name: "", dosage: "", frequency: "", notes: "" }],
+            name: protocol.name,
+            description: protocol.description || "",
+            start_date: format(new Date(protocol.start_date), "yyyy-MM-dd"),
+            end_date: protocol.end_date ? format(new Date(protocol.end_date), "yyyy-MM-dd") : undefined,
+            compounds: protocol.compounds && protocol.compounds.length > 0
+                ? protocol.compounds.map(c => ({
+                    name: c.name,
+                    dosage: c.dosage,
+                    frequency: c.frequency,
+                    notes: c.notes || ""
+                }))
+                : [{ name: "", dosage: "", frequency: "", notes: "" }],
         },
     });
 
@@ -57,29 +66,45 @@ export function CreateHormonalProtocolDialog({ clientId, trigger }: CreateHormon
         name: "compounds",
     });
 
+    // Reset form when protocol changes
+    useEffect(() => {
+        if (open) {
+            form.reset({
+                name: protocol.name,
+                description: protocol.description || "",
+                start_date: format(new Date(protocol.start_date), "yyyy-MM-dd"),
+                end_date: protocol.end_date ? format(new Date(protocol.end_date), "yyyy-MM-dd") : undefined,
+                compounds: protocol.compounds && protocol.compounds.length > 0
+                    ? protocol.compounds.map(c => ({
+                        name: c.name,
+                        dosage: c.dosage,
+                        frequency: c.frequency,
+                        notes: c.notes || ""
+                    }))
+                    : [{ name: "", dosage: "", frequency: "", notes: "" }],
+            });
+        }
+    }, [protocol, open]);
+
     const onSubmit = async (data: ProtocolFormValues) => {
         try {
-            await createProtocol.mutateAsync({
-                client_id: clientId,
+            await updateProtocol.mutateAsync({
+                id: protocol.id,
+                client_id: protocol.client_id,
                 name: data.name,
                 description: data.description,
                 start_date: new Date(data.start_date).toISOString(),
                 end_date: data.end_date ? new Date(data.end_date).toISOString() : null,
-                status: "active",
                 compounds: data.compounds as any,
             });
-            setOpen(false);
-            form.reset();
+            onOpenChange(false);
         } catch (error) {
             console.error(error);
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                {trigger || <Button>Novo Protocolo</Button>}
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="bg-[#0A0A0B] border-white/10 text-white rounded-none sm:max-w-[700px] p-0 overflow-hidden shadow-2xl shadow-primary/5">
                 <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
                 <div className="absolute top-0 left-0 w-[2px] h-full bg-primary" />
@@ -89,7 +114,7 @@ export function CreateHormonalProtocolDialog({ clientId, trigger }: CreateHormon
                     <DialogTitle className="font-display font-black italic uppercase text-3xl lg:text-4xl tracking-tighter flex flex-col leading-none">
                         <span className="text-white/40 text-[10px] tracking-[0.4em] mb-2 not-italic font-bold">PLANO HORMONAL</span>
                         <span className="flex items-center gap-3">
-                            NOVO <span className="text-primary">PLANO</span>
+                            EDITAR <span className="text-primary">PLANO</span>
                         </span>
                     </DialogTitle>
                 </DialogHeader>
@@ -107,7 +132,7 @@ export function CreateHormonalProtocolDialog({ clientId, trigger }: CreateHormon
                                 {...form.register("name")}
                             />
                             {form.formState.errors.name && (
-                                <p className="text-destructive text-[10px] font-black uppercase italic italic tracking-tighter mt-1">{form.formState.errors.name.message}</p>
+                                <p className="text-destructive text-[10px] font-black uppercase italic tracking-tighter mt-1">{form.formState.errors.name.message}</p>
                             )}
                         </div>
 
@@ -288,22 +313,22 @@ export function CreateHormonalProtocolDialog({ clientId, trigger }: CreateHormon
                         <Button
                             type="button"
                             variant="ghost"
-                            onClick={() => setOpen(false)}
+                            onClick={() => onOpenChange(false)}
                             className="flex-1 rounded-none border border-white/5 hover:bg-white/5 text-white/40 uppercase font-display font-black italic text-[10px] tracking-widest h-14"
                         >
                             CANCELAR
                         </Button>
                         <Button
                             type="submit"
-                            disabled={createProtocol.isPending}
+                            disabled={updateProtocol.isPending}
                             className="flex-[2] btn-athletic h-14 flex items-center justify-center gap-3 group text-xs font-black italic"
                         >
-                            {createProtocol.isPending ? (
+                            {updateProtocol.isPending ? (
                                 <Loader2 className="animate-spin" size={20} />
                             ) : (
                                 <>
-                                    <span>CRIAR PLANO</span>
-                                    <Plus size={18} className="group-hover:scale-125 transition-transform" />
+                                    <span>SALVAR ALTERAÇÕES</span>
+                                    <Save size={18} className="group-hover:scale-125 transition-transform" />
                                 </>
                             )}
                         </Button>

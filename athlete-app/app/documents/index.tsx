@@ -82,8 +82,8 @@ export default function DocumentsScreen() {
     return (
         <Container variant="page">
             <Header
-                title="MEUS ARQUIVOS"
-                subtitle="EXAMES & DOCUMENTOS"
+                title="ARQUIVOS & EXAMES"
+                subtitle="BIOIMPEDÂNCIAS & LAUDOS"
                 onBack={() => router.back()}
             />
 
@@ -102,7 +102,7 @@ export default function DocumentsScreen() {
                     ) : (
                         <>
                             <Plus size={20} color={brandColors.primary} />
-                            <Text style={[styles.uploadText, { color: brandColors.primary }]}>ADICIONAR NOVO EXAME</Text>
+                            <Text style={[styles.uploadText, { color: brandColors.primary }]}>ADICIONAR DOCUMENTO / EXAME</Text>
                         </>
                     )}
                 </TouchableOpacity>

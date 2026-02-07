@@ -83,24 +83,6 @@ serve(async (req) => {
 
         const userId = authUser.user.id
 
-        // 5. Create Profile (Master Coach)
-        const { error: profileError } = await supabaseAdmin
-            .from('profiles')
-            .insert({
-                id: userId,
-                full_name: fullName,
-                email: phantomEmail,
-                role: 'coach',
-                tenant_id: tenantId
-            })
-
-        if (profileError) {
-            // Rollback auth user and tenant
-            await supabaseAdmin.auth.admin.deleteUser(userId)
-            await supabaseAdmin.from('tenants').delete().eq('id', tenantId)
-            throw profileError
-        }
-
         return new Response(JSON.stringify({ success: true, userId, tenantId }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,

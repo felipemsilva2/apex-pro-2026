@@ -25,6 +25,13 @@ export default function SignUpPage() {
     const [businessName, setBusinessName] = useState("");
     const [termsAccepted, setTermsAccepted] = useState(false);
 
+    // Strict Flow Redirection: If no token, redirect to unified checkout (public signup is disabled)
+    useEffect(() => {
+        if (!token) {
+            navigate("/checkout", { replace: true });
+        }
+    }, [token, navigate]);
+
     useEffect(() => {
         if (token) {
             const validateInvite = async () => {
@@ -207,6 +214,9 @@ export default function SignUpPage() {
                                 disabled={!!token && !!initialEmail}
                                 className="pl-12 h-14 bg-black/50 border-white/10 rounded-none font-display font-bold italic text-xs tracking-widest focus:border-primary transition-all text-white disabled:opacity-50"
                             />
+                            <p className="mt-2 text-[9px] font-bold text-primary/60 uppercase tracking-widest italic leading-relaxed">
+                                💡 Dica: Use seu "primeiro e segundo nome" como usuário (ex: felipemsilva), como no Instagram. É mais fácil e profissional!
+                            </p>
                         </div>
                     </div>
 

@@ -127,58 +127,61 @@ export default function LoginPage() {
                 <form onSubmit={handleLogin} className="space-y-6 bg-white/5 border border-white/10 p-8 shadow-2xl relative rounded-lg">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 -skew-x-[30deg] translate-x-8 -translate-y-8 pointer-events-none" />
 
-                    <div className="space-y-2">
-                        <Label className="text-sm font-medium text-white/60">E-mail ou Usuário</Label>
+                    <div className="space-y-4">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 italic pl-1">E-mail ou Usuário</Label>
                         <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40" size={18} />
+                            <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/60" size={18} />
                             <Input
                                 type="text"
                                 placeholder="nome@exemplo.com ou usuário"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="pl-12 h-14 bg-black/50 border-white/10 rounded-lg text-sm focus:border-primary transition-all text-white placeholder:text-white/30"
+                                className="pl-14 h-14 bg-black/50 border-white/10 rounded-none text-sm focus:border-primary transition-all text-white placeholder:text-white/20 font-medium"
                             />
                         </div>
+                        <p className="text-[9px] font-bold text-primary/40 uppercase tracking-widest italic leading-relaxed pl-1 pt-1">
+                            ✨ Dica: Coaches podem entrar usando o Nome e Segundo Nome (ex: felipemsilva).
+                        </p>
                     </div>
 
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                            <Label className="text-sm font-medium text-white/60">Senha</Label>
-                            <button type="button" className="text-xs text-primary/60 hover:text-primary transition-colors">
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center px-1">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 italic">Senha</Label>
+                            <button type="button" className="text-[10px] font-bold uppercase italic tracking-widest text-primary/60 hover:text-primary transition-colors">
                                 Esqueci a senha
                             </button>
                         </div>
                         <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40" size={18} />
+                            <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/60" size={18} />
                             <Input
                                 type={showPassword ? "text" : "password"}
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                className="pl-12 pr-12 h-14 bg-black/50 border-white/10 rounded-lg text-sm focus:border-primary transition-all text-white placeholder:text-white/30"
+                                className="pl-14 pr-12 h-14 bg-black/50 border-white/10 rounded-none text-sm focus:border-primary transition-all text-white placeholder:text-white/20 font-medium"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                                className="absolute right-5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 px-1">
                         <Checkbox
                             id="remember"
                             checked={rememberMe}
                             onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                            className="border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                            className="border-white/20 h-5 w-5 data-[state=checked]:bg-primary data-[state=checked]:border-primary rounded-none"
                         />
                         <label
                             htmlFor="remember"
-                            className="text-sm text-white/50 cursor-pointer hover:text-white/70 transition-colors"
+                            className="text-[11px] font-bold uppercase tracking-widest text-white/50 cursor-pointer hover:text-white/70 transition-colors italic"
                         >
                             Lembrar meu login
                         </label>
@@ -201,8 +204,8 @@ export default function LoginPage() {
 
                     <p className="text-center text-sm text-white/30 pt-2">
                         Ainda não tem acesso?{" "}
-                        <Link to="/signup" className="text-primary/60 hover:text-primary transition-colors">
-                            Solicitar Credenciais
+                        <Link to="/checkout" className="text-primary/60 hover:text-primary transition-colors">
+                            Ativar Nova Licença
                         </Link>
                     </p>
                 </form>

@@ -150,7 +150,10 @@ export function useUpdateAthleteProfile() {
 
     return useMutation({
         mutationFn: async (updates: any) => {
-            if (!profile?.id) throw new Error('No profile loaded');
+            if (!profile?.id) {
+                console.error('[useUpdateAthleteProfile] Profile ID missing:', { profile });
+                throw new Error('Perfil de atleta não carregado. Você está logado como atleta?');
+            }
 
             const { data, error } = await supabase
                 .from('clients')
@@ -159,7 +162,10 @@ export function useUpdateAthleteProfile() {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('[useUpdateAthleteProfile] Supabase error:', error);
+                throw error;
+            }
             return data;
         },
         onSuccess: () => {
@@ -235,7 +241,7 @@ export function useCoachProfile() {
             // 1. If the logged in user is a COACH, show their own profile
             const { data: ownProfile } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, cref, specialty, bio, education, instagram, linkedin, website')
+                .select('id, full_name, avatar_url, cref, specialty, bio, education, instagram, website, spotify_playlist_url')
                 .eq('id', user?.id)
                 .eq('role', 'coach')
                 .maybeSingle();
@@ -246,7 +252,7 @@ export function useCoachProfile() {
             if (profile?.assigned_coach_id) {
                 const { data: assignedCoach } = await supabase
                     .from('profiles')
-                    .select('id, full_name, avatar_url, cref, specialty, bio, education, instagram, linkedin, website')
+                    .select('id, full_name, avatar_url, cref, specialty, bio, education, instagram, website, spotify_playlist_url')
                     .eq('id', profile.assigned_coach_id)
                     .maybeSingle();
 
@@ -256,7 +262,7 @@ export function useCoachProfile() {
             // 3. Fallback: Find any coach in the tenant who actually has content (bio or specialty)
             const { data: activeCoach } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, cref, specialty, bio, education, instagram, linkedin, website')
+                .select('id, full_name, avatar_url, cref, specialty, bio, education, instagram, website, spotify_playlist_url')
                 .eq('tenant_id', tenant.id)
                 .eq('role', 'coach')
                 .not('bio', 'is', null)
@@ -268,7 +274,7 @@ export function useCoachProfile() {
             // 4. Last resort: Just pick the first coach available
             const { data: firstCoach } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, cref, specialty, bio, education, instagram, linkedin, website')
+                .select('id, full_name, avatar_url, cref, specialty, bio, education, instagram, website, spotify_playlist_url')
                 .eq('tenant_id', tenant.id)
                 .eq('role', 'coach')
                 .limit(1)

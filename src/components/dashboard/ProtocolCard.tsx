@@ -1,4 +1,4 @@
-import { Dumbbell, Utensils, Calendar, Trash2, ChevronRight, Zap } from "lucide-react";
+import { Dumbbell, Utensils, Calendar, Trash2, ChevronRight, Zap, Edit2 } from "lucide-react";
 import { type Workout, type MealPlan } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -8,10 +8,11 @@ interface ProtocolCardProps {
     protocol: Workout | MealPlan;
     type: 'workout' | 'meal';
     onDelete?: (id: string) => void;
+    onEdit?: (id: string) => void;
     onClick?: (id: string) => void;
 }
 
-export function ProtocolCard({ protocol, type, onDelete, onClick }: ProtocolCardProps) {
+export function ProtocolCard({ protocol, type, onDelete, onEdit, onClick }: ProtocolCardProps) {
     const isWorkout = type === 'workout';
     const workout = protocol as Workout;
     const meal = protocol as MealPlan;
@@ -37,24 +38,45 @@ export function ProtocolCard({ protocol, type, onDelete, onClick }: ProtocolCard
                         <h4 className="font-display font-black italic uppercase text-sm tracking-tight group-hover:text-primary transition-colors">
                             {protocol.name}
                         </h4>
-                        <p className="text-[10px] text-white/40 font-medium uppercase tracking-widest flex items-center gap-2">
-                            <Calendar size={10} />
-                            {format(new Date(protocol.created_at), "dd 'DE' MMM, yyyy", { locale: ptBR })}
-                        </p>
+                        <div className="flex items-center gap-1.5 text-white/40 text-[10px] font-bold uppercase tracking-widest leading-none">
+                            <Calendar size={10} className="text-primary/60" />
+                            <span>INÍCIO: {format(new Date(isWorkout ? workout.created_at : meal.start_date || meal.created_at), "dd/MM/yyyy")}</span>
+                            {!isWorkout && meal.end_date && (
+                                <>
+                                    <span className="mx-1">•</span>
+                                    <span>FIM: {format(new Date(meal.end_date), "dd/MM/yyyy")}</span>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {onDelete && (
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete(protocol.id);
-                        }}
-                        className="w-8 h-8 flex items-center justify-center text-white/20 hover:text-destructive transition-colors"
-                    >
-                        <Trash2 size={16} />
-                    </button>
-                )}
+                <div className="flex gap-1.5 self-start pt-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {onEdit && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onEdit(protocol.id);
+                            }}
+                            className="p-2.5 rounded-none bg-white/5 border border-white/10 text-white/40 hover:text-primary hover:border-primary/50 hover:bg-primary/10 transition-all active:scale-95"
+                            title="Editar Protocolo"
+                        >
+                            <Edit2 size={16} />
+                        </button>
+                    )}
+                    {onDelete && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(protocol.id);
+                            }}
+                            className="p-2.5 rounded-none bg-white/5 border border-white/10 text-white/40 hover:text-red-400 hover:border-red-400/50 hover:bg-red-400/10 transition-all active:scale-95"
+                            title="Excluir Protocolo"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="space-y-4 relative z-10">

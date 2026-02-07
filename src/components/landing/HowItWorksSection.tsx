@@ -144,7 +144,7 @@ const HowItWorksSection = () => {
             Qual coach <span className="text-primary underline decoration-primary/30">VOCÊ</span> quer ser?
           </h4>
           <button
-            onClick={() => window.location.href = '/signup'}
+            onClick={() => window.location.href = '/checkout'}
             className="btn-athletic text-[11px] px-12 py-5 shadow-[0_15px_40px_rgba(212,255,0,0.15)] group relative overflow-hidden"
           >
             <span className="relative z-10 flex items-center gap-3">

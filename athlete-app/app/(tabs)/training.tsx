@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Container, Header, EmptyState, LoadingSpinner } from '../../components/ui';
 import { Dumbbell, Zap, ChevronRight, Calendar, Clock, AlertTriangle } from 'lucide-react-native';
@@ -20,6 +20,7 @@ export default function TrainingScreen() {
     const { brandColors } = useAuth();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<Tab>('workouts');
+    const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
 
     const { data: workouts, isLoading: loadingWorkouts, refetch: refetchWorkouts, isRefetching: refetchingWorkouts } = useAthleteWorkouts();
     const { data: protocols, isLoading: loadingProtocols, refetch: refetchProtocols, isRefetching: refetchingProtocols } = useAthleteProtocols();
@@ -33,14 +34,14 @@ export default function TrainingScreen() {
     };
 
     if (isLoading) {
-        return <LoadingSpinner message="Carregando arsenal..." />;
+        return <LoadingSpinner message="Carregando treinos..." />;
     }
 
     return (
         <Container variant="page">
             <Header
-                title="Arsenal"
-                subtitle="Protocolos & Treinos"
+                title="Treinos"
+                subtitle="Meus Treinos"
             />
 
             {/* Custom Tabs */}
@@ -130,11 +131,26 @@ export default function TrainingScreen() {
                                                                 <Text style={[styles.nextBadgeText, { color: 'rgba(255,255,255,0.4)' }]}>DURANTE A SEMANA</Text>
                                                             </View>
                                                         ) : null}
-                                                        {workout.scheduled_date && (
+                                                        {workout.scheduled_date ? (
                                                             <Text style={[styles.dateText, isNext && { color: brandColors.primary }]}>
                                                                 {format(parseLocalDate(workout.scheduled_date), "EEEE", { locale: ptBR }).toUpperCase()}
                                                                 <Text style={{ opacity: 0.3 }}> • {format(parseLocalDate(workout.scheduled_date), "d 'DE' MMM", { locale: ptBR }).toUpperCase()}</Text>
                                                             </Text>
+                                                        ) : (
+                                                            (() => {
+                                                                const days = Array.from(new Set(workout.exercises?.map((ex: any) => ex.day).filter(Boolean))) as string[];
+                                                                if (days.length > 0) {
+                                                                    const dayOrder: any = { segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6, domingo: 7 };
+                                                                    const dayLabels: any = { segunda: 'SEG', terca: 'TER', quarta: 'QUA', quinta: 'QUI', sexta: 'SEX', sabado: 'SÁB', domingo: 'DOM' };
+                                                                    const sortedDays = days.sort((a, b) => dayOrder[a] - dayOrder[b]);
+                                                                    return (
+                                                                        <Text style={[styles.dateText, isNext && { color: brandColors.primary }]}>
+                                                                            {sortedDays.map(d => dayLabels[d] || d.toUpperCase()).join(' • ')}
+                                                                        </Text>
+                                                                    );
+                                                                }
+                                                                return null;
+                                                            })()
                                                         )}
                                                     </View>
                                                     <Text style={styles.cardTitle}>{workout.title}</Text>
@@ -200,9 +216,11 @@ export default function TrainingScreen() {
                                 const currentWeek = differenceInWeeks(new Date(), startDate) + 1;
 
                                 return (
-                                    <View
+                                    <TouchableOpacity
                                         key={protocol.id}
+                                        activeOpacity={0.9}
                                         style={styles.card}
+                                        onPress={() => setSelectedProtocol(protocol)}
                                     >
                                         <View style={[styles.statusStripe, { backgroundColor: brandColors.primary }]} />
 
@@ -222,6 +240,18 @@ export default function TrainingScreen() {
                                                 </View>
                                             </View>
 
+                                            <View style={styles.statsRow}>
+                                                <View style={styles.statItem}>
+                                                    <Clock size={12} color="rgba(255,255,255,0.4)" />
+                                                    <Text style={styles.statText}>INÍCIO: {protocol.start_date ? format(new Date(protocol.start_date), "dd/MM/yy") : '--/--/--'}</Text>
+                                                </View>
+                                                <View style={styles.statDivider} />
+                                                <View style={styles.statItem}>
+                                                    <Calendar size={12} color="rgba(255,255,255,0.4)" />
+                                                    <Text style={styles.statText}>FIM: {protocol.end_date ? format(new Date(protocol.end_date), "dd/MM/yy") : 'CONTÍNUO'}</Text>
+                                                </View>
+                                            </View>
+
                                             <View style={styles.divider} />
 
                                             <View style={styles.previewList}>
@@ -232,7 +262,7 @@ export default function TrainingScreen() {
                                                             {compound.name}
                                                         </Text>
                                                         <Text style={styles.previewSets}>
-                                                            {compound.dosage}
+                                                            {compound.dosage} {compound.frequency ? `• ${compound.frequency}` : ''}
                                                         </Text>
                                                     </View>
                                                 ))}
@@ -241,13 +271,13 @@ export default function TrainingScreen() {
                                             {protocol.description && (
                                                 <View style={styles.noteContainer}>
                                                     <AlertTriangle size={12} color={brandColors.primary} />
-                                                    <Text style={[styles.noteText, { color: brandColors.primary }]} numberOfLines={2}>
+                                                    <Text style={[styles.noteText, { color: brandColors.primary }]} numberOfLines={3}>
                                                         {protocol.description}
                                                     </Text>
                                                 </View>
                                             )}
                                         </View>
-                                    </View>
+                                    </TouchableOpacity>
                                 );
                             })
                         ) : (
@@ -262,11 +292,180 @@ export default function TrainingScreen() {
 
                 <View style={{ height: 100 }} />
             </ScrollView>
+
+            {/* Protocol Detail Modal */}
+            <Modal
+                visible={!!selectedProtocol}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setSelectedProtocol(null)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <View style={{ flex: 1 }}>
+                                <View style={styles.headerTopRow}>
+                                    <View style={[styles.nextBadge, { backgroundColor: brandColors.primary }]}>
+                                        <Text style={[styles.nextBadgeText, { color: brandColors.secondary }]}>MISSÃO ATUAL</Text>
+                                    </View>
+                                    <Text style={styles.modalDateText}>PROTOCOLO EM VIGOR</Text>
+                                </View>
+                                <Text style={styles.modalTitle}>{selectedProtocol?.name}</Text>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={() => setSelectedProtocol(null)}
+                            >
+                                <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 24 }}>×</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView showsVerticalScrollIndicator={false} style={styles.modalBody}>
+                            {selectedProtocol?.description && (
+                                <View style={styles.modalDescriptionBox}>
+                                    <Text style={styles.modalLabel}>ORIENTAÇÕES DO COACH</Text>
+                                    <Text style={styles.modalDescriptionText}>
+                                        {selectedProtocol.description}
+                                    </Text>
+                                </View>
+                            )}
+
+                            <Text style={[styles.modalLabel, { marginTop: 24, marginBottom: 16 }]}>EXERCÍCIOS</Text>
+                            {selectedProtocol?.compounds?.map((compound: any, i: number) => (
+                                <View key={i} style={styles.modalCompoundRow}>
+                                    <View style={[styles.compoundIcon, { backgroundColor: `${brandColors.primary}20` }]}>
+                                        <Zap size={16} color={brandColors.primary} />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.compoundName}>{compound.name}</Text>
+                                        <Text style={[styles.compoundDosage, { color: brandColors.primary }]}>
+                                            {compound.dosage} {compound.frequency ? <Text style={{ color: 'rgba(255,255,255,0.4)', fontWeight: '400' }}> • {compound.frequency}</Text> : ''}
+                                        </Text>
+                                    </View>
+                                </View>
+                            ))}
+
+                            <View style={{ height: 40 }} />
+                        </ScrollView>
+
+                        <TouchableOpacity
+                            style={[styles.modalCloseButton, { backgroundColor: brandColors.primary }]}
+                            onPress={() => setSelectedProtocol(null)}
+                        >
+                            <Text style={[styles.modalCloseText, { color: brandColors.secondary }]}>ENTENDIDO</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </Container>
     );
 }
 
 const styles = StyleSheet.create({
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.9)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#0F0F0F',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        padding: 24,
+        maxHeight: '85%',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 24,
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: '900',
+        fontStyle: 'italic',
+        color: '#FFF',
+        textTransform: 'uppercase',
+        marginTop: 4,
+    },
+    modalDateText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: 'rgba(255,255,255,0.4)',
+        letterSpacing: 2,
+    },
+    closeButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    modalBody: {
+        marginBottom: 24,
+    },
+    modalDescriptionBox: {
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        padding: 16,
+        borderRadius: 8,
+        borderLeftWidth: 3,
+        borderLeftColor: 'rgba(255,255,255,0.1)',
+    },
+    modalLabel: {
+        fontSize: 10,
+        fontWeight: '900',
+        color: 'rgba(255,255,255,0.4)',
+        letterSpacing: 1.5,
+        marginBottom: 8,
+    },
+    modalDescriptionText: {
+        color: '#FFF',
+        fontSize: 14,
+        lineHeight: 22,
+        fontWeight: '500',
+    },
+    modalCompoundRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.02)',
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 8,
+        gap: 12,
+    },
+    compoundIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    compoundName: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: '700',
+    },
+    compoundDosage: {
+        fontSize: 12,
+        fontWeight: '800',
+        marginTop: 2,
+    },
+    modalCloseButton: {
+        paddingVertical: 16,
+        borderRadius: 8,
+        alignItems: 'center',
+        transform: [{ skewX: '-10deg' }],
+    },
+    modalCloseText: {
+        fontWeight: '900',
+        fontSize: 14,
+        textTransform: 'uppercase',
+        fontStyle: 'italic',
+        transform: [{ skewX: '10deg' }],
+    },
     tabContainer: {
         flexDirection: 'row',
         backgroundColor: 'rgba(255,255,255,0.03)',
