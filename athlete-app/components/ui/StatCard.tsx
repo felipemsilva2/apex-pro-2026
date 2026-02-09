@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
-import { useAuth } from '../../contexts/AuthContext';
 
 interface StatCardProps {
     label: string;
@@ -13,8 +12,8 @@ interface StatCardProps {
 }
 
 /**
- * Stat card component with trend indicators
- * Shows metrics with optional trend and icon
+ * Stat card component with Reacticx-inspired aesthetic
+ * Clean, bento-style card with refined typography
  */
 export const StatCard: React.FC<StatCardProps> = ({
     label,
@@ -24,49 +23,41 @@ export const StatCard: React.FC<StatCardProps> = ({
     icon,
     unit,
 }) => {
-    const { brandColors } = useAuth();
-
     const getTrendColor = () => {
         if (trend === 'up') return '#4ADE80'; // Green
         if (trend === 'down') return '#F87171'; // Red
-        return 'rgba(255,255,255,0.4)'; // Gray
+        return 'rgba(255,255,255,0.3)'; // Gray
     };
 
     const getTrendIcon = () => {
-        if (trend === 'up') return <TrendingUp size={14} color={getTrendColor()} />;
-        if (trend === 'down') return <TrendingDown size={14} color={getTrendColor()} />;
-        return <Minus size={14} color={getTrendColor()} />;
+        if (trend === 'up') return <TrendingUp size={12} color={getTrendColor()} />;
+        if (trend === 'down') return <TrendingDown size={12} color={getTrendColor()} />;
+        return <Minus size={12} color={getTrendColor()} />;
     };
 
     return (
-        <View
-            style={[
-                styles.container,
-                { borderColor: `${brandColors.primary}20` },
-            ]}
-        >
-            {icon && <View style={styles.iconContainer}>{icon}</View>}
-
-            <View style={styles.content}>
+        <View style={styles.container}>
+            <View style={styles.header}>
                 <Text style={styles.label}>{label}</Text>
+                {icon && <View style={styles.iconContainer}>{icon}</View>}
+            </View>
 
-                <View style={styles.valueRow}>
-                    <Text style={styles.value}>
-                        {value}
-                        {unit && <Text style={styles.unit}>{unit}</Text>}
-                    </Text>
+            <View style={styles.valueRow}>
+                <Text style={styles.value}>
+                    {value}
+                    {unit && <Text style={styles.unit}>{unit}</Text>}
+                </Text>
 
-                    {trend && (
-                        <View style={styles.trendContainer}>
-                            {getTrendIcon()}
-                            {trendValue && (
-                                <Text style={[styles.trendValue, { color: getTrendColor() }]}>
-                                    {trendValue}
-                                </Text>
-                            )}
-                        </View>
-                    )}
-                </View>
+                {trend && (
+                    <View style={[styles.trendBadge, { backgroundColor: `${getTrendColor()}15` }]}>
+                        {getTrendIcon()}
+                        {trendValue && (
+                            <Text style={[styles.trendValue, { color: getTrendColor() }]}>
+                                {trendValue}
+                            </Text>
+                        )}
+                    </View>
+                )}
             </View>
         </View>
     );
@@ -76,52 +67,55 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: 'rgba(255,255,255,0.03)',
         borderWidth: 1,
-        borderRadius: 4,
-        padding: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-        transform: [{ skewX: '-2deg' }],
-    },
-    iconContainer: {
-        marginRight: 12,
-        transform: [{ skewX: '2deg' }],
-    },
-    content: {
+        borderColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 24, // Consistent bento style
+        padding: 20,
         flex: 1,
-        transform: [{ skewX: '2deg' }],
     },
-    label: {
-        fontSize: 12,
-        fontWeight: '900',
-        color: 'rgba(255,255,255,0.5)',
-        letterSpacing: 1,
-        textTransform: 'uppercase',
-        marginBottom: 4,
-    },
-    valueRow: {
+    header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    iconContainer: {
+        opacity: 0.5,
+    },
+    label: {
+        fontSize: 11,
+        fontWeight: '800',
+        color: 'rgba(255,255,255,0.4)',
+        letterSpacing: 1,
+        textTransform: 'uppercase',
+    },
+    valueRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
     },
     value: {
-        fontSize: 24,
-        fontWeight: '900',
-        fontStyle: 'italic',
+        fontSize: 32,
+        fontFamily: 'Syne_800ExtraBold',
         color: '#FFFFFF',
+        letterSpacing: -1,
     },
     unit: {
         fontSize: 14,
-        fontWeight: '700',
-        color: 'rgba(255,255,255,0.6)',
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.3)',
         marginLeft: 4,
+        marginBottom: 4,
     },
-    trendContainer: {
+    trendBadge: {
         flexDirection: 'row',
         alignItems: 'center',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
         gap: 4,
     },
     trendValue: {
-        fontSize: 12,
-        fontWeight: '700',
+        fontSize: 11,
+        fontWeight: '800',
     },
 });

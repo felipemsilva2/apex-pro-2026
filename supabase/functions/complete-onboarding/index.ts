@@ -38,7 +38,7 @@ serve(async (req) => {
         }
 
         const isManaged = !email.includes('@')
-        const phantomEmail = isManaged ? `${email.trim().toLowerCase()}@managed.nutripro.pro` : email.trim()
+        const phantomEmail = isManaged ? `${email.trim().toLowerCase()}@acesso.apexpro.fit` : email.trim()
 
         let tenantId: string | null = null
         let userId: string | null = null
@@ -47,6 +47,18 @@ serve(async (req) => {
             // STEP A: Create Tenant
             console.log(`[${requestId}] Creating Tenant...`)
             const subdomain = email.toLowerCase().replace(/[^a-z0-9]/g, '')
+
+            // Check for collision
+            const { data: existingTenant } = await supabaseAdmin
+                .from('tenants')
+                .select('id')
+                .eq('subdomain', subdomain)
+                .maybeSingle()
+
+            if (existingTenant) {
+                throw new Error('Este nome de usuário ou subdomínio já está em uso. Por favor, escolha outro.')
+            }
+
             const { data: tenantData, error: tenantError } = await supabaseAdmin
                 .from('tenants')
                 .insert({
@@ -173,8 +185,34 @@ serve(async (req) => {
 
             console.log(`[${requestId}] Asaas Service Success:`, asaasServiceData.id)
 
+            let pixData = null;
+            if (paymentMethod === 'PIX') {
+                console.log(`[${requestId}] Fetching PIX QR Code for payment:`, asaasServiceData.id)
+                try {
+                    const pixResponse = await fetch(`${ASAAS_API_URL}/payments/${asaasServiceData.id}/pixQrCode`, {
+                        method: 'GET',
+                        headers: { 'access_token': ASAAS_API_KEY }
+                    })
+
+                    const pixResult = await pixResponse.json()
+                    if (!pixResponse.ok) {
+                        console.error(`[${requestId}] Asaas PIX API Error:`, JSON.stringify(pixResult))
+                        // We don't throw here to avoid full rollback if the payment was successful, 
+                        // but we will log it. However, since the user needs the QR code now, 
+                        // we might want to reconsider. For now, let's throw to ensure a clean state if QR fails.
+                        throw new Error(`Erro ao gerar QR Code PIX: ${pixResult.errors?.[0]?.description || 'Erro desconhecido'}`)
+                    }
+                    pixData = pixResult
+                    console.log(`[${requestId}] PIX QR Code fetched successfully.`)
+                } catch (pixErr: any) {
+                    console.error(`[${requestId}] PIX Fetch Exception:`, pixErr.message)
+                    throw pixErr
+                }
+            }
+
             // STEP F: Sync Final Status
-            await supabaseAdmin.from('subscriptions').insert({
+            console.log(`[${requestId}] Syncing final status to DB...`)
+            const { error: subError } = await supabaseAdmin.from('subscriptions').insert({
                 tenant_id: tenantId,
                 plan_id: dbPlan.id,
                 asaas_id: asaasServiceData.id,
@@ -182,6 +220,11 @@ serve(async (req) => {
                 billing_type: cycle,
                 current_period_end: nextDueDate.toISOString()
             })
+
+            if (subError) {
+                console.error(`[${requestId}] Subscription Sync Error:`, subError)
+                throw new Error(`Erro ao salvar assinatura: ${subError.message}`)
+            }
 
             if (isTrialable) {
                 await supabaseAdmin.from('tenants').update({
@@ -195,7 +238,8 @@ serve(async (req) => {
                 success: true,
                 tenantId,
                 userId,
-                identification: email
+                identification: email,
+                pixData
             }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 200,
@@ -203,8 +247,24 @@ serve(async (req) => {
 
         } catch (innerError: any) {
             console.error(`[${requestId}] Rollback triggered due to:`, innerError.message)
-            if (userId) await supabaseAdmin.auth.admin.deleteUser(userId).catch(e => console.error("Rollback User Error:", e))
-            if (tenantId) await supabaseAdmin.from('tenants').delete().eq('id', tenantId).catch(e => console.error("Rollback Tenant Error:", e))
+
+            // Step-by-step rollback with safety
+            if (userId) {
+                console.log(`[${requestId}] Rolling back User:`, userId)
+                await supabaseAdmin.auth.admin.deleteUser(userId)
+                    .catch(e => console.error(`[${requestId}] Rollback User Error:`, e.message))
+            }
+
+            if (tenantId) {
+                console.log(`[${requestId}] Rolling back Tenant:`, tenantId)
+                // Delete profiles first because of foreign key constraint
+                await supabaseAdmin.from('profiles').delete().eq('tenant_id', tenantId)
+                    .catch(e => console.error(`[${requestId}] Rollback Profiles Error:`, e.message))
+
+                await supabaseAdmin.from('tenants').delete().eq('id', tenantId)
+                    .catch(e => console.error(`[${requestId}] Rollback Tenant Error:`, e.message))
+            }
+
             throw innerError
         }
 

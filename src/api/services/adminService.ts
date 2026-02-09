@@ -139,6 +139,19 @@ export class AdminService {
     }
 
     /**
+     * Delete a tenant completely via Edge Function.
+     */
+    static async deleteTenant(tenantId: string) {
+        const { data, error } = await supabase.functions.invoke('admin-delete-tenant', {
+            body: { tenantId }
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        return data;
+    }
+
+    /**
      * Update user profile data.
      */
     static async updateUser(userId: string, updates: { full_name?: string; role?: string; tenant_id?: string }) {

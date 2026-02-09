@@ -9,24 +9,24 @@ import { useTenant } from "@/contexts/TenantContext";
 
 const faqs = [
   {
-    question: "O app é meu mesmo?",
+    question: "O app terá a minha marca?",
     answer:
-      "Sim. Publicamos na Apple Store e Google Play com seu nome, sua foto e seu logo. Para o aluno, o app é SEU e de mais ninguém.",
+      "Sim. Através do nosso sistema de Whitelabel Dinâmico, assim que o seu aluno faz login no app oficial, a interface assume instantaneamente o seu logo, suas cores e sua identidade visual. Para o aluno, a experiência é 100% sua.",
   },
   {
-    question: "Como funciona os 30 dias grátis?",
+    question: "Como os alunos baixam o app?",
     answer:
-      "Você cadastra, configura seu app e usa TUDO por 30 dias. Se não gostar, cancela com um clique. Não cobramos nada antes do 31º dia.",
+      "Os alunos baixam o app ApexPro nas lojas. Ao entrarem com o acesso que você gerou, o app se transforma na sua plataforma personalizada. Isso garante que eles tenham sempre a versão mais estável e rápida do mercado, sem você precisar se preocupar com atualizações técnicas.",
   },
   {
-    question: "Preciso ter CNPJ?",
+    question: "Como funcionam os 30 dias grátis?",
     answer:
-      "Não. Você pode publicar como pessoa física sem nenhum problema técnico ou burocrático.",
+      "Você cria sua conta, configura sua marca e usa TUDO sem restrições por 30 dias. Se decidir que não é para você, basta cancelar. Não cobramos nada antes do 31º dia.",
   },
   {
     question: "Já tenho muitos alunos, como migrar?",
     answer:
-      "Nosso suporte faz a importação da sua planilha de alunos gratuitamente. Em 24h todos estarão no seu novo app estrategicamente posicionados.",
+      "Nosso suporte faz a importação da sua planilha de alunos gratuitamente. Em poucas horas, todos estarão cadastrados e prontos para acessar sua nova plataforma personalizada.",
   },
 ];
 

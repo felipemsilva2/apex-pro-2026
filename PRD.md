@@ -87,7 +87,7 @@ ApexPro Platform
 | Feature | Status | Descrição |
 |---------|--------|-----------|
 | Login por Email | ✅ | Supabase Auth |
-| Login por Username | ✅ | Managed accounts (@managed.nutripro.pro) |
+| Login por Username | ✅ | Managed accounts (@acesso.apexpro.fit) |
 | Remember Me | ✅ | Persistência de login |
 | Password Toggle | ✅ | Visualizar/ocultar senha |
 | Redirect por Role | ✅ | Admin → /hq, Coach → /dashboard |
@@ -196,7 +196,7 @@ ApexPro Platform
 
 | Tipo | Email | Senha |
 |------|-------|-------|
-| Admin Master | `master.admin@managed.nutripro.pro` | `ApexHQ2026!` |
+| Admin Master | `master.admin@acesso.apexpro.fit` | `ApexHQ2026!` |
 
 ---
 

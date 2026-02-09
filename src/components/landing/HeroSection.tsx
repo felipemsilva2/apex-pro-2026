@@ -43,8 +43,8 @@ const HeroSection = () => {
           </div>
 
           <h1 className="text-3xl sm:text-6xl lg:text-[72px] font-display font-black mb-8 animate-fade-in uppercase italic leading-[0.95] tracking-tighter">
-            SEU PRÓPRIO APP <br />
-            <span className="text-primary text-blur-sm">COMPLETO NAS LOJAS</span>
+            SUA MARCA EM UM <br />
+            <span className="text-primary text-blur-sm">ECOSSISTEMA COMPLETO</span>
           </h1>
 
           <p className="font-display font-bold uppercase italic text-sm lg:text-base tracking-[0.15em] text-white mb-10 max-w-3xl mx-auto border-y border-primary/20 py-6 lg:py-8 animate-fade-in decoration-primary/30 underline-offset-8" style={{ animationDelay: '0.1s' }}>

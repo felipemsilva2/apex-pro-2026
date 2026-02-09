@@ -29,7 +29,7 @@ const AdminSettings = () => {
                         <div className="flex flex-col gap-2">
                             <span className="text-[10px] font-black text-white/40 uppercase tracking-widest italic">Gateway de Autenticação</span>
                             <div className="p-4 bg-white/5 border border-white/5 font-display font-bold text-white italic text-xs">
-                                auth.managed.nutripro.pro
+                                auth.acesso.apexpro.fit
                             </div>
                         </div>
                     </div>

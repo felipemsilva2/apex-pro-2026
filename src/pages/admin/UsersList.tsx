@@ -158,7 +158,7 @@ const UsersListAdmin = () => {
                                         </Badge>
                                     </div>
                                     <div className="flex items-center gap-4 text-white/40 text-[9px] font-bold uppercase italic tracking-widest mt-1">
-                                        <span className="flex items-center gap-1.5"><Mail size={10} className="text-primary" /> {user.email || 'managed@apex.pro'}</span>
+                                        <span className="flex items-center gap-1.5"><Mail size={10} className="text-primary" /> {user.email || 'managed@acesso.apexpro.fit'}</span>
                                         <span className="flex items-center gap-1.5"><Shield size={10} className="text-primary" /> AMBIENTE: {user.tenants?.business_name || 'GLOBAL'}</span>
                                     </div>
                                 </div>
@@ -211,7 +211,7 @@ const UsersListAdmin = () => {
                                         <DropdownMenuSeparator className="bg-white/5" />
 
                                         {/* Hide delete button for admin master */}
-                                        {user.email !== 'master.admin@managed.nutripro.pro' && (
+                                        {user.email !== 'master.admin@acesso.apexpro.fit' && (
                                             <DropdownMenuItem
                                                 className="p-4 flex items-center gap-3 cursor-pointer group text-red-500 focus:bg-red-500/10"
                                                 onClick={() => { setSelectedUser(user); setDeleteDialogOpen(true); }}

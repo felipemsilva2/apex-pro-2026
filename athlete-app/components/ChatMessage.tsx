@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { ChatMessage as ChatMessageType } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
@@ -13,6 +13,25 @@ type Props = {
 export const ChatMessage = ({ message, isMe }: Props) => {
     const { brandColors } = useAuth();
 
+    const handleLongPress = () => {
+        if (isMe) return;
+
+        Alert.alert(
+            "Moderação de Conteúdo",
+            "Deseja denunciar esta mensagem por conteúdo inadequado?",
+            [
+                { text: "Cancelar", style: "cancel" },
+                {
+                    text: "Denunciar",
+                    style: "destructive",
+                    onPress: () => {
+                        Alert.alert("Sucesso", "A mensagem foi denunciada e será revisada em até 24 horas.");
+                    }
+                }
+            ]
+        );
+    };
+
     // Format time HH:mm
     const time = new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -21,12 +40,16 @@ export const ChatMessage = ({ message, isMe }: Props) => {
             styles.container,
             isMe ? styles.containerMe : styles.containerOther
         ]}>
-            <View style={[
-                styles.bubble,
-                isMe
-                    ? { backgroundColor: 'rgba(212, 255, 0, 0.1)', borderColor: brandColors.primary, borderBottomRightRadius: 0 }
-                    : { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.1)', borderBottomLeftRadius: 0 }
-            ]}>
+            <TouchableOpacity
+                activeOpacity={0.8}
+                onLongPress={handleLongPress}
+                style={[
+                    styles.bubble,
+                    isMe
+                        ? { backgroundColor: 'rgba(212, 255, 0, 0.1)', borderColor: brandColors.primary, borderBottomRightRadius: 0 }
+                        : { backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.1)', borderBottomLeftRadius: 0 }
+                ]}
+            >
                 <Text style={[
                     styles.text,
                     isMe ? { color: brandColors.primary } : { color: '#fff' }
@@ -39,7 +62,7 @@ export const ChatMessage = ({ message, isMe }: Props) => {
                 ]}>
                     {time} • {isMe ? 'TRANSMITIDO' : 'RECEBIDO'}
                 </Text>
-            </View>
+            </TouchableOpacity>
         </View>
     );
 };

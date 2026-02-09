@@ -30,6 +30,8 @@ import DownloadAppPage from "./pages/client/DownloadAppPage";
 import LoginPage from "./pages/auth/LoginPage";
 import SignUpPage from "./pages/auth/SignUpPage";
 import CheckoutPage from "./pages/auth/CheckoutPage";
+import MarketingAssetsPage from "./pages/dashboard/MarketingAssetsPage";
+import PublicProfilePage from "./pages/public/PublicProfilePage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 // Admin / Backoffice
@@ -88,7 +90,11 @@ const App = () => (
                 <Route path="messages" element={<MessagesPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="billing" element={<BillingPage />} />
+                <Route path="marketing" element={<MarketingAssetsPage />} />
               </Route>
+
+              {/* Public Personal Landing Pages */}
+              <Route path="/:slug" element={<PublicProfilePage />} />
 
               {/* Auth / Invitation Routes */}
               <Route path="/invite/:token" element={<InviteOnboarding />} />
@@ -112,7 +118,11 @@ const App = () => (
               </Route>
 
               {/* Blocked Access */}
-              <Route path="/blocked" element={<BlockedPage />} />
+              <Route path="/blocked" element={
+                <ProtectedRoute allowedRoles={['coach']}>
+                  <BlockedPage />
+                </ProtectedRoute>
+              } />
 
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />

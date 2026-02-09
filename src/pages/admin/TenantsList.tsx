@@ -11,7 +11,9 @@ import {
     Ban,
     CheckCircle,
     ChevronRight,
-    ExternalLink
+    ExternalLink,
+    Trash2,
+    AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -26,12 +28,25 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 
 const TenantsList = () => {
     const [tenants, setTenants] = useState<TenantAdminInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [selectedTenant, setSelectedTenant] = useState<TenantAdminInfo | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchTenants = async () => {
         try {
@@ -59,6 +74,24 @@ const TenantsList = () => {
         } catch (err) {
             console.error("Error updating tenant status:", err);
             toast.error("Erro ao alterar status do ambiente.");
+        }
+    };
+
+    const handleDeleteTenant = async () => {
+        if (!selectedTenant) return;
+
+        try {
+            setIsDeleting(true);
+            await AdminService.deleteTenant(selectedTenant.id);
+            toast.success("Ambiente removido com sucesso.");
+            setDeleteDialogOpen(false);
+            fetchTenants();
+        } catch (err: any) {
+            console.error("Error deleting tenant:", err);
+            toast.error(err.message || "Erro ao remover ambiente.");
+        } finally {
+            setIsDeleting(false);
+            setSelectedTenant(null);
         }
     };
 
@@ -191,6 +224,16 @@ const TenantsList = () => {
                                                     {tenant.status === 'active' ? 'SUSPENDER TRABALHOS' : 'ATIVAR TRABALHOS'}
                                                 </span>
                                             </DropdownMenuItem>
+
+                                            <DropdownMenuSeparator className="bg-white/5" />
+
+                                            <DropdownMenuItem
+                                                className="p-4 flex items-center gap-3 cursor-pointer group text-red-500 focus:bg-red-500/10"
+                                                onClick={() => { setSelectedTenant(tenant); setDeleteDialogOpen(true); }}
+                                            >
+                                                <Trash2 size={16} className="text-red-500" />
+                                                <span className="text-[10px] font-black italic uppercase tracking-widest">REMOVER AMBIENTE</span>
+                                            </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
@@ -199,6 +242,38 @@ const TenantsList = () => {
                     ))
                 )}
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent className="bg-[#0A0A0A] border-white/10 rounded-none max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-xl font-display font-black italic uppercase text-white flex items-center gap-3">
+                            <AlertTriangle className="text-red-500" />
+                            CONFIRMAR EXCLUSÃO
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-white/60 font-medium">
+                            Esta ação é <span className="text-white font-bold underline">irreversível</span>. Ao remover o ambiente
+                            <span className="text-white font-bold italic ml-1 uppercase">{selectedTenant?.business_name}</span>,
+                            todos os alunos, treinadores, protocolos e históricos vinculados serão <span className="text-red-500 font-bold uppercase tracking-tight">permanentemente deletados</span>.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="mt-8 gap-3">
+                        <AlertDialogCancel className="bg-white/5 border-white/10 rounded-none text-white/40 font-display font-black italic uppercase tracking-widest text-[10px] hover:bg-white/10 hover:text-white transition-all h-12">
+                            CANCELAR
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault();
+                                handleDeleteTenant();
+                            }}
+                            disabled={isDeleting}
+                            className="bg-red-500 hover:bg-red-600 rounded-none text-black font-display font-black italic uppercase tracking-widest text-[10px] transition-all h-12 px-8"
+                        >
+                            {isDeleting ? "REMOVENDO..." : "REMOVER DEFINITIVAMENTE"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

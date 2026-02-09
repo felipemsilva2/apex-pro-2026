@@ -1,39 +1,31 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, RefreshControl } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, TextInput, RefreshControl, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Container, Header, StatCard, LoadingSpinner, ConfirmationModal } from '../../components/ui';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAthleteWorkouts, useAthleteDiet, useUpdateAthleteProfile, useAthleteProfile, useCoachProfile } from '../../hooks/useAthleteData';
 import { getVisibleColor } from '../../lib/whitelabel';
 import {
-  Scale,
   Activity,
-  Target,
   Dumbbell,
   Apple,
   TrendingUp,
   ChevronRight,
   MessageSquare,
   Calendar,
-  FileText,
-  LogOut,
   User,
-  Award,
-  Power
+  ExternalLink
 } from 'lucide-react-native';
 
 /**
- * Home/Dashboard screen - Main hub with quick stats and actions
+ * HomeScreen - Redesigned with premium Reacticx/Bento aesthetic
  */
 export default function HomeScreen() {
   const { profile: contextProfile, brandColors, tenant, signOut } = useAuth();
   const router = useRouter();
-
   const visiblePrimary = getVisibleColor(brandColors.primary);
 
-  // Pre-fetch coach profile data to warm the cache
-  const { data: coach, refetch: refetchCoach, isRefetching: isRefetchingCoach } = useCoachProfile();
-
+  const { data: coach } = useCoachProfile();
   const { data: serverProfile, isLoading: loadingProfile, refetch: refetchProfile, isRefetching: isRefetchingProfile } = useAthleteProfile();
   const profile = serverProfile || contextProfile;
 
@@ -41,15 +33,10 @@ export default function HomeScreen() {
   const { data: diet, isLoading: loadingDiet, refetch: refetchDiet, isRefetching: isRefetchingDiet } = useAthleteDiet();
   const updateProfile = useUpdateAthleteProfile();
 
-  const isRefetching = isRefetchingProfile || isRefetchingWorkouts || isRefetchingDiet || isRefetchingCoach;
+  const isRefetching = isRefetchingProfile || isRefetchingWorkouts || isRefetchingDiet;
 
   const handleRefresh = async () => {
-    await Promise.all([
-      refetchProfile(),
-      refetchWorkouts(),
-      refetchDiet(),
-      refetchCoach()
-    ]);
+    await Promise.all([refetchProfile(), refetchWorkouts(), refetchDiet()]);
   };
 
   const [newWeight, setNewWeight] = useState(profile?.current_weight?.toString().replace('.', ',') || '');
@@ -65,11 +52,8 @@ export default function HomeScreen() {
   });
 
   const isLoading = loadingWorkouts || loadingDiet || loadingProfile;
-
-  // Check if profile needs more data - Essential fields
   const isIncompleteProfile = !profile?.gender || !profile?.birth_date || !profile?.target_weight;
 
-  // Keep internal weight state in sync when profile loads
   React.useEffect(() => {
     if (profile?.current_weight) {
       setNewWeight(profile.current_weight.toString().replace('.', ','));
@@ -78,31 +62,8 @@ export default function HomeScreen() {
 
   const handleWeightUpdate = async () => {
     if (!newWeight || isUpdating) return;
-
-    // 1. Check if 24h has passed since last update
-    if (profile?.last_weight_update) {
-      const lastUpdate = new Date(profile.last_weight_update);
-      const now = new Date();
-      const diffInHours = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
-
-      if (diffInHours < 24) {
-        const hoursRemaining = Math.ceil(24 - diffInHours);
-        setModalConfig({
-          title: '⏳ Aguarde',
-          message: `Você já realizou seu check-in hoje.\n\nPróxima atualização disponível em aprox. ${hoursRemaining}h.\n\nDica: Pese-se sempre no mesmo horário para maior precisão.`,
-          type: 'info',
-          onConfirm: () => setModalVisible(false),
-          confirmText: 'ENTENDI',
-          showCancel: false
-        });
-        setModalVisible(true);
-        return;
-      }
-    }
-
-    // 2. Confirmation Alert
     setModalConfig({
-      title: '⚖️ Confirmar Peso',
+      title: '⚖️ Peso de Hoje',
       message: `Registrar ${newWeight}kg como seu peso oficial de hoje?`,
       type: 'warning',
       onConfirm: performUpdate,
@@ -115,16 +76,14 @@ export default function HomeScreen() {
   const performUpdate = async () => {
     setModalVisible(false);
     setIsUpdating(true);
-    const normalizedWeight = newWeight.replace(',', '.');
     try {
       await updateProfile.mutateAsync({
-        current_weight: parseFloat(normalizedWeight),
+        current_weight: parseFloat(newWeight.replace(',', '.')),
         last_weight_update: new Date().toISOString()
       });
-
       setModalConfig({
         title: '✅ Sucesso',
-        message: 'Peso registrado e média atualizada!',
+        message: 'Progresso registrado!',
         type: 'success',
         onConfirm: () => setModalVisible(false),
         confirmText: 'OK',
@@ -132,10 +91,9 @@ export default function HomeScreen() {
       });
       setModalVisible(true);
     } catch (err: any) {
-      console.error("Weight update error:", err);
       setModalConfig({
         title: '❌ Erro',
-        message: `Não foi possível atualizar o peso: ${err.message || 'Erro desconhecido'}`,
+        message: 'Não foi possível atualizar o peso.',
         type: 'warning',
         onConfirm: () => setModalVisible(false),
         confirmText: 'OK',
@@ -147,177 +105,153 @@ export default function HomeScreen() {
     }
   };
 
-  const handleLogout = () => {
-    setModalConfig({
-      title: 'SAIR DO SISTEMA',
-      message: 'Deseja realmente encerrar sua sessão?',
-      type: 'warning',
-      onConfirm: async () => {
-        setModalVisible(false);
-        await signOut();
-      },
-      confirmText: 'SAIR',
-      showCancel: true
-    });
-    setModalVisible(true);
-  };
-
-  // Helper to format weight values (e.g., 90.5 -> 90,5)
-  const formatWeight = (val: any) => {
-    if (!val) return '--';
-    return val.toString().replace('.', ',');
-  };
-
-  if (isLoading) {
-    return <LoadingSpinner message="Carregando..." />;
-  }
+  if (isLoading) return <LoadingSpinner message="Atualizando..." />;
 
   return (
     <Container variant="page" seamless>
       <Header
-        title={`Olá, ${profile?.full_name?.split(' ')[0] || 'Atleta'}`}
-        subtitle={`PERSONAL ${(coach?.full_name || tenant?.business_name || "PRO").replace(/^personal\s+/i, '').toUpperCase()}`}
+        title={`Atleta ${profile?.full_name?.split(' ')[0] || ''}`}
+        subtitle={`SISTEMA ${(coach?.full_name || tenant?.business_name || "PRO").split(' ')[0].toUpperCase()}`}
         variant="hero"
         rightAction={
-          <TouchableOpacity
-            onPress={() => router.push('/settings')}
-            style={{ padding: 4 }}
-          >
-            <User size={28} color={visiblePrimary} />
+          <TouchableOpacity onPress={() => router.push('/settings')} style={styles.profileButton}>
+            <User size={22} color={visiblePrimary} />
           </TouchableOpacity>
         }
       />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20 }} // Add padding back for scrollable content
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={handleRefresh}
-            tintColor={brandColors.primary}
-            colors={[brandColors.primary]}
-          />
+          <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={brandColors.primary} />
         }
       >
-        {/* Profile Alert Banner */}
+        {/* Profile Alert */}
         {isIncompleteProfile && (
           <TouchableOpacity
             onPress={() => router.push('/profile_edit')}
             activeOpacity={0.9}
-            style={[styles.alertBanner, { borderColor: `${visiblePrimary}40`, backgroundColor: `${visiblePrimary}08` }]}
+            style={[styles.alertBanner, { borderColor: `${visiblePrimary}20` }]}
           >
-            <View style={[styles.alertIndicator, { backgroundColor: visiblePrimary }]} />
             <View style={styles.alertContent}>
-              <Text style={[styles.alertTitle, { color: visiblePrimary }]}>AVISO: PERFIL INCOMPLETO</Text>
-              <Text style={styles.alertText}>Faltam dados biométricos essenciais para otimizar seus resultados.</Text>
+              <Text style={[styles.alertTitle, { color: visiblePrimary }]}>DADOS PENDENTES</Text>
+              <Text style={styles.alertText}>Atualize seu perfil para cálculos precisos.</Text>
             </View>
-            <ChevronRight size={16} color={visiblePrimary} />
+            <ChevronRight size={16} color={visiblePrimary} opacity={0.5} />
           </TouchableOpacity>
         )}
 
-
-
-        {/* Quick Weight Check-in */}
-        <View style={[styles.section, { borderColor: `${visiblePrimary}20` }]}>
-          <View style={styles.sectionHeader}>
-            <Activity size={16} color={visiblePrimary} />
-            <Text style={styles.sectionTitle}>CHECK-IN RÁPIDO</Text>
+        {/* Bento Stats Grid */}
+        <View style={styles.bentoGrid}>
+          <View style={styles.bentoCol}>
+            <StatCard
+              label="Peso Atual"
+              value={newWeight || '--'}
+              unit="KG"
+              icon={<TrendingUp size={16} color="rgba(255,255,255,0.2)" />}
+            />
           </View>
+          <View style={styles.bentoCol}>
+            <StatCard
+              label="Meta"
+              value={profile?.target_weight || '--'}
+              unit="KG"
+              trend="neutral"
+            />
+          </View>
+        </View>
 
-          <View style={styles.weightInput}>
+        {/* Bento Quick Action - Interactive Weight */}
+        <View style={styles.bentoSection}>
+          <View style={styles.sectionHeader}>
+            <Activity size={14} color={visiblePrimary} />
+            <Text style={styles.sectionTitle}>Evolução Corporal</Text>
+          </View>
+          <View style={styles.weightInputRow}>
             <TextInput
-              style={[styles.input, { borderColor: `${visiblePrimary}40` }]}
-              placeholder="Peso atual (kg)"
-              placeholderTextColor="rgba(255,255,255,0.3)"
+              style={styles.input}
+              placeholder="00,0"
+              placeholderTextColor="rgba(255,255,255,0.2)"
               keyboardType="decimal-pad"
               value={newWeight}
               onChangeText={setNewWeight}
             />
             <TouchableOpacity
-              style={[styles.button, { backgroundColor: brandColors.primary }]}
+              style={[styles.saveButton, { backgroundColor: brandColors.primary }]}
               onPress={handleWeightUpdate}
               disabled={isUpdating}
             >
-              <Text style={[styles.buttonText, { color: brandColors.secondary }]}>
-                {isUpdating ? 'SALVANDO...' : 'SALVAR'}
-              </Text>
+              <Text style={styles.saveButtonText}>{isUpdating ? '...' : 'SALVAR'}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Core Tactical Actions - 2x2 Grid */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>MENU PRINCIPAL</Text>
-          <View style={styles.gridRow}>
-            <TouchableOpacity
-              style={[styles.gridItem, { borderColor: `${visiblePrimary}30` }]}
-              onPress={() => router.push('/(tabs)/training')}
-            >
+        {/* Main Grid Actions */}
+        <View style={styles.mainGrid}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push('/(tabs)/training')}
+            style={styles.gridCard}
+          >
+            <View style={[styles.gridIconBg, { backgroundColor: `${visiblePrimary}10` }]}>
               <Dumbbell size={24} color={visiblePrimary} />
-              <Text style={styles.gridItemTitle}>TREINOS</Text>
-              <Text style={styles.gridItemSubtitle}>{workouts?.length || 0} PROTOCOLOS</Text>
-            </TouchableOpacity>
+            </View>
+            <Text style={styles.gridTitle}>TREINOS</Text>
+            <Text style={styles.gridSubtitle}>{workouts?.length || 0} TREINOS ATIVOS</Text>
+            <ExternalLink size={12} color="rgba(255,255,255,0.2)" style={styles.gridCornerIcon} />
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.gridItem, { borderColor: `${visiblePrimary}30` }]}
-              onPress={() => router.push('/(tabs)/nutrition')}
-            >
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push('/(tabs)/nutrition')}
+            style={styles.gridCard}
+          >
+            <View style={[styles.gridIconBg, { backgroundColor: `${visiblePrimary}10` }]}>
               <Apple size={24} color={visiblePrimary} />
-              <Text style={styles.gridItemTitle}>DIETA</Text>
-              <Text style={styles.gridItemSubtitle}>{diet?.meals?.length || 0} REFEIÇÕES</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.gridRow}>
-            <TouchableOpacity
-              style={[styles.gridItem, { borderColor: `${visiblePrimary}30` }]}
-              onPress={() => router.push('/(tabs)/progress')}
-            >
-              <TrendingUp size={24} color={visiblePrimary} />
-              <Text style={styles.gridItemTitle}>PROGRESSO</Text>
-              <Text style={styles.gridItemSubtitle}>AVALIAÇÕES</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.gridItem, { borderColor: `${visiblePrimary}30` }]}
-              onPress={() => router.push('/schedule')}
-            >
-              <Calendar size={24} color={visiblePrimary} />
-              <Text style={styles.gridItemTitle}>AGENDA</Text>
-              <Text style={styles.gridItemSubtitle}>AGENDA E CONSULTAS</Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+            <Text style={styles.gridTitle}>DIETA</Text>
+            <Text style={styles.gridSubtitle}>{diet?.meals?.length || 0} REFEIÇÕES</Text>
+            <ExternalLink size={12} color="rgba(255,255,255,0.2)" style={styles.gridCornerIcon} />
+          </TouchableOpacity>
         </View>
 
+        <View style={styles.mainGrid}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push('/(tabs)/progress')}
+            style={styles.gridCard}
+          >
+            <View style={[styles.gridIconBg, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+              <TrendingUp size={24} color="#FFF" />
+            </View>
+            <Text style={styles.gridTitle}>PROGRESSO</Text>
+            <Text style={styles.gridSubtitle}>FOTOS E MEDIDAS</Text>
+          </TouchableOpacity>
 
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push('/schedule')}
+            style={styles.gridCard}
+          >
+            <View style={[styles.gridIconBg, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+              <Calendar size={24} color="#FFF" />
+            </View>
+            <Text style={styles.gridTitle}>AGENDA</Text>
+            <Text style={styles.gridSubtitle}>CONSULTAS</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Chat FAB */}
+      {/* Premium FAB */}
       <TouchableOpacity
-        activeOpacity={0.8}
+        activeOpacity={0.9}
         onPress={() => router.push('/chat')}
-        style={{
-          position: 'absolute',
-          bottom: 24,
-          right: 24,
-          width: 64,
-          height: 64,
-          borderRadius: 32,
-          backgroundColor: brandColors.primary,
-          justifyContent: 'center',
-          alignItems: 'center',
-          elevation: 8,
-          shadowColor: brandColors.primary,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.5,
-          shadowRadius: 8,
-          borderWidth: 1,
-          borderColor: '#000',
-          transform: [{ skewX: '-6deg' }]
-        }}
+        style={[styles.fab, { backgroundColor: brandColors.primary, shadowColor: brandColors.primary }]}
       >
-        <MessageSquare size={28} color="#000" style={{ transform: [{ skewX: '6deg' }] }} />
+        <MessageSquare size={26} color="#000" />
       </TouchableOpacity>
 
       <ConfirmationModal
@@ -328,7 +262,7 @@ export default function HomeScreen() {
         onConfirm={modalConfig.onConfirm}
         onCancel={() => setModalVisible(false)}
         confirmText={modalConfig.confirmText}
-        cancelText={modalConfig.showCancel ? "CANCELAR" : ""}
+        cancelText={modalConfig.showCancel ? "REVISAR" : ""}
         brandColors={brandColors}
       />
     </Container>
@@ -336,109 +270,58 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
   alertBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderWidth: 1,
-    borderRadius: 4,
-    marginBottom: 20,
-    marginTop: 10,
-    gap: 12,
-  },
-  alertIndicator: {
-    width: 2,
-    height: '100%',
+    borderRadius: 20,
+    marginBottom: 24,
+    backgroundColor: 'rgba(255,255,255,0.02)',
   },
   alertContent: {
     flex: 1,
   },
   alertTitle: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '900',
     letterSpacing: 1,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   alertText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.6)',
-    lineHeight: 20,
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgba(255,255,255,0.5)',
   },
-  statsGrid: {
+  bentoGrid: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
-  gridRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  gridItem: {
-    flex: 1,
-    padding: 16,
-    borderWidth: 1,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-  },
-  gridItemTitle: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-    marginTop: 4,
-  },
-  gridItemSubtitle: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  compactRow: {
-    flexDirection: 'row',
-    gap: 12,
+    gap: 16,
     marginBottom: 16,
   },
-  compactItem: {
+  bentoCol: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+  },
+  bentoSection: {
     backgroundColor: 'rgba(255,255,255,0.03)',
-    borderWidth: 1,
-    padding: 12,
-    borderRadius: 4,
-  },
-  compactItemText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  subtleLogout: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 10,
-    opacity: 0.6,
-  },
-  subtleLogoutText: {
-    color: 'rgba(255, 68, 68, 0.8)',
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-    fontStyle: 'italic',
-  },
-  section: {
-    marginBottom: 20,
-    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 4,
-    padding: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -448,64 +331,89 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 11,
-    fontWeight: '900',
-    color: 'rgba(255,255,255,0.7)',
-    letterSpacing: 1.5,
+    fontWeight: '800',
+    color: 'rgba(255,255,255,0.4)',
+    letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  weightInput: {
+  weightInputRow: {
     flexDirection: 'row',
     gap: 12,
   },
   input: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderWidth: 1,
-    borderRadius: 4,
-    padding: 14,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 16,
+    padding: 16,
     color: '#FFF',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 18,
+    fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
   },
-  button: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+  saveButton: {
+    paddingHorizontal: 24,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    transform: [{ skewX: '-5deg' }],
   },
-  buttonText: {
+  saveButtonText: {
     fontSize: 12,
     fontWeight: '900',
-    letterSpacing: 1,
-    transform: [{ skewX: '5deg' }],
-  },
-  actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.02)',
-    borderWidth: 1,
-    borderRadius: 4,
-    padding: 16,
-    marginBottom: 12,
-  },
-  actionIcon: {
-    marginRight: 16,
-  },
-  actionContent: {
-    flex: 1,
-  },
-  actionTitle: {
-    fontSize: 14,
-    fontWeight: '900',
-    fontStyle: 'italic',
-    color: '#FFF',
     letterSpacing: 0.5,
-    marginBottom: 4,
+    color: '#000',
   },
-  actionSubtitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.5)',
+  mainGrid: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+  },
+  gridCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  gridIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  gridTitle: {
+    fontSize: 13,
+    fontFamily: Platform.OS === 'ios' ? 'Syne-ExtraBold' : 'Syne_800ExtraBold',
+    color: '#FFF',
+    letterSpacing: -0.5,
+  },
+  gridSubtitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.3)',
+    marginTop: 4,
+    letterSpacing: 0.5,
+  },
+  gridCornerIcon: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 32,
+    right: 24,
+    width: 64,
+    height: 64,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
   },
 });

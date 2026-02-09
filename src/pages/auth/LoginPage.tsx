@@ -54,10 +54,9 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            // Managed Login Logic: If no @, assume it's a managed username
             const identification = email.includes('@')
                 ? email.trim()
-                : `${email.trim().toLowerCase()}@managed.nutripro.pro`;
+                : `${email.trim().toLowerCase()}@acesso.apexpro.fit`;
 
             const { data, error } = await supabase.auth.signInWithPassword({
                 email: identification,

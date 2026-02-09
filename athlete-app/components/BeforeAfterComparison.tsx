@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { ArrowRight } from 'lucide-react-native';
 
 interface BeforeAfterComparisonProps {
@@ -15,114 +15,106 @@ export function BeforeAfterComparison({ firstAssessment, latestAssessment }: Bef
 
     return (
         <View style={styles.container}>
-            <Text style={styles.sectionTitle}>Transformação</Text>
+            <Text style={styles.sectionTitle}>Transformação Estratégica</Text>
 
             <View style={styles.comparisonRow}>
                 {/* Before */}
                 <View style={styles.comparisonCard}>
-                    <Text style={styles.cardLabel}>Início</Text>
-                    <Text style={styles.cardDate}>{formatDate(firstAssessment.assessment_date)}</Text>
+                    <View style={styles.cardHeader}>
+                        <Text style={styles.cardLabel}>INÍCIO</Text>
+                        <Text style={styles.cardDate}>{formatDate(firstAssessment.assessment_date)}</Text>
+                    </View>
 
                     <View style={styles.metricsContainer}>
                         {firstAssessment.weight_kg && (
                             <View style={styles.metric}>
-                                <Text style={styles.metricLabel}>Peso</Text>
-                                <Text style={styles.metricValue}>{firstAssessment.weight_kg.toFixed(1)} kg</Text>
+                                <Text style={styles.metricLabel}>PESO</Text>
+                                <Text style={styles.metricValue}>{firstAssessment.weight_kg.toFixed(1)}kg</Text>
                             </View>
                         )}
                         {firstAssessment.body_fat_percentage && (
                             <View style={styles.metric}>
-                                <Text style={styles.metricLabel}>Gordura</Text>
+                                <Text style={styles.metricLabel}>GORDURA</Text>
                                 <Text style={styles.metricValue}>{firstAssessment.body_fat_percentage.toFixed(1)}%</Text>
-                            </View>
-                        )}
-                        {firstAssessment.lean_mass_kg && (
-                            <View style={styles.metric}>
-                                <Text style={styles.metricLabel}>M. Magra</Text>
-                                <Text style={styles.metricValue}>{firstAssessment.lean_mass_kg.toFixed(1)} kg</Text>
                             </View>
                         )}
                     </View>
                 </View>
 
-                {/* Arrow */}
-                <View style={styles.arrowContainer}>
-                    <ArrowRight size={24} color="#D4FF00" />
+                {/* Arrow Bento */}
+                <View style={styles.arrowWrapper}>
+                    <ArrowRight size={20} color="rgba(255,255,255,0.2)" />
                 </View>
 
                 {/* After */}
-                <View style={styles.comparisonCard}>
-                    <Text style={styles.cardLabel}>Atual</Text>
-                    <Text style={styles.cardDate}>{formatDate(latestAssessment.assessment_date)}</Text>
+                <View style={[styles.comparisonCard, { borderColor: 'rgba(212, 255, 0, 0.2)' }]}>
+                    <View style={styles.cardHeader}>
+                        <Text style={[styles.cardLabel, { color: '#D4FF00' }]}>ATUAL</Text>
+                        <Text style={styles.cardDate}>{formatDate(latestAssessment.assessment_date)}</Text>
+                    </View>
 
                     <View style={styles.metricsContainer}>
                         {latestAssessment.weight_kg && (
                             <View style={styles.metric}>
-                                <Text style={styles.metricLabel}>Peso</Text>
-                                <Text style={styles.metricValue}>{latestAssessment.weight_kg.toFixed(1)} kg</Text>
+                                <Text style={styles.metricLabel}>PESO</Text>
+                                <Text style={styles.metricValue}>{latestAssessment.weight_kg.toFixed(1)}kg</Text>
                             </View>
                         )}
                         {latestAssessment.body_fat_percentage && (
                             <View style={styles.metric}>
-                                <Text style={styles.metricLabel}>Gordura</Text>
+                                <Text style={styles.metricLabel}>GORDURA</Text>
                                 <Text style={styles.metricValue}>{latestAssessment.body_fat_percentage.toFixed(1)}%</Text>
-                            </View>
-                        )}
-                        {latestAssessment.lean_mass_kg && (
-                            <View style={styles.metric}>
-                                <Text style={styles.metricLabel}>M. Magra</Text>
-                                <Text style={styles.metricValue}>{latestAssessment.lean_mass_kg.toFixed(1)} kg</Text>
                             </View>
                         )}
                     </View>
                 </View>
             </View>
 
-            {/* Measurements Comparison */}
+            {/* Measurements Comparison Bento */}
             {(firstAssessment.waist_cm || latestAssessment.waist_cm) && (
-                <View style={styles.measurementsComparison}>
-                    <Text style={styles.measurementsTitle}>Medidas Comparativas</Text>
+                <View style={styles.measurementsBox}>
+                    <Text style={styles.measurementsTitle}>MEDIDAS COMPARATIVAS</Text>
                     <View style={styles.measurementsList}>
                         {firstAssessment.waist_cm && latestAssessment.waist_cm && (
                             <View style={styles.measurementRow}>
                                 <Text style={styles.measurementName}>Cintura</Text>
-                                <Text style={styles.measurementBefore}>{firstAssessment.waist_cm.toFixed(1)}</Text>
-                                <ArrowRight size={12} color="rgba(255,255,255,0.3)" />
-                                <Text style={styles.measurementAfter}>{latestAssessment.waist_cm.toFixed(1)} cm</Text>
-                                <Text style={[
-                                    styles.measurementDiff,
-                                    latestAssessment.waist_cm < firstAssessment.waist_cm ? styles.diffPositive : styles.diffNegative
+                                <View style={styles.measureFlow}>
+                                    <Text style={styles.measureBefore}>{firstAssessment.waist_cm.toFixed(1)}</Text>
+                                    <ArrowRight size={10} color="rgba(255,255,255,0.1)" />
+                                    <Text style={styles.measureAfter}>{latestAssessment.waist_cm.toFixed(1)}cm</Text>
+                                </View>
+                                <View style={[
+                                    styles.diffBadge,
+                                    { backgroundColor: latestAssessment.waist_cm < firstAssessment.waist_cm ? 'rgba(212, 255, 0, 0.1)' : 'rgba(255, 68, 68, 0.1)' }
                                 ]}>
-                                    {(latestAssessment.waist_cm - firstAssessment.waist_cm).toFixed(1)}
-                                </Text>
+                                    <Text style={[
+                                        styles.diffText,
+                                        { color: latestAssessment.waist_cm < firstAssessment.waist_cm ? '#D4FF00' : '#FF4444' }
+                                    ]}>
+                                        {(latestAssessment.waist_cm - firstAssessment.waist_cm).toFixed(1)}
+                                    </Text>
+                                </View>
                             </View>
                         )}
                         {firstAssessment.hip_cm && latestAssessment.hip_cm && (
                             <View style={styles.measurementRow}>
                                 <Text style={styles.measurementName}>Quadril</Text>
-                                <Text style={styles.measurementBefore}>{firstAssessment.hip_cm.toFixed(1)}</Text>
-                                <ArrowRight size={12} color="rgba(255,255,255,0.3)" />
-                                <Text style={styles.measurementAfter}>{latestAssessment.hip_cm.toFixed(1)} cm</Text>
-                                <Text style={[
-                                    styles.measurementDiff,
-                                    latestAssessment.hip_cm < firstAssessment.hip_cm ? styles.diffPositive : styles.diffNegative
+                                <View style={styles.measureFlow}>
+                                    <Text style={styles.measureBefore}>{firstAssessment.hip_cm.toFixed(1)}</Text>
+                                    <ArrowRight size={10} color="rgba(255,255,255,0.1)" />
+                                    <Text style={styles.measureAfter}>{latestAssessment.hip_cm.toFixed(1)}cm</Text>
+                                </View>
+                                <View style={[
+                                    styles.diffBadge,
+                                    { backgroundColor: latestAssessment.hip_cm < firstAssessment.hip_cm ? 'rgba(212, 255, 0, 0.1)' : 'rgba(255, 68, 68, 0.1)' }
                                 ]}>
-                                    {(latestAssessment.hip_cm - firstAssessment.hip_cm).toFixed(1)}
-                                </Text>
-                            </View>
-                        )}
-                        {firstAssessment.arm_cm && latestAssessment.arm_cm && (
-                            <View style={styles.measurementRow}>
-                                <Text style={styles.measurementName}>Braço</Text>
-                                <Text style={styles.measurementBefore}>{firstAssessment.arm_cm.toFixed(1)}</Text>
-                                <ArrowRight size={12} color="rgba(255,255,255,0.3)" />
-                                <Text style={styles.measurementAfter}>{latestAssessment.arm_cm.toFixed(1)} cm</Text>
-                                <Text style={[
-                                    styles.measurementDiff,
-                                    latestAssessment.arm_cm > firstAssessment.arm_cm ? styles.diffPositive : styles.diffNegative
-                                ]}>
-                                    {(latestAssessment.arm_cm - firstAssessment.arm_cm).toFixed(1)}
-                                </Text>
+                                    <Text style={[
+                                        styles.diffText,
+                                        { color: latestAssessment.hip_cm < firstAssessment.hip_cm ? '#D4FF00' : '#FF4444' }
+                                    ]}>
+                                        {(latestAssessment.hip_cm - firstAssessment.hip_cm).toFixed(1)}
+                                    </Text>
+                                </View>
                             </View>
                         )}
                     </View>
@@ -137,38 +129,40 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     sectionTitle: {
-        color: '#D4FF00',
         fontSize: 12,
-        fontWeight: '900',
-        fontStyle: 'italic',
-        marginBottom: 12,
-        textTransform: 'uppercase',
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        color: 'rgba(255,255,255,0.5)',
         letterSpacing: 1,
+        marginBottom: 16,
     },
     comparisonRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
+        gap: 8,
         marginBottom: 16,
     },
     comparisonCard: {
         flex: 1,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 24,
         padding: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
+    },
+    cardHeader: {
+        marginBottom: 12,
     },
     cardLabel: {
-        color: '#D4FF00',
         fontSize: 9,
         fontWeight: '900',
-        marginBottom: 4,
-        textTransform: 'uppercase',
+        color: 'rgba(255,255,255,0.3)',
+        letterSpacing: 0.5,
+        marginBottom: 2,
     },
     cardDate: {
-        color: 'rgba(255,255,255,0.4)',
         fontSize: 10,
-        marginBottom: 12,
+        fontWeight: '700',
+        color: 'rgba(255,255,255,0.2)',
     },
     metricsContainer: {
         gap: 8,
@@ -176,67 +170,74 @@ const styles = StyleSheet.create({
     metric: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'baseline',
+        alignItems: 'center',
     },
     metricLabel: {
-        color: 'rgba(255,255,255,0.4)',
-        fontSize: 9,
+        fontSize: 8,
         fontWeight: '900',
+        color: 'rgba(255,255,255,0.25)',
     },
     metricValue: {
+        fontSize: 13,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
         color: '#FFF',
-        fontSize: 14,
-        fontWeight: '900',
-        fontStyle: 'italic',
     },
-    arrowContainer: {
-        opacity: 0.6,
+    arrowWrapper: {
+        opacity: 0.5,
     },
-    measurementsComparison: {
-        backgroundColor: 'rgba(255,255,255,0.03)',
+    measurementsBox: {
+        backgroundColor: 'rgba(255,255,255,0.02)',
+        borderRadius: 24,
+        padding: 20,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-        padding: 16,
+        borderColor: 'rgba(255,255,255,0.05)',
     },
     measurementsTitle: {
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: '900',
-        marginBottom: 12,
-        textTransform: 'uppercase',
+        color: 'rgba(255,255,255,0.3)',
+        letterSpacing: 1,
+        marginBottom: 16,
     },
     measurementsList: {
-        gap: 10,
+        gap: 12,
     },
     measurementRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        justifyContent: 'space-between',
     },
     measurementName: {
-        color: 'rgba(255,255,255,0.4)',
-        fontSize: 10,
-        fontWeight: '900',
-        width: 60,
+        fontSize: 12,
+        fontWeight: '700',
+        color: 'rgba(255,255,255,0.5)',
+        width: 70,
     },
-    measurementBefore: {
-        color: 'rgba(255,255,255,0.3)',
-        fontSize: 11,
+    measureFlow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        flex: 1,
     },
-    measurementAfter: {
+    measureBefore: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: 'rgba(255,255,255,0.2)',
+    },
+    measureAfter: {
+        fontSize: 13,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
         color: '#FFF',
-        fontSize: 11,
-        fontWeight: '900',
     },
-    measurementDiff: {
+    diffBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 6,
+        minWidth: 40,
+        alignItems: 'center',
+    },
+    diffText: {
         fontSize: 10,
         fontWeight: '900',
-        marginLeft: 'auto',
-    },
-    diffPositive: {
-        color: '#D4FF00',
-    },
-    diffNegative: {
-        color: '#FF4444',
-    },
-} as any);
+    }
+});

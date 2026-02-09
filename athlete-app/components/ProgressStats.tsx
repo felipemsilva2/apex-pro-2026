@@ -1,12 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { TrendingUp, TrendingDown, Target, Calendar } from 'lucide-react-native';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProgressStatsProps {
     assessments: any[];
 }
 
 export function ProgressStats({ assessments }: ProgressStatsProps) {
+    const { brandColors } = useAuth();
+
     if (!assessments || assessments.length < 2) {
         return null;
     }
@@ -35,7 +38,7 @@ export function ProgressStats({ assessments }: ProgressStatsProps) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.sectionTitle}>Resultados Totais</Text>
+            <Text style={styles.sectionTitle}>Sumário de Resultados</Text>
 
             <View style={styles.statsGrid}>
                 {/* Weight Change */}
@@ -43,17 +46,21 @@ export function ProgressStats({ assessments }: ProgressStatsProps) {
                     <View style={styles.statCard}>
                         <View style={styles.statHeader}>
                             {weightDiff < 0 ? (
-                                <TrendingDown size={16} color="#D4FF00" />
+                                <View style={[styles.iconBox, { backgroundColor: 'rgba(212, 255, 0, 0.1)' }]}>
+                                    <TrendingDown size={14} color="#D4FF00" />
+                                </View>
                             ) : (
-                                <TrendingUp size={16} color="#FF4444" />
+                                <View style={[styles.iconBox, { backgroundColor: 'rgba(255, 68, 68, 0.1)' }]}>
+                                    <TrendingUp size={14} color="#FF4444" />
+                                </View>
                             )}
-                            <Text style={styles.statLabel}>Variação de Peso</Text>
+                            <Text style={styles.statLabel}>PESO TOTAL</Text>
                         </View>
                         <Text style={[
                             styles.statValue,
                             weightDiff < 0 ? styles.positive : styles.negative
                         ]}>
-                            {weightDiff > 0 ? '+' : ''}{weightDiff.toFixed(1)} kg
+                            {weightDiff > 0 ? '+' : ''}{weightDiff.toFixed(1)}kg
                         </Text>
                     </View>
                 )}
@@ -63,11 +70,15 @@ export function ProgressStats({ assessments }: ProgressStatsProps) {
                     <View style={styles.statCard}>
                         <View style={styles.statHeader}>
                             {bodyFatDiff < 0 ? (
-                                <TrendingDown size={16} color="#D4FF00" />
+                                <View style={[styles.iconBox, { backgroundColor: 'rgba(212, 255, 0, 0.1)' }]}>
+                                    <TrendingDown size={14} color="#D4FF00" />
+                                </View>
                             ) : (
-                                <TrendingUp size={16} color="#FF4444" />
+                                <View style={[styles.iconBox, { backgroundColor: 'rgba(255, 68, 68, 0.1)' }]}>
+                                    <TrendingUp size={14} color="#FF4444" />
+                                </View>
                             )}
-                            <Text style={styles.statLabel}>Variação Gordura</Text>
+                            <Text style={styles.statLabel}> % GORDURA</Text>
                         </View>
                         <Text style={[
                             styles.statValue,
@@ -83,26 +94,32 @@ export function ProgressStats({ assessments }: ProgressStatsProps) {
                     <View style={styles.statCard}>
                         <View style={styles.statHeader}>
                             {leanMassDiff > 0 ? (
-                                <TrendingUp size={16} color="#D4FF00" />
+                                <View style={[styles.iconBox, { backgroundColor: 'rgba(212, 255, 0, 0.1)' }]}>
+                                    <TrendingUp size={14} color="#D4FF00" />
+                                </View>
                             ) : (
-                                <TrendingDown size={16} color="#FF4444" />
+                                <View style={[styles.iconBox, { backgroundColor: 'rgba(255, 68, 68, 0.1)' }]}>
+                                    <TrendingDown size={14} color="#FF4444" />
+                                </View>
                             )}
-                            <Text style={styles.statLabel}>Massa Magra</Text>
+                            <Text style={styles.statLabel}>MASSA MAGRA</Text>
                         </View>
                         <Text style={[
                             styles.statValue,
                             leanMassDiff > 0 ? styles.positive : styles.negative
                         ]}>
-                            {leanMassDiff > 0 ? '+' : ''}{leanMassDiff.toFixed(1)} kg
+                            {leanMassDiff > 0 ? '+' : ''}{leanMassDiff.toFixed(1)}kg
                         </Text>
                     </View>
                 )}
 
                 {/* Time Period */}
-                <View style={styles.statCard}>
+                <View style={[styles.statCard, { borderStyle: 'dashed', backgroundColor: 'transparent' }]}>
                     <View style={styles.statHeader}>
-                        <Calendar size={16} color="#D4FF00" />
-                        <Text style={styles.statLabel}>Período</Text>
+                        <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+                            <Calendar size={14} color="rgba(255,255,255,0.4)" />
+                        </View>
+                        <Text style={styles.statLabel}>PERÍODO</Text>
                     </View>
                     <Text style={styles.statValue}>
                         {daysBetween} dias
@@ -110,10 +127,12 @@ export function ProgressStats({ assessments }: ProgressStatsProps) {
                 </View>
 
                 {/* Total Assessments */}
-                <View style={styles.statCard}>
+                <View style={[styles.statCard, { borderStyle: 'dashed', backgroundColor: 'transparent' }]}>
                     <View style={styles.statHeader}>
-                        <Target size={16} color="#D4FF00" />
-                        <Text style={styles.statLabel}>Avaliações</Text>
+                        <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+                            <Target size={14} color="rgba(255,255,255,0.4)" />
+                        </View>
+                        <Text style={styles.statLabel}>CHECK-INS</Text>
                     </View>
                     <Text style={styles.statValue}>
                         {assessments.length}
@@ -129,13 +148,11 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     sectionTitle: {
-        color: '#D4FF00',
         fontSize: 12,
-        fontWeight: '900',
-        fontStyle: 'italic',
-        marginBottom: 12,
-        textTransform: 'uppercase',
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        color: 'rgba(255,255,255,0.5)',
         letterSpacing: 1,
+        marginBottom: 16,
     },
     statsGrid: {
         flexDirection: 'row',
@@ -143,29 +160,36 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     statCard: {
-        width: 'calc(50% - 6px)' as any,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        width: '48%',
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 24,
+        padding: 20,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-        padding: 16,
-        transform: [{ skewX: '-3deg' }],
+        borderColor: 'rgba(255,255,255,0.05)',
     },
     statHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        marginBottom: 8,
+        gap: 10,
+        marginBottom: 12,
+    },
+    iconBox: {
+        width: 28,
+        height: 28,
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     statLabel: {
-        color: 'rgba(255,255,255,0.4)',
+        color: 'rgba(255,255,255,0.3)',
         fontSize: 9,
         fontWeight: '900',
+        letterSpacing: 0.5,
     },
     statValue: {
         color: '#FFF',
-        fontSize: 20,
-        fontWeight: '900',
-        fontStyle: 'italic',
+        fontSize: 22,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
     },
     positive: {
         color: '#D4FF00',
@@ -173,4 +197,4 @@ const styles = StyleSheet.create({
     negative: {
         color: '#FF4444',
     },
-} as any);
+});

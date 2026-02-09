@@ -34,10 +34,8 @@ import {
 import { TextInputMask } from 'react-native-masked-text';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
+import * as Haptics from 'expo-haptics';
 
-/**
- * Profile Edit Screen - Allows athletes to fill in their own biometric data
- */
 export default function ProfileEditScreen() {
     const { profile, brandColors } = useAuth();
     const router = useRouter();
@@ -46,7 +44,7 @@ export default function ProfileEditScreen() {
     const [formData, setFormData] = useState({
         full_name: profile?.full_name || '',
         gender: profile?.gender || '',
-        birth_date: profile?.birth_date || '', // Expected format: YYYY-MM-DD
+        birth_date: profile?.birth_date || '',
         phone: profile?.phone || '',
         current_weight: profile?.current_weight?.toString().replace('.', ',') || '',
         target_weight: profile?.target_weight?.toString().replace('.', ',') || '',
@@ -72,6 +70,7 @@ export default function ProfileEditScreen() {
 
         if (!result.canceled && result.assets[0].base64) {
             setIsUploading(true);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             try {
                 const asset = result.assets[0];
                 const fileExt = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
@@ -91,6 +90,7 @@ export default function ProfileEditScreen() {
                     .getPublicUrl(filePath);
 
                 setFormData(prev => ({ ...prev, avatar_url: publicUrl }));
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             } catch (error: any) {
                 console.error('Error uploading image:', error);
                 Alert.alert('Erro no Upload', 'Não foi possível carregar sua imagem.');
@@ -108,10 +108,9 @@ export default function ProfileEditScreen() {
         }
 
         setIsSaving(true);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         try {
-            // Clean up phone number: remove masking characters (keep only digits)
             const cleanPhone = formData.phone.replace(/\D/g, '');
-
             const normalizedCurrentWeight = formData.current_weight.replace(',', '.');
             const normalizedTargetWeight = formData.target_weight.replace(',', '.');
             const normalizedHeight = formData.height.replace(',', '.');
@@ -126,10 +125,12 @@ export default function ProfileEditScreen() {
                 height: formData.height ? parseFloat(normalizedHeight) : null,
                 avatar_url: formData.avatar_url,
             });
+
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             router.back();
         } catch (error: any) {
             console.error('Error saving profile:', error);
-            setErrorMessage(error.message || 'Não foi possível salvar os dados. Verifique sua conexão e tente novamente.');
+            setErrorMessage(error.message || 'Não foi possível salvar os dados.');
             setModalVisible(true);
         } finally {
             setIsSaving(false);
@@ -139,7 +140,6 @@ export default function ProfileEditScreen() {
     const onDateChange = (event: any, selectedDate?: Date) => {
         setShowDatePicker(false);
         if (selectedDate) {
-            // Store as ISO YYYY-MM-DD
             setFormData({ ...formData, birth_date: format(selectedDate, 'yyyy-MM-dd') });
         }
     };
@@ -159,7 +159,6 @@ export default function ProfileEditScreen() {
                 <Text style={styles.label}>{label}</Text>
             </View>
             <View style={styles.inputWrapper}>
-                <View style={[styles.indicator, { backgroundColor: brandColors.primary }]} />
                 {maskType ? (
                     <TextInputMask
                         type={maskType}
@@ -167,14 +166,7 @@ export default function ProfileEditScreen() {
                         style={styles.input}
                         value={value}
                         includeRawValueInChangeText={true}
-                        onChangeText={(text, raw) => {
-                            if (maskType === 'datetime') {
-                                // For datetime, we handle conversion if needed, but here text is masked
-                                onChange(text);
-                            } else {
-                                onChange(text);
-                            }
-                        }}
+                        onChangeText={onChange}
                         placeholder={placeholder}
                         placeholderTextColor="rgba(255,255,255,0.2)"
                         keyboardType={keyboardType}
@@ -194,14 +186,15 @@ export default function ProfileEditScreen() {
     );
 
     return (
-        <Container variant="page">
+        <Container variant="page" seamless>
             <Header
-                title="AJUSTE DE PERFIL"
-                subtitle="CONFIGURAÇÃO TÁTICA BIOMÉTRICA"
+                title="Editar Perfil"
+                subtitle="DADOS E CONTATO"
+                variant="hero"
                 onBack={() => router.back()}
                 rightAction={
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <X size={24} color="rgba(255,255,255,0.5)" />
+                    <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
+                        <X size={20} color="rgba(255,255,255,0.4)" />
                     </TouchableOpacity>
                 }
             />
@@ -211,159 +204,154 @@ export default function ProfileEditScreen() {
                 style={{ flex: 1 }}
             >
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-
-                    {/* Avatar Upload Section */}
+                    {/* Avatar Upload Selection */}
                     <View style={styles.avatarSection}>
                         <TouchableOpacity
-                            style={[styles.avatarUploadContainer, { borderColor: brandColors.primary }]}
+                            style={[styles.avatarUploadContainer, { borderColor: 'rgba(255,255,255,0.05)' }]}
                             onPress={handlePickImage}
+                            activeOpacity={0.8}
                             disabled={isUploading}
                         >
                             {formData.avatar_url ? (
                                 <Image source={{ uri: formData.avatar_url }} style={styles.avatarImage} />
                             ) : (
-                                <View style={[styles.avatarPlaceholder, { backgroundColor: `${brandColors.primary}10` }]}>
-                                    <User size={40} color={brandColors.primary} />
+                                <View style={[styles.avatarPlaceholder, { backgroundColor: 'rgba(255,255,255,0.02)' }]}>
+                                    <User size={32} color="rgba(255,255,255,0.2)" />
                                 </View>
                             )}
-                            {isUploading ? (
+                            <View style={[styles.editIconContainer, { backgroundColor: brandColors.primary }]}>
+                                <Camera size={14} color={brandColors.secondary} />
+                            </View>
+                            {isUploading && (
                                 <View style={styles.uploadOverlay}>
-                                    <ActivityIndicator color="#FFF" />
-                                </View>
-                            ) : (
-                                <View style={[styles.editIconContainer, { backgroundColor: brandColors.primary }]}>
-                                    <Camera size={16} color={brandColors.secondary} />
+                                    <ActivityIndicator color="#FFF" size="small" />
                                 </View>
                             )}
                         </TouchableOpacity>
                         <Text style={styles.avatarLabel}>FOTO DE PERFIL</Text>
                     </View>
 
-                    {renderInput(
-                        "NOME COMPLETO",
-                        formData.full_name,
-                        (val) => setFormData({ ...formData, full_name: val }),
-                        <User size={14} color={brandColors.primary} />,
-                        "Seu nome completo"
-                    )}
+                    <View style={styles.formContainer}>
+                        {renderInput(
+                            "NOME DE EXIBIÇÃO",
+                            formData.full_name,
+                            (val) => setFormData({ ...formData, full_name: val }),
+                            <User size={12} color={brandColors.primary} />,
+                            "Como devemos te chamar?"
+                        )}
 
-                    <View style={styles.row}>
-                        <View style={[styles.inputGroup, { flex: 1 }]}>
-                            <View style={styles.labelContainer}>
-                                <Activity size={14} color={brandColors.primary} />
-                                <Text style={styles.label}>GÊNERO</Text>
-                            </View>
-                            <View style={styles.pickerWrapper}>
-                                <View style={[styles.indicator, { backgroundColor: brandColors.primary }]} />
+                        <View style={styles.row}>
+                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                                <View style={styles.labelContainer}>
+                                    <Activity size={12} color={brandColors.primary} />
+                                    <Text style={styles.label}>GÊNERO</Text>
+                                </View>
                                 <TouchableOpacity
                                     style={styles.pickerTrigger}
                                     onPress={() => setShowGenderModal(true)}
+                                    activeOpacity={0.7}
                                 >
                                     <Text style={[styles.pickerText, !formData.gender && { color: 'rgba(255,255,255,0.2)' }]}>
-                                        {formData.gender === 'male' ? 'MASCULINO' :
-                                            formData.gender === 'female' ? 'FEMININO' :
-                                                formData.gender === 'other' ? 'OUTRO' : 'SELECIONE'}
+                                        {formData.gender === 'male' ? 'Masculino' :
+                                            formData.gender === 'female' ? 'Feminino' :
+                                                formData.gender === 'other' ? 'Outro' : 'Selecione'}
                                     </Text>
-                                    <ChevronDown size={16} color="rgba(255,255,255,0.4)" />
+                                    <ChevronDown size={14} color="rgba(255,255,255,0.3)" />
                                 </TouchableOpacity>
                             </View>
-                        </View>
 
-                        <View style={[styles.inputGroup, { flex: 1 }]}>
-                            <View style={styles.labelContainer}>
-                                <Calendar size={14} color={brandColors.primary} />
-                                <Text style={styles.label}>NASCIMENTO</Text>
-                            </View>
-                            <View style={styles.pickerWrapper}>
-                                <View style={[styles.indicator, { backgroundColor: brandColors.primary }]} />
+                            <View style={[styles.inputGroup, { flex: 1 }]}>
+                                <View style={styles.labelContainer}>
+                                    <Calendar size={12} color={brandColors.primary} />
+                                    <Text style={styles.label}>NASCIMENTO</Text>
+                                </View>
                                 <TouchableOpacity
                                     style={styles.pickerTrigger}
                                     onPress={() => setShowDatePicker(true)}
+                                    activeOpacity={0.7}
                                 >
                                     <Text style={[styles.pickerText, !formData.birth_date && { color: 'rgba(255,255,255,0.2)' }]}>
                                         {formData.birth_date ? format(new Date(formData.birth_date + 'T12:00:00'), 'dd/MM/yyyy') : 'DD/MM/AAAA'}
                                     </Text>
-                                    <Calendar size={16} color="rgba(255,255,255,0.4)" />
+                                    <Calendar size={14} color="rgba(255,255,255,0.3)" />
                                 </TouchableOpacity>
                             </View>
                         </View>
-                    </View>
 
-                    <View style={styles.row}>
-                        <View style={{ flex: 1 }}>
-                            {renderInput(
-                                "PESO ATUAL (KG)",
-                                formData.current_weight,
-                                (val) => setFormData({ ...formData, current_weight: val }),
-                                <Scale size={14} color={brandColors.primary} />,
-                                "00.0",
-                                "decimal-pad"
-                            )}
+                        <View style={styles.row}>
+                            <View style={{ flex: 1 }}>
+                                {renderInput(
+                                    "PESO (KG)",
+                                    formData.current_weight,
+                                    (val) => setFormData({ ...formData, current_weight: val }),
+                                    <Scale size={12} color={brandColors.primary} />,
+                                    "0.0",
+                                    "decimal-pad"
+                                )}
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                {renderInput(
+                                    "ALVO (KG)",
+                                    formData.target_weight,
+                                    (val) => setFormData({ ...formData, target_weight: val }),
+                                    <Target size={12} color={brandColors.primary} />,
+                                    "0.0",
+                                    "decimal-pad"
+                                )}
+                            </View>
                         </View>
-                        <View style={{ flex: 1 }}>
-                            {renderInput(
-                                "ALVO TÁTICO (KG)",
-                                formData.target_weight,
-                                (val) => setFormData({ ...formData, target_weight: val }),
-                                <Target size={14} color={brandColors.primary} />,
-                                "00.0",
-                                "decimal-pad"
-                            )}
-                        </View>
-                    </View>
 
-                    {renderInput(
-                        "CONTATO (WHATSAPP)",
-                        formData.phone,
-                        (val) => setFormData({ ...formData, phone: val }),
-                        <Phone size={14} color={brandColors.primary} />,
-                        "(00) 00000-0000",
-                        "phone-pad",
-                        "cel-phone"
-                    )}
-
-                    <View style={{ height: 40 }} />
-
-                    <TouchableOpacity
-                        style={[styles.saveButton, { backgroundColor: brandColors.primary }]}
-                        onPress={handleSave}
-                        disabled={isSaving}
-                    >
-                        {isSaving ? (
-                            <ActivityIndicator color={brandColors.secondary} />
-                        ) : (
-                            <>
-                                <Text style={[styles.saveButtonText, { color: brandColors.secondary }]}>CONSOLIDAR ALTERAÇÕES</Text>
-                                <Save size={20} color={brandColors.secondary} />
-                            </>
+                        {renderInput(
+                            "CONTATO WHATSAPP",
+                            formData.phone,
+                            (val) => setFormData({ ...formData, phone: val }),
+                            <Phone size={12} color={brandColors.primary} />,
+                            "(00) 00000-0000",
+                            "phone-pad",
+                            "cel-phone"
                         )}
-                    </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.saveButton, { backgroundColor: brandColors.primary }]}
+                            onPress={handleSave}
+                            disabled={isSaving}
+                            activeOpacity={0.8}
+                        >
+                            {isSaving ? (
+                                <ActivityIndicator color={brandColors.secondary} />
+                            ) : (
+                                <>
+                                    <Text style={[styles.saveButtonText, { color: brandColors.secondary }]}>Salvar Alterações</Text>
+                                    <Save size={18} color={brandColors.secondary} />
+                                </>
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 </ScrollView>
             </KeyboardAvoidingView>
 
             {/* Gender Selection Modal */}
             <ConfirmationModal
                 visible={showGenderModal}
-                title="SELECIONE O GÊNERO"
+                title="Gênero"
                 message="Como você se identifica?"
                 type="info"
-                onConfirm={() => { }} // Not used here as we have custom buttons
+                onConfirm={() => { }}
                 onCancel={() => setShowGenderModal(false)}
                 showFooter={false}
-                cancelText="CANCELAR"
                 brandColors={brandColors}
             >
                 <View style={styles.modalOptions}>
                     {[
-                        { id: 'male', label: 'MASCULINO' },
-                        { id: 'female', label: 'FEMININO' },
-                        { id: 'other', label: 'OUTRO' }
+                        { id: 'male', label: 'Masculino' },
+                        { id: 'female', label: 'Feminino' },
+                        { id: 'other', label: 'Outro' }
                     ].map((opt) => (
                         <TouchableOpacity
                             key={opt.id}
                             style={[
                                 styles.optionButton,
-                                formData.gender === opt.id && { backgroundColor: `${brandColors.primary}20`, borderColor: brandColors.primary }
+                                formData.gender === opt.id && { backgroundColor: 'rgba(255,255,255,0.05)', borderColor: brandColors.primary }
                             ]}
                             onPress={() => {
                                 setFormData({ ...formData, gender: opt.id as any });
@@ -378,63 +366,29 @@ export default function ProfileEditScreen() {
                             </Text>
                         </TouchableOpacity>
                     ))}
-
-                    <TouchableOpacity
-                        style={[styles.optionButton, { marginTop: 10, backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'transparent' }]}
-                        onPress={() => setShowGenderModal(false)}
-                    >
-                        <Text style={[styles.optionText, { color: 'rgba(255,255,255,0.5)' }]}>CANCELAR</Text>
-                    </TouchableOpacity>
                 </View>
             </ConfirmationModal>
 
-            {/* Native Date Picker Helper */}
+            {/* Native Date Picker */}
             {showDatePicker && (
-                Platform.OS === 'ios' ? (
-                    <ConfirmationModal
-                        visible={showDatePicker}
-                        title="EFETOR CALENDÁRIO"
-                        message="SINCRONIZAR DATA DE NASCIMENTO"
-                        type="info"
-                        onConfirm={() => setShowDatePicker(false)}
-                        onCancel={() => setShowDatePicker(false)}
-                        brandColors={brandColors}
-                        containerStyle={{ paddingHorizontal: 12 }}
-                    >
-                        <View style={styles.datePickerContainer}>
-                            <View style={[styles.hudLine, { backgroundColor: brandColors.primary }]} />
-                            <DateTimePicker
-                                value={formData.birth_date ? new Date(formData.birth_date + 'T12:00:00') : new Date()}
-                                mode="date"
-                                display="inline"
-                                onChange={onDateChange}
-                                maximumDate={new Date()}
-                                themeVariant="dark"
-                                accentColor={brandColors.primary}
-                                textColor="#FFFFFF"
-                                style={{ width: '100%', alignSelf: 'center' }}
-                            />
-                        </View>
-                    </ConfirmationModal>
-                ) : (
-                    <DateTimePicker
-                        value={formData.birth_date ? new Date(formData.birth_date + 'T12:00:00') : new Date()}
-                        mode="date"
-                        display="default"
-                        onChange={onDateChange}
-                        maximumDate={new Date()}
-                    />
-                )
+                <DateTimePicker
+                    value={formData.birth_date ? new Date(formData.birth_date + 'T12:00:00') : new Date()}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={onDateChange}
+                    maximumDate={new Date()}
+                    themeVariant="dark"
+                />
             )}
 
             <ConfirmationModal
                 visible={modalVisible}
-                title="ERRO DE SINCRONIZAÇÃO"
-                message={errorMessage || "Não foi possível salvar os dados. Verifique sua conexão e tente novamente."}
+                title="Erro ao Salvar"
+                message={errorMessage}
                 type="warning"
                 onConfirm={() => setModalVisible(false)}
                 onCancel={() => setModalVisible(false)}
-                confirmText="ENTENDI"
+                confirmText="Ok"
                 brandColors={brandColors}
             />
         </Container>
@@ -443,65 +397,70 @@ export default function ProfileEditScreen() {
 
 const styles = StyleSheet.create({
     scrollContent: {
-        padding: 20,
-        paddingBottom: 40,
+        paddingBottom: 60,
+    },
+    closeBtn: {
+        padding: 4,
     },
     avatarSection: {
         alignItems: 'center',
-        marginBottom: 32,
-        marginTop: 10,
+        marginVertical: 32,
     },
     avatarUploadContainer: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        borderWidth: 2,
-        padding: 5,
+        width: 100,
+        height: 100,
+        borderRadius: 32,
+        borderWidth: 1,
+        padding: 4,
         position: 'relative',
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.02)',
     },
     avatarImage: {
         width: '100%',
         height: '100%',
-        borderRadius: 55,
+        borderRadius: 28,
     },
     avatarPlaceholder: {
         width: '100%',
         height: '100%',
-        borderRadius: 55,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    uploadOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        borderRadius: 60,
+        borderRadius: 28,
         justifyContent: 'center',
         alignItems: 'center',
     },
     editIconContainer: {
         position: 'absolute',
-        bottom: 5,
-        right: 5,
+        bottom: -4,
+        right: -4,
         width: 32,
         height: 32,
-        borderRadius: 16,
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: '#000',
+        borderWidth: 3,
+        borderColor: '#050505',
     },
     avatarLabel: {
         fontSize: 10,
-        fontWeight: '900',
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
         color: 'rgba(255,255,255,0.3)',
-        letterSpacing: 2,
-        marginTop: 12,
+        letterSpacing: 1,
+        marginTop: 16,
+    },
+    uploadOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    formContainer: {
+        paddingHorizontal: 20,
     },
     row: {
         flexDirection: 'row',
-        gap: 16,
+        gap: 20,
     },
     inputGroup: {
         marginBottom: 24,
@@ -511,109 +470,78 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 8,
         marginBottom: 10,
+        paddingLeft: 4,
     },
     label: {
-        fontSize: 10,
-        fontWeight: '900',
-        color: 'rgba(212, 255, 0, 0.6)',
-        letterSpacing: 1.5,
-        textTransform: 'uppercase',
-        fontStyle: 'italic',
-        fontFamily: 'Syne',
+        fontSize: 11,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        color: 'rgba(255,255,255,0.5)',
+        letterSpacing: 0.5,
     },
     inputWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
-        height: 60,
-    },
-    indicator: {
-        width: 3,
-        height: '60%',
-        marginRight: 15,
-        shadowColor: '#D4FF00',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.5,
-        shadowRadius: 10,
+        borderColor: 'rgba(255,255,255,0.05)',
+        height: 56,
+        paddingHorizontal: 20,
+        justifyContent: 'center',
     },
     input: {
-        flex: 1,
         color: '#FFF',
-        fontSize: 16,
-        fontWeight: '800',
-        fontStyle: 'italic',
-        textTransform: 'uppercase',
-    },
-    pickerWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
-        height: 60,
+        fontSize: 15,
+        fontWeight: '600',
     },
     pickerTrigger: {
-        flex: 1,
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
+        height: 56,
+        paddingHorizontal: 20,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingRight: 15,
     },
     pickerText: {
         color: '#FFF',
-        fontSize: 14,
-        fontWeight: '800',
-        fontStyle: 'italic',
-        paddingLeft: 18,
+        fontSize: 15,
+        fontWeight: '600',
     },
     saveButton: {
-        height: 70,
+        height: 64,
+        borderRadius: 24,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 15,
-        transform: [{ skewX: '-10deg' }],
-        shadowColor: '#D4FF00',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-        elevation: 10,
+        gap: 12,
+        marginTop: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
     },
     saveButtonText: {
         fontSize: 16,
-        fontWeight: '900',
-        letterSpacing: 1,
-        fontStyle: 'italic',
-        transform: [{ skewX: '10deg' }],
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
     },
     modalOptions: {
-        gap: 12,
-        marginTop: 20,
+        gap: 8,
+        marginTop: 16,
     },
     optionButton: {
-        height: 54,
+        height: 56,
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: 'rgba(255,255,255,0.05)',
         backgroundColor: 'rgba(255,255,255,0.02)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     optionText: {
-        fontSize: 12,
-        fontWeight: '800',
-        fontStyle: 'italic',
+        fontSize: 14,
+        fontWeight: '700',
         color: '#FFF',
-    },
-    datePickerContainer: {
-        width: '100%',
-        padding: 0,
-        marginTop: 10,
-    },
-    hudLine: {
-        height: 2,
-        width: 30,
-        marginBottom: 10,
     },
 });

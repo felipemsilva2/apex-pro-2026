@@ -10,7 +10,8 @@ import {
     ActivityIndicator
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
-import { Shield, ChevronRight } from 'lucide-react-native';
+import { Shield, ChevronRight, Scale, Info } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -19,6 +20,7 @@ export default function LoginScreen() {
     const [error, setError] = useState<string | null>(null);
 
     const { signIn, brandColors, tenant } = useAuth();
+    const router = useRouter();
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -32,7 +34,7 @@ export default function LoginScreen() {
             // Managed Login Logic: If no @, assume it's a managed username
             const identification = email.includes('@')
                 ? email.trim()
-                : `${email.trim().toLowerCase()}@managed.nutripro.pro`;
+                : `${email.trim().toLowerCase()}@acesso.apexpro.fit`;
 
             const { error: signInError } = await signIn(identification, password);
             if (signInError) throw signInError;
@@ -119,7 +121,16 @@ export default function LoginScreen() {
 
                 {/* Footer info */}
                 <View style={styles.footer}>
-                    <Text style={styles.version}>VERSION 1.0.4 Alpha // PLATAFORMA</Text>
+                    <View style={styles.legalLinks}>
+                        <TouchableOpacity style={styles.legalButton} onPress={() => router.push('/privacy')}>
+                            <Text style={styles.legalText}>PRIVACIDADE</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.legalDivider}>•</Text>
+                        <TouchableOpacity style={styles.legalButton} onPress={() => router.push('/terms')}>
+                            <Text style={styles.legalText}>TERMOS DE USO</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <Text style={styles.version}>VERSÃO 1.0.4 // PLATAFORMA</Text>
                     <Text style={styles.copyright}>© 2026 APEXPRO PERFORMANCE</Text>
                 </View>
             </View>
@@ -252,5 +263,24 @@ const styles = StyleSheet.create({
         fontSize: 8,
         fontWeight: '900',
         marginTop: 4,
+    },
+    legalLinks: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        marginBottom: 12,
+    },
+    legalButton: {
+        padding: 4,
+    },
+    legalText: {
+        color: '#FFF',
+        fontSize: 9,
+        fontWeight: '900',
+        letterSpacing: 1,
+    },
+    legalDivider: {
+        color: 'rgba(255,255,255,0.3)',
+        fontSize: 8,
     }
 } as any);

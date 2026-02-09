@@ -49,15 +49,16 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
   const { signOut, profile } = useAuth();
 
   const location = useLocation();
+  const { tenant, t } = useTenant();
   const unreadCount = mockMessages.filter(m => m.unread).length;
-  const { tenant } = useTenant();
 
   const menuItems = [
     { icon: LayoutDashboard, label: "VISÃO GERAL", path: "/dashboard" },
     { icon: Users, label: "MEUS ALUNOS", path: "/dashboard/clients" },
-    { icon: Calendar, label: "AGENDA", path: "/dashboard/agenda" },
-    { icon: FileText, label: "TREINOS & DIETA", path: "/dashboard/plans" },
-    { icon: MessageSquare, label: "CHAT", path: "/dashboard/messages", badge: unreadCount },
+    { icon: Activity, label: t('marketing', 'MARKETING'), path: "/dashboard/marketing" },
+    { icon: Calendar, label: t('appointments', 'AGENDA'), path: "/dashboard/agenda" },
+    { icon: FileText, label: `${t('training', 'TREINOS')} & ${t('nutrition', 'DIETA')}`, path: "/dashboard/plans" },
+    { icon: MessageSquare, label: t('messages', 'CHAT'), path: "/dashboard/messages", badge: unreadCount },
     { icon: CreditCard, label: "ASSINATURA", path: "/dashboard/billing" },
     { icon: Settings, label: "CONFIGURAÇÕES", path: "/dashboard/settings" },
   ];
@@ -66,13 +67,12 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
     <aside
       data-tour="sidebar-nav"
       className={cn(
-        "fixed left-0 top-0 h-screen z-40 bg-black border-r border-white/5 transition-all duration-500 group/sidebar overflow-hidden flex flex-col",
+        "fixed left-0 top-0 h-screen z-40 bg-zinc-950/40 backdrop-blur-2xl border-r border-white/10 transition-all duration-500 group/sidebar overflow-hidden flex flex-col",
         collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Brand */}
-      <div className="p-6 h-20 flex items-center justify-between border-b border-white/5 shrink-0 relative overflow-hidden">
-        <div className="scanline opacity-20" />
+      <div className="p-6 h-20 flex items-center justify-between border-b border-white/10 shrink-0 relative overflow-hidden">
         {!collapsed ? (
           <div className="flex items-center gap-3 animate-fade-in">
             <div className="w-10 h-10 rounded-full border border-primary/20 bg-primary/5 flex items-center justify-center overflow-hidden shrink-0">
@@ -102,10 +102,9 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Profile */}
         <div className={cn(
-          "mx-4 my-2 p-4 bg-white/5 border border-white/10 relative overflow-hidden shrink-0",
+          "mx-4 my-2 p-4 bg-white/[0.03] border border-white/10 rounded-2xl relative overflow-hidden shrink-0",
           collapsed ? "px-0 flex justify-center" : ""
         )}>
-          <div className="absolute top-0 right-0 w-8 h-8 bg-primary/10 -rotate-45 translate-x-4 -translate-y-4" />
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -163,10 +162,7 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
                   </div>
                 )}
                 {isActive && (
-                  <>
-                    <div className="absolute left-0 top-0 w-1 h-full bg-primary neon-glow z-20" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent z-0" />
-                  </>
+                  <div className="absolute inset-0 bg-primary/5 border-l-2 border-primary z-0" />
                 )}
               </NavLink>
             );

@@ -114,7 +114,7 @@ export default function AssessmentDetailScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.navBack}>
                     <ArrowLeft size={24} color="#FFF" />
                 </TouchableOpacity>
-                <Text style={styles.navTitle}>EVOLUTION REPORT</Text>
+                <Text style={styles.navTitle}>RELATÓRIO DE EVOLUÇÃO</Text>
                 <TouchableOpacity style={styles.navShare} onPress={handleShare}>
                     <Share2 size={24} color={brandColors.primary} />
                 </TouchableOpacity>

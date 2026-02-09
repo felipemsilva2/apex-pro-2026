@@ -89,11 +89,11 @@ export function EditClientDialog({ client, trigger }: EditClientDialogProps) {
                 <form onSubmit={handleSubmit(onSubmit, (errors) => {
                     const failedFields = Object.keys(errors).join(", ");
                     toast.error(`Erro nos campos: ${failedFields}`);
-                })} className="p-8 pt-2 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar relative">
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                })} className="p-10 pt-2 space-y-10 max-h-[75vh] overflow-y-auto custom-scrollbar relative">
+                    <div className="grid grid-cols-2 gap-x-10 gap-y-8">
                         {/* Name */}
                         <div className="space-y-2 col-span-2">
-                            <Label htmlFor="full_name" className="font-display font-bold text-[9px] uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2 mb-1">
+                            <Label htmlFor="full_name" className="font-display font-bold text-[11px] uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2 mb-2">
                                 <User size={10} className="text-primary" /> NOME COMPLETO
                             </Label>
                             <div className="relative group">
@@ -109,7 +109,7 @@ export function EditClientDialog({ client, trigger }: EditClientDialogProps) {
 
                         {/* Status & Gender Row */}
                         <div className="space-y-2 col-span-2 md:col-span-1">
-                            <Label className="font-display font-bold text-[9px] uppercase tracking-[0.2em] text-primary/60 mb-1">STATUS DA CONTA</Label>
+                            <Label className="font-display font-bold text-[11px] uppercase tracking-[0.2em] text-primary/60 mb-2">STATUS DA CONTA</Label>
                             <Select
                                 value={status}
                                 onValueChange={(val) => setValue("status", val as any)}
@@ -127,7 +127,7 @@ export function EditClientDialog({ client, trigger }: EditClientDialogProps) {
                         </div>
 
                         <div className="space-y-2 col-span-2 md:col-span-1">
-                            <Label htmlFor="gender" className="font-display font-bold text-[9px] uppercase tracking-[0.2em] text-primary/60 mb-1">GÊNERO</Label>
+                            <Label htmlFor="gender" className="font-display font-bold text-[11px] uppercase tracking-[0.2em] text-primary/60 mb-2">GÊNERO</Label>
                             <Select
                                 value={watch("gender") || ""}
                                 onValueChange={(val) => setValue("gender", val as "male" | "female" | "other")}
@@ -145,7 +145,7 @@ export function EditClientDialog({ client, trigger }: EditClientDialogProps) {
 
                         {/* Birth Date */}
                         <div className="space-y-2 col-span-2 md:col-span-1">
-                            <Label htmlFor="birth_date" className="font-display font-bold text-[9px] uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2 mb-1">
+                            <Label htmlFor="birth_date" className="font-display font-bold text-[11px] uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2 mb-2">
                                 <Calendar size={10} className="text-primary" /> DATA DE NASCIMENTO
                             </Label>
                             <Popover>
@@ -212,7 +212,7 @@ export function EditClientDialog({ client, trigger }: EditClientDialogProps) {
 
                         {/* Phone */}
                         <div className="space-y-2 col-span-2 md:col-span-1">
-                            <Label htmlFor="phone" className="font-display font-bold text-[9px] uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2 mb-1">
+                            <Label htmlFor="phone" className="font-display font-bold text-[11px] uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2 mb-2">
                                 <Phone size={10} className="text-primary" /> CONTATO
                             </Label>
                             <Input
@@ -225,7 +225,7 @@ export function EditClientDialog({ client, trigger }: EditClientDialogProps) {
 
                         {/* Weights */}
                         <div className="space-y-2 col-span-2 md:col-span-1">
-                            <Label htmlFor="current_weight" className="font-display font-bold text-[9px] uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2 mb-1">
+                            <Label htmlFor="current_weight" className="font-display font-bold text-[11px] uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2 mb-2">
                                 <Scale size={10} className="text-primary" /> PESO ATUAL (KG)
                             </Label>
                             <div className="relative group">
@@ -241,7 +241,7 @@ export function EditClientDialog({ client, trigger }: EditClientDialogProps) {
                         </div>
 
                         <div className="space-y-2 col-span-2 md:col-span-1">
-                            <Label htmlFor="target_weight" className="font-display font-bold text-[9px] uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2 mb-1">
+                            <Label htmlFor="target_weight" className="font-display font-bold text-[11px] uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2 mb-2">
                                 <Target size={10} className="text-primary" /> META DE PESO (KG)
                             </Label>
                             <div className="relative group">
@@ -259,7 +259,7 @@ export function EditClientDialog({ client, trigger }: EditClientDialogProps) {
 
                     {/* Notes */}
                     <div className="space-y-2">
-                        <Label htmlFor="notes" className="font-display font-bold text-[9px] uppercase tracking-[0.2em] text-primary/60 mb-1 flex items-center gap-2">
+                        <Label htmlFor="notes" className="font-display font-bold text-[11px] uppercase tracking-[0.2em] text-primary/60 mb-2 flex items-center gap-2">
                             <Save size={10} className="text-primary" /> NOTAS E OBSERVAÇÕES
                         </Label>
                         <Textarea

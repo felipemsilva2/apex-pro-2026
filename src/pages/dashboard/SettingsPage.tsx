@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Palette, RefreshCw, CreditCard, Bell, Users, Camera, Save, Loader2, Crown, CheckCircle2, UserPlus, ExternalLink, Globe, Instagram, Link2, Upload, Image, Trash2, Music } from "lucide-react";
+import { User, Palette, RefreshCw, CreditCard, Bell, Users, Camera, Save, Loader2, Crown, CheckCircle2, UserPlus, ExternalLink, Globe, Instagram, Link2, Upload, Image, Trash2, Music, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +40,23 @@ const SettingsPage = () => {
     business_name: "",
     primary_color: "",
     secondary_color: "",
+    slug: "",
+  });
+
+  const [terminology, setTerminology] = useState<Record<string, string>>({
+    training: "Treino",
+    nutrition: "Dieta",
+    protocols: "Protocolos",
+    progress: "Evolução",
+    appointments: "Agenda",
+    messages: "Chat"
+  });
+
+  const [landingConfig, setLandingConfig] = useState({
+    hero_title: "",
+    hero_subtitle: "",
+    about_text: "",
+    custom_benefits: [] as string[],
   });
 
   useEffect(() => {
@@ -64,7 +81,21 @@ const SettingsPage = () => {
         business_name: tenant.business_name || "",
         primary_color: tenant.primary_color || "#d4ff00",
         secondary_color: tenant.secondary_color || "#09090b",
+        slug: tenant.slug || "",
       });
+
+      if (tenant.terminology) {
+        setTerminology(tenant.terminology);
+      }
+
+      if (tenant.landing_page_config) {
+        setLandingConfig({
+          hero_title: tenant.landing_page_config.hero_title || "",
+          hero_subtitle: tenant.landing_page_config.hero_subtitle || "",
+          about_text: tenant.landing_page_config.about_text || "",
+          custom_benefits: tenant.landing_page_config.custom_benefits || [],
+        });
+      }
     }
   }, [tenant]);
 
@@ -95,15 +126,20 @@ const SettingsPage = () => {
   };
 
   const handleSaveBrand = async () => {
-    console.log('[Settings] Saving brand settings:', brandSettings);
+    console.log('[Settings] Saving brand settings:', { ...brandSettings, terminology, landing_page_config: landingConfig });
     try {
-      await updateTenantMutation.mutateAsync(brandSettings);
+      await updateTenantMutation.mutateAsync({
+        ...brandSettings,
+        terminology,
+        landing_page_config: landingConfig
+      });
 
       // Update title immediately for instant feedback
       if (brandSettings.business_name) {
         document.title = `${brandSettings.business_name} | APEX PRO`;
       }
 
+      refetchGlobalTenant();
       console.log('[Settings] Brand settings saved successfully');
     } catch (error: any) {
       console.error('[Settings] Error saving brand settings:', error);
@@ -117,13 +153,11 @@ const SettingsPage = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error("O arquivo deve ter no máximo 2MB");
       return;
     }
 
-    // Validate file type
     if (!file.type.match(/^image\/(png|jpeg|svg\+xml)$/)) {
       toast.error("Apenas PNG, JPE ou SVG são permitidos");
       return;
@@ -159,13 +193,11 @@ const SettingsPage = () => {
     const file = event.target.files?.[0];
     if (!file || !profile) return;
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error("O arquivo deve ter no máximo 2MB");
       return;
     }
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast.error("Apenas imagens são permitidas");
       return;
@@ -242,15 +274,15 @@ const SettingsPage = () => {
           {[
             { id: 'identidade', icon: User, label: 'IDENTIDADE' },
             { id: 'branding', icon: Palette, label: 'BRANDING' },
-            { id: 'sync', icon: RefreshCw, label: 'SYNC' },
+            { id: 'vocabulary', icon: Zap, label: 'VOCABULÁRIO' },
+            { id: 'public-page', icon: Globe, label: 'PÁGINA PÚBLICA' },
             { id: 'assinatura', icon: CreditCard, label: 'ASSINATURA' },
-            { id: 'alertas', icon: Bell, label: 'ALERTAS' },
-            { id: 'equipe', icon: Users, label: 'EQUIPE DE COACHES' },
+            { id: 'equipe', icon: Users, label: 'EQUIPE' },
           ].map((tab) => (
             <TabsTrigger
               key={tab.id}
               value={tab.id}
-              className="rounded-none font-display font-black italic uppercase text-[10px] tracking-widest px-6 data-[state=active]:bg-primary data-[state=active]:text-black transition-all"
+              className="rounded-none font-display font-black italic uppercase text-[10px] tracking-widest px-6 data-[state=active]:bg-primary data-[state=active]:text-black transition-all shrink-0"
             >
               <tab.icon size={14} className="mr-2" /> {tab.label}
             </TabsTrigger>
@@ -590,24 +622,134 @@ const SettingsPage = () => {
           </div>
         </TabsContent>
 
-        {/* --- SYNC (Placeholder) --- */}
-        <TabsContent value="sync" className="mt-0 outline-none">
-          <div className="max-w-2xl bg-white/5 border border-white/10 p-8 space-y-6">
-            <div className="space-y-4">
-              <h3 className="font-display font-black italic uppercase text-lg tracking-tight flex items-center gap-2">
-                <RefreshCw className="text-primary" size={20} /> INTEGRAÇÕES <span className="text-primary text-glow-primary">SYNC</span>
+        {/* --- VOCABULÁRIO --- */}
+        <TabsContent value="vocabulary" className="mt-0 outline-none">
+          <div className="max-w-4xl bg-white/5 border border-white/10 p-8 space-y-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 -mr-16 -mt-16 rounded-full blur-3xl" />
+
+            <div className="space-y-2">
+              <h3 className="font-display font-black italic uppercase text-lg tracking-tight">
+                PERSONALIZAÇÃO DE <span className="text-primary">VOCABULÁRIO</span>
               </h3>
               <p className="text-[10px] text-white/40 font-medium uppercase tracking-widest leading-relaxed">
-                CONECTE SUAS FERRAMENTAS FAVORITAS PARA SINCRONIZAR DADOS AUTOMATICAMENTE.
+                ESCOLHA COMO CADA SEÇÃO SERÁ EXIBIDA PARA SEUS ALUNOS.
               </p>
             </div>
 
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <RefreshCw size={48} className="text-white/10 mb-4" />
-              <p className="text-white/40 font-display font-bold uppercase text-sm tracking-widest">EM BREVE</p>
-              <p className="text-white/20 text-[10px] uppercase tracking-widest mt-2">
-                GOOGLE CALENDAR, STRIPE, WHATSAPP API
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
+              {[
+                { key: 'training', label: 'TREINAMENTO', default: 'Treino' },
+                { key: 'nutrition', label: 'DIETA & NUTRIÇÃO', default: 'Dieta' },
+                { key: 'protocols', label: 'PROTOCOLOS', default: 'Protocolos' },
+                { key: 'progress', label: 'EVOLUÇÃO', default: 'Evolução' },
+                { key: 'appointments', label: 'AGENDA', default: 'Agenda' },
+                { key: 'messages', label: 'CHAT / MENSAGENS', default: 'Chat' },
+              ].map((item) => (
+                <div key={item.key} className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">{item.label}</Label>
+                  <Input
+                    value={terminology[item.key] || item.default}
+                    onChange={(e) => setTerminology(prev => ({ ...prev, [item.key]: e.target.value }))}
+                    className="bg-black/50 border-white/10 rounded-none font-display font-bold italic h-12 text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <Button onClick={handleSaveBrand} className="btn-athletic h-14 w-full justify-center text-sm gap-2 uppercase tracking-widest font-black italic">
+              <Save size={18} /> SALVAR VOCABULÁRIO
+            </Button>
+          </div>
+        </TabsContent>
+
+        {/* --- PÁGINA PÚBLICA --- */}
+        <TabsContent value="public-page" className="mt-0 outline-none">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 bg-white/5 border border-white/10 p-8 space-y-8 relative overflow-hidden">
+              <div className="space-y-2">
+                <h3 className="font-display font-black italic uppercase text-lg tracking-tight">
+                  PÁGINA <span className="text-primary">PUBLICA DO COACH</span>
+                </h3>
+                <p className="text-[10px] text-white/40 font-medium uppercase tracking-widest leading-relaxed">
+                  CONFIGURE SUA LANDING PAGE DE CAPTAÇÃO E APRESENTAÇÃO.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">SLUG DA URL (LINK ÚNICO)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/20 bg-black/30 px-3 py-3 border border-white/10">APEXPRO.FIT/</span>
+                    <Input
+                      value={brandSettings.slug}
+                      onChange={(e) => setBrandSettings(s => ({ ...s, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') }))}
+                      placeholder="seu-nome-pro"
+                      className="bg-black/50 border-white/10 rounded-none font-display font-bold italic h-12 text-sm text-primary"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">TÍTULO HERÓI (CTA PRINCIPAL)</Label>
+                  <Input
+                    value={landingConfig.hero_title}
+                    onChange={(e) => setLandingConfig(s => ({ ...s, hero_title: e.target.value }))}
+                    placeholder="ALCANCE O PRÓXIMO NÍVEL DO SEU SHAPE"
+                    className="bg-black/50 border-white/10 rounded-none font-display font-bold italic h-12 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">SUBTÍTULO HERÓI</Label>
+                  <Input
+                    value={landingConfig.hero_subtitle}
+                    onChange={(e) => setLandingConfig(s => ({ ...s, hero_subtitle: e.target.value }))}
+                    placeholder="Consultoria online focada em resultados reais e performance de elite."
+                    className="bg-black/50 border-white/10 rounded-none font-display font-bold italic h-12 text-sm"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40">SOBRE O COACH (LANDING PAGE)</Label>
+                  <Textarea
+                    value={landingConfig.about_text}
+                    onChange={(e) => setLandingConfig(s => ({ ...s, about_text: e.target.value }))}
+                    placeholder="Conte sua história e metodologia para novos alunos..."
+                    className="bg-black/50 border-white/10 rounded-none font-display font-bold italic text-sm min-h-[150px] resize-none"
+                  />
+                </div>
+              </div>
+
+              <Button onClick={handleSaveBrand} className="btn-athletic h-14 w-full justify-center text-sm gap-2 uppercase tracking-widest font-black italic">
+                <Save size={18} /> SALVAR PÁGINA PÚBLICA
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-white/5 border border-white/10 p-6 space-y-4">
+                <h4 className="font-display font-black italic uppercase text-xs tracking-tight">PREVIEW <span className="text-primary text-glow-primary">LIVE</span></h4>
+                <div className="aspect-[9/16] bg-black border border-white/10 overflow-hidden relative group">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10" />
+                  {tenant?.logo_url && (
+                    <img src={tenant.logo_url} className="absolute top-8 left-1/2 -translate-x-1/2 w-20 z-20 brightness-200" alt="Logo" />
+                  )}
+                  <div className="absolute bottom-8 left-4 right-4 z-20 space-y-2">
+                    <p className="font-display font-black italic text-xl uppercase leading-none tracking-tighter truncate">
+                      {landingConfig.hero_title || 'SEU TÍTULO AQUI'}
+                    </p>
+                    <p className="text-[8px] uppercase tracking-widest text-white/60 line-clamp-2">
+                      {landingConfig.hero_subtitle || 'Configuração de subtítulo para sua landing page.'}
+                    </p>
+                    <div className="h-8 bg-primary w-full mt-4 flex items-center justify-center">
+                      <span className="text-black font-black italic text-[8px] uppercase tracking-tighter">QUERO COMEÇAR AGORA</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-4 text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  VISUALIZAÇÃO EM TEMPO REAL
+                </div>
+              </div>
             </div>
           </div>
         </TabsContent>

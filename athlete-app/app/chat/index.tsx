@@ -66,8 +66,8 @@ export default function ChatScreen() {
                                 <View style={[styles.emptyIcon, { borderColor: 'rgba(255,255,255,0.1)' }]}>
                                     <MessageSquare size={32} color="rgba(255,255,255,0.2)" />
                                 </View>
-                                <Text style={styles.emptyText}>NENHUMA TRANSMISSÃO</Text>
-                                <Text style={styles.emptySubtext}>INICIE O PROTOCOLO DE COMUNICAÇÃO</Text>
+                                <Text style={styles.emptyText}>NENHUMA MENSAGEM</Text>
+                                <Text style={styles.emptySubtext}>ENVIE UMA MENSAGEM PARA SEU TREINADOR</Text>
                             </View>
                         ) : (
                             <FlatList

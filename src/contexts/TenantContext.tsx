@@ -8,6 +8,7 @@ interface TenantContextType {
     loading: boolean;
     error: Error | null;
     refetchTenant: () => Promise<void>;
+    t: (key: string, defaultValue?: string) => string;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -71,8 +72,15 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         await fetchTenant();
     }, [fetchTenant]);
 
+    const t = useCallback((key: string, defaultValue?: string) => {
+        if (!tenant?.terminology || !tenant.terminology[key]) {
+            return defaultValue || key;
+        }
+        return tenant.terminology[key];
+    }, [tenant]);
+
     return (
-        <TenantContext.Provider value={{ tenant, loading, error, refetchTenant }}>
+        <TenantContext.Provider value={{ tenant, loading, error, refetchTenant, t }}>
             {children}
         </TenantContext.Provider>
     );

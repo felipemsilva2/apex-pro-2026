@@ -14,7 +14,11 @@
       "backgroundColor": "#0A0A0B"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Precisamos de acesso à câmera para você tirar fotos da sua evolução física.",
+        "NSPhotoLibraryUsageDescription": "Precisamos de acesso à sua galeria para você selecionar fotos de check-in e exames."
+      }
     },
     "android": {
       "adaptiveIcon": {

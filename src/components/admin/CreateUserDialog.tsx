@@ -48,8 +48,18 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
     }, [open]);
 
     const fetchTenants = async () => {
-        const { data } = await supabase.from('tenants').select('id, business_name').order('business_name');
-        setTenants(data || []);
+        // Fetch tenants that have at least one coach associated
+        const { data: profiles } = await supabase
+            .from('profiles')
+            .select('tenant_id, tenants(id, business_name)')
+            .eq('role', 'coach');
+
+        // Extract unique tenants from profiles
+        const uniqueTenants = Array.from(new Set(
+            profiles?.filter(p => p.tenants).map(p => JSON.stringify(p.tenants))
+        )).map(s => JSON.parse(s));
+
+        setTenants(uniqueTenants.sort((a, b) => a.business_name.localeCompare(b.business_name)));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -162,7 +172,7 @@ export function CreateUserDialog({ open, onOpenChange, onSuccess }: CreateUserDi
                             required
                             className="bg-white/5 border-white/10 rounded-none h-12 font-display font-bold text-sm"
                         />
-                        <p className="text-[9px] text-white/30 italic">@managed.nutripro.pro será adicionado automaticamente</p>
+                        <p className="text-[9px] text-white/30 italic">@acesso.apexpro.fit será adicionado automaticamente</p>
                     </div>
 
                     <div className="space-y-2">

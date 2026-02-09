@@ -29,10 +29,24 @@ export type Tenant = {
     tagline: string | null;
     contact_email: string | null;
     billing_email: string | null;
-    subscription_status: 'active' | 'past_due' | 'blocked' | 'trialing' | 'canceled' | null;
+    subscription_status: 'active' | 'past_due' | 'blocked' | 'trialing' | 'canceled' | 'pending' | null;
     overdue_since: string | null;
     trial_end: string | null;
     plan_tier: 'free' | 'pro' | 'elite' | null;
+    terminology: Record<string, string> | null;
+    marketing_config: {
+        instagram: string;
+        website: string;
+        social_template_colors: string[];
+    } | null;
+    landing_page_config: {
+        hero_title: string;
+        hero_subtitle: string;
+        about_text: string;
+        custom_benefits: string[];
+    } | null;
+    slug: string | null;
+    trial_used: boolean;
     created_at: string;
     updated_at: string;
 };

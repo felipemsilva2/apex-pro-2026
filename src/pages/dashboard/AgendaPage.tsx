@@ -331,7 +331,7 @@ const AgendaPage = () => {
             <div className="w-1.5 h-6 bg-primary -skew-x-12" />
             <h3 className="text-xl font-display font-black italic uppercase tracking-tighter">Próximas Sessões</h3>
           </div>
-          <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">LIVE STATUS: ACTIVE</p>
+          <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">STATUS EM TEMPO REAL: ATIVO</p>
         </div>
 
         <div className="space-y-3">
@@ -347,7 +347,7 @@ const AgendaPage = () => {
               <div
                 key={apt.id}
                 onClick={(e) => handleAppointmentClick(e, apt)}
-                className="group flex items-center gap-6 p-4 bg-white/5 border border-white/5 hover:border-primary/40 transition-all relative overflow-hidden cursor-pointer"
+                className="group flex items-center gap-6 p-5 bg-white/5 border border-white/5 hover:border-primary/40 transition-all relative overflow-hidden cursor-pointer"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="absolute top-0 right-0 w-24 h-full bg-primary/5 -skew-x-[30deg] translate-x-12 transition-transform duration-500 group-hover:translate-x-8" />
@@ -392,12 +392,12 @@ const AgendaPage = () => {
                       const message = `Olá ${apt.client?.full_name?.split(' ')[0]}, passando para lembrar da nossa sessão de ${apt.title} hoje (${date}) às ${time}.`;
                       window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
                     }}
-                    className="w-8 h-8 flex items-center justify-center bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 text-green-500 hover:scale-105 transition-all -skew-x-12"
+                    className="w-10 h-10 flex items-center justify-center bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 text-green-500 hover:scale-105 transition-all -skew-x-12"
                     title="Enviar lembrete via WhatsApp"
                   >
 
                     {/* Using a simple generic icon or importing MessageCircle/Phone */}
-                    <MessageCircle size={14} strokeWidth={2.5} />
+                    <MessageCircle size={16} strokeWidth={2.5} />
                   </button>
 
                   {/* Google Meet Action */}
@@ -441,7 +441,7 @@ const AgendaPage = () => {
                       }
                     }}
                     className={cn(
-                      "w-8 h-8 flex items-center justify-center border transition-all -skew-x-12 hover:scale-105",
+                      "w-10 h-10 flex items-center justify-center border transition-all -skew-x-12 hover:scale-105",
                       // @ts-ignore
                       apt.video_link
                         ? "bg-purple-500/10 border-purple-500/20 text-purple-500 hover:bg-purple-500/20"
@@ -452,14 +452,14 @@ const AgendaPage = () => {
                       apt.video_link ? "Copiar Link e Enviar no WhatsApp" : "Criar sala no Google Meet"
                     }
                   >
-                    <Video size={14} strokeWidth={2.5} />
+                    <Video size={16} strokeWidth={2.5} />
                   </button>
 
                   <button
                     onClick={(e) => handleStartProtocol(e, apt)}
                     className="btn-athletic px-6 py-2 text-[10px] shadow-lg shadow-primary/5"
                   >
-                    INICIAR PROTOCOLO
+                    INICIAR PLANO
                   </button>
                 </div>
               </div>

@@ -35,18 +35,25 @@ export function ProtectedRoute({ children, allowedRoles }: { children: React.Rea
         const isOnboarding = location.pathname === '/onboarding';
         const isBilling = location.pathname.startsWith('/dashboard/billing') || location.pathname === '/blocked';
 
-        // 1. Onboarding Guard
-        const isProfileComplete = !!profile.cref;
-        if (!isProfileComplete && !isOnboarding) {
-            return <Navigate to="/onboarding" replace />;
-        }
-
-        // 2. Subscription Guard (The Paywall)
+        // 1. Subscription Guard (The Paywall) - Prioritizied
         const allowedStatuses = ['active', 'trialing'];
         const currentStatus = tenant?.subscription_status || 'pending';
 
-        if (!allowedStatuses.includes(currentStatus) && !isBilling && !isOnboarding) {
-            return <Navigate to="/blocked" replace />;
+        if (!allowedStatuses.includes(currentStatus) && !isBilling) {
+            // Se está pendente (Pix aguardando), manda para o faturamento para ver o QR Code
+            if (currentStatus === 'pending' && location.pathname !== '/dashboard/billing') {
+                return <Navigate to="/dashboard/billing" replace />;
+            }
+            // Se já está no faturamento ou blocked, não redireciona infinitamente
+            if (!isBilling) {
+                return <Navigate to="/blocked" replace />;
+            }
+        }
+
+        // 2. Onboarding Guard - Only if Payment is OK
+        const isProfileComplete = !!profile.cref;
+        if (allowedStatuses.includes(currentStatus) && !isProfileComplete && !isOnboarding) {
+            return <Navigate to="/onboarding" replace />;
         }
     }
 

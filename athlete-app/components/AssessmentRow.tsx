@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChevronRight, TrendingDown, TrendingUp, Minus, CheckCircle2 } from 'lucide-react-native';
+import { ChevronRight, TrendingDown, TrendingUp, Minus, CheckCircle2, Camera } from 'lucide-react-native';
 
 interface Assessment {
     id: string;
@@ -37,20 +37,19 @@ export const AssessmentRow = ({ assessment, previousAssessment, onPress }: Asses
     const hasPhotos = !!(assessment.front_photo || assessment.back_photo || assessment.side_photo);
 
     const renderDelta = (value: number, suffix: string, inverse: boolean = false) => {
-        if (!previousAssessment) return <Minus size={12} color="rgba(255,255,255,0.2)" />;
+        if (!previousAssessment) return <Minus size={10} color="rgba(255,255,255,0.15)" />;
 
-        if (Math.abs(value) < 0.1) return <Minus size={12} color="rgba(255,255,255,0.2)" />;
+        if (Math.abs(value) < 0.1) return <Minus size={10} color="rgba(255,255,255,0.15)" />;
 
         const isPositive = value > 0;
         // For weight/fat, usually negative is good (green), positive is bad (red)
-        // Unless inverse is true (e.g. muscle mass)
         const isGood = inverse ? isPositive : !isPositive;
-        const color = isGood ? '#10B981' : '#EF4444';
+        const color = isGood ? '#D4FF00' : '#FF4444';
         const Icon = isPositive ? TrendingUp : TrendingDown;
 
         return (
             <View style={styles.deltaContainer}>
-                <Icon size={12} color={color} />
+                <Icon size={10} color={color} />
                 <Text style={[styles.deltaText, { color }]}>
                     {Math.abs(value).toFixed(1)}{suffix}
                 </Text>
@@ -64,7 +63,7 @@ export const AssessmentRow = ({ assessment, previousAssessment, onPress }: Asses
             onPress={onPress}
             activeOpacity={0.7}
         >
-            {/* Date Column */}
+            {/* Date Bento */}
             <View style={styles.dateCol}>
                 <Text style={styles.day}>
                     {format(new Date(assessment.assessment_date), 'dd', { locale: ptBR })}
@@ -72,17 +71,6 @@ export const AssessmentRow = ({ assessment, previousAssessment, onPress }: Asses
                 <Text style={styles.month}>
                     {format(new Date(assessment.assessment_date), 'MMM', { locale: ptBR }).toUpperCase()}
                 </Text>
-                {hasPhotos && (
-                    <View style={[styles.photoBadge, { backgroundColor: brandColors.primary }]}>
-                        <Text style={styles.photoBadgeText}>FOTOS</Text>
-                    </View>
-                )}
-                {assessment.status === 'reviewed' && (
-                    <View style={styles.reviewedBadge}>
-                        <CheckCircle2 size={8} color="#10B981" />
-                        <Text style={styles.reviewedBadgeText}>LIDO</Text>
-                    </View>
-                )}
             </View>
 
             {/* Metrics */}
@@ -93,6 +81,8 @@ export const AssessmentRow = ({ assessment, previousAssessment, onPress }: Asses
                     {renderDelta(weightDelta, 'kg')}
                 </View>
 
+                <View style={[styles.divider, { backgroundColor: 'rgba(255,255,255,0.05)' }]} />
+
                 <View style={styles.metricItem}>
                     <Text style={styles.metricLabel}>GORDURA</Text>
                     <Text style={styles.metricValue}>
@@ -100,9 +90,23 @@ export const AssessmentRow = ({ assessment, previousAssessment, onPress }: Asses
                     </Text>
                     {renderDelta(fatDelta, '%')}
                 </View>
-            </View>
 
-            <ChevronRight size={20} color="rgba(255,255,255,0.2)" />
+                <View style={styles.statusCol}>
+                    {hasPhotos && (
+                        <View style={[styles.badge, { backgroundColor: brandColors.primary }]}>
+                            <Camera size={10} color={brandColors.secondary} />
+                        </View>
+                    )}
+                    {assessment.status === 'reviewed' && (
+                        <View style={[styles.badge, { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }]}>
+                            <CheckCircle2 size={10} color="rgba(255,255,255,0.4)" />
+                        </View>
+                    )}
+                    <View style={styles.arrowBox}>
+                        <ChevronRight size={16} color="rgba(255,255,255,0.2)" />
+                    </View>
+                </View>
+            </View>
         </TouchableOpacity>
     );
 };
@@ -113,79 +117,89 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 16,
         backgroundColor: 'rgba(255,255,255,0.03)',
-        borderRadius: 12,
+        borderRadius: 24,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
-        marginBottom: 8,
+        marginBottom: 10,
+        gap: 16,
     },
     dateCol: {
         alignItems: 'center',
-        marginRight: 16,
-        width: 48,
+        justifyContent: 'center',
+        width: 54,
+        height: 54,
+        backgroundColor: 'rgba(255,255,255,0.02)',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.03)',
     },
     day: {
         fontSize: 18,
-        fontFamily: 'Inter_700Bold',
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
         color: '#FFF',
     },
     month: {
-        fontSize: 10,
-        fontFamily: 'Inter_500Medium',
-        color: 'rgba(255,255,255,0.5)',
-    },
-    photoBadge: {
-        marginTop: 4,
-        paddingHorizontal: 4,
-        paddingVertical: 2,
-        borderRadius: 2,
-    },
-    photoBadgeText: {
-        fontSize: 7,
-        fontFamily: 'Inter_900Black',
-        color: '#000',
+        fontSize: 9,
+        fontWeight: '800',
+        color: 'rgba(255,255,255,0.3)',
+        marginTop: -2,
     },
     metricsContainer: {
         flex: 1,
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
     metricItem: {
+        flex: 1,
         alignItems: 'flex-start',
     },
+    divider: {
+        width: 1,
+        height: 24,
+        marginHorizontal: 12,
+    },
     metricLabel: {
-        fontSize: 10,
-        fontFamily: 'Inter_500Medium',
-        color: 'rgba(255,255,255,0.4)',
-        marginBottom: 2,
+        fontSize: 8,
+        fontWeight: '900',
+        color: 'rgba(255,255,255,0.3)',
+        marginBottom: 4,
+        letterSpacing: 0.5,
     },
     metricValue: {
         fontSize: 16,
-        fontFamily: 'Inter_700Bold',
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
         color: '#FFF',
-        marginBottom: 2,
     },
     deltaContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 2,
+        gap: 3,
+        marginTop: 2,
     },
     deltaText: {
         fontSize: 10,
-        fontFamily: 'Inter_600SemiBold',
+        fontWeight: '800',
     },
-    reviewedBadge: {
-        marginTop: 4,
+    statusCol: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 2,
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-        paddingHorizontal: 4,
-        paddingVertical: 2,
-        borderRadius: 2,
+        gap: 8,
     },
-    reviewedBadgeText: {
-        fontSize: 7,
-        fontFamily: 'Inter_900Black',
-        color: '#10B981',
+    badge: {
+        width: 24,
+        height: 24,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
+    arrowBox: {
+        width: 28,
+        height: 28,
+        borderRadius: 10,
+        backgroundColor: 'rgba(255,255,255,0.01)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 4,
+    }
 });

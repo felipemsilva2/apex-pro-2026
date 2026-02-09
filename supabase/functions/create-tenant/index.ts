@@ -31,7 +31,7 @@ serve(async (req) => {
         }
 
         // 1. Construct Phantom Email
-        const phantomEmail = `${username.toLowerCase()}@managed.nutripro.pro`
+        const phantomEmail = `${username.toLowerCase()}@acesso.apexpro.fit`
 
         // 2. Check if username/email already exists
         const { data: existingUser } = await supabaseAdmin

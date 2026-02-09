@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ContainerProps {
     variant?: 'page' | 'card' | 'section';
@@ -10,11 +11,8 @@ interface ContainerProps {
 }
 
 /**
- * Container component with tactical HUD styling
- * Supports different variants for pages, cards, and sections
+ * Container component with Reacticx-inspired aesthetic
  */
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 export const Container: React.FC<ContainerProps> = ({
     variant = 'page',
     seamless = false,
@@ -31,7 +29,7 @@ export const Container: React.FC<ContainerProps> = ({
             { paddingTop: insets.top, paddingBottom: insets.bottom },
             seamless && { paddingHorizontal: 0 }
         ],
-        variant === 'card' && [styles.card, { borderColor: `${brandColors.primary}20` }],
+        variant === 'card' && styles.card,
         variant === 'section' && styles.section,
         style,
     ];
@@ -45,15 +43,16 @@ const styles = StyleSheet.create({
     },
     page: {
         flex: 1,
-        backgroundColor: '#0A0A0B',
+        backgroundColor: '#050505',
         paddingHorizontal: 20,
     },
     card: {
         backgroundColor: 'rgba(255,255,255,0.03)',
         borderWidth: 1,
-        borderRadius: 4,
-        padding: 16,
-        marginBottom: 12,
+        borderColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 16,
     },
     section: {
         marginBottom: 24,

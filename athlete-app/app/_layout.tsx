@@ -93,7 +93,7 @@ function RootLayoutNav() {
     return (
       <View style={{ flex: 1, backgroundColor: '#0A0A0B', alignItems: 'center', justifyContent: 'center' }}>
         <Text style={{ color: '#D4FF00', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase', letterSpacing: 2 }}>
-          HUD ALPHA // SYNCING...
+          CARREGANDO // PREPARANDO TREINO...
         </Text>
       </View>
     );

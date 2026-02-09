@@ -28,7 +28,9 @@ const CheckoutPage = () => {
     const [loading, setLoading] = useState(false);
     const [selectedCycle, setSelectedCycle] = useState<"MENSAL" | "ANUAL">(initialPlan);
     const [paymentMethod, setPaymentMethod] = useState<"CREDIT_CARD" | "PIX">("CREDIT_CARD");
+    const [step, setStep] = useState<1 | 2>(1);
     const [termsAccepted, setTermsAccepted] = useState(false);
+    const [pixData, setPixData] = useState<{ encodedImage: string, payload: string } | null>(null);
     const navigate = useNavigate();
 
     // Account Data
@@ -65,15 +67,28 @@ const CheckoutPage = () => {
             return "Não conseguimos processar o pagamento. Verifique os dados do cartão ou tente Pix.";
         }
 
-        if (lowerMessage.includes("duplicada") || lowerMessage.includes("already exists")) {
-            return "Este usuário ou subdomínio já está sendo utilizado.";
+        if (lowerMessage.includes("duplicada") || lowerMessage.includes("already exists") || lowerMessage.includes("duplicate")) {
+            return "Este usuário ou subdomínio já está sendo utilizado. Tente outro nome de acesso.";
         }
 
         if (lowerMessage.includes("network") || lowerMessage.includes("fetch")) {
             return "Erro de conexão. Verifique sua internet e tente novamente.";
         }
 
-        return "Ocorreu um erro inesperado ao ativar sua conta. Nossa equipe técnica já foi notificada.";
+        // Help debug: return explicitly what failed if it's not a standard error
+        return `Erro ao ativar conta: ${message}. Nossa equipe técnica já foi notificada.`;
+    };
+
+    const handleNextStep = () => {
+        if (!fullName || !businessName || !email || !password) {
+            toast.error("Campos Incompletos", { description: "Por favor, preencha todos os campos da conta." });
+            return;
+        }
+        if (password.length < 6) {
+            toast.error("Senha Fraca", { description: "Sua senha deve ter pelo menos 6 caracteres." });
+            return;
+        }
+        setStep(2);
     };
 
     const handleCheckout = async (e: React.FormEvent) => {
@@ -125,7 +140,7 @@ const CheckoutPage = () => {
                         } : null,
                         holderInfo: paymentMethod === 'CREDIT_CARD' ? {
                             name: cardDetails.name,
-                            email: email.includes('@') ? email : `${email.toLowerCase().trim()}@managed.nutripro.pro`,
+                            email: email.includes('@') ? email : `${email.toLowerCase().trim()}@acesso.apexpro.fit`,
                             cpfCnpj: cpfCnpj.replace(/\D/g, ''),
                             postalCode: '00000000', // Placeholder as required by Asaas
                             addressNumber: '0',
@@ -148,12 +163,21 @@ const CheckoutPage = () => {
                 throw new Error(data.error);
             }
 
+            if (data?.pixData) {
+                setPixData(data.pixData);
+                toast.success("Pagamento Criado", {
+                    description: "Escaneie o QR Code abaixo para ativar sua conta."
+                });
+                setLoading(false);
+                return;
+            }
+
             toast.success("Ecosistema Ativado", {
                 description: "Sua conta foi criada e o plano configurado. Bem-vindo!"
             });
 
             // Auto-login logic
-            const identification = email.includes('@') ? email.trim() : `${email.trim().toLowerCase()}@managed.nutripro.pro`;
+            const identification = email.includes('@') ? email.trim() : `${email.trim().toLowerCase()}@acesso.apexpro.fit`;
             const { error: loginError } = await supabase.auth.signInWithPassword({
                 email: identification,
                 password
@@ -168,15 +192,88 @@ const CheckoutPage = () => {
             navigate('/dashboard');
 
         } catch (error: any) {
+            console.error("Checkout Error:", error);
             const friendlyMessage = getFriendlyError(error.message);
+
+            // Special handling for common errors to be even friendlier
+            let description = friendlyMessage;
+            if (error.message?.includes("subdomínio já está em uso")) {
+                description = "Este nome de usuário ou marca já está em uso. Por favor, escolha outro nome no Passo 1.";
+            } else if (error.message?.includes("QR Code")) {
+                description = "Houve um problema ao gerar o QR Code do PIX. Por favor, tente novamente ou use um cartão.";
+            }
+
             toast.error("Não foi possível concluir", {
-                description: friendlyMessage,
+                description: description,
                 duration: 6000
             });
         } finally {
             setLoading(false);
         }
     };
+
+    if (pixData) {
+        return (
+            <div className="min-h-screen bg-[#0A0A0B] text-white p-6 flex items-center justify-center">
+                <div className="max-w-md w-full space-y-8 athletic-card p-10 bg-zinc-900/40 border-2 border-primary/20 text-center relative overflow-hidden animate-in zoom-in duration-500">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 -rotate-45 translate-x-16 -translate-y-16" />
+
+                    <div className="space-y-4">
+                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <QrCode className="text-primary" size={32} />
+                        </div>
+                        <h2 className="text-3xl font-display font-black italic uppercase italic tracking-tighter">
+                            PAGAMENTO <span className="text-primary">PENDENTE</span>
+                        </h2>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 leading-relaxed uppercase italic">
+                            Sua conta foi criada! Agora, realize o pagamento via Pix para liberar seu acesso instantaneamente.
+                        </p>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-xl mx-auto w-fit shadow-[0_0_30px_rgba(var(--primary-rgb),0.2)]">
+                        <img
+                            src={`data:image/png;base64,${pixData.encodedImage}`}
+                            alt="Pix QR Code"
+                            className="w-64 h-64"
+                        />
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="p-4 bg-black/40 border border-white/5 space-y-2">
+                            <span className="text-[9px] font-black text-white/20 uppercase tracking-widest block">Código Pix Copia e Cola</span>
+                            <code className="text-[10px] font-mono text-primary/80 break-all select-all leading-relaxed block">
+                                {pixData.payload}
+                            </code>
+                        </div>
+
+                        <Button
+                            variant="link"
+                            onClick={() => {
+                                navigator.clipboard.writeText(pixData.payload);
+                                toast.success("Código Copiado!", { description: "Agora cole no seu banco." });
+                            }}
+                            className="text-primary uppercase tracking-[0.2em] text-[10px] font-black italic hover:text-white transition-colors"
+                        >
+                            Copiar Código Pix
+                        </Button>
+                    </div>
+
+                    <div className="pt-6 border-t border-white/5">
+                        <Button
+                            onClick={() => navigate('/dashboard')}
+                            className="w-full h-16 bg-white text-black font-display font-black italic uppercase tracking-widest text-xs hover:bg-primary transition-all rounded-none"
+                        >
+                            Ir para o Painel
+                            <ArrowRight size={18} className="ml-2" />
+                        </Button>
+                        <p className="text-[9px] font-medium text-white/20 uppercase tracking-widest mt-4">
+                            O acesso será liberado assim que o Pix for confirmado.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#0A0A0B] text-white p-6 lg:p-12 relative overflow-hidden">
@@ -190,7 +287,7 @@ const CheckoutPage = () => {
             <div className="max-w-6xl mx-auto relative z-10">
                 <div className="flex flex-col lg:flex-row gap-12">
 
-                    {/* Left Column: Account & Logo */}
+                    {/* Left Column: Form Steps */}
                     <div className="flex-1 space-y-8 animate-in slide-in-from-left-4 duration-700">
                         <Link to="/" className="inline-flex items-center gap-3 group mb-4">
                             <div className="w-12 h-12 bg-primary flex items-center justify-center -skew-x-12 group-hover:scale-110 transition-transform">
@@ -201,77 +298,113 @@ const CheckoutPage = () => {
                             </span>
                         </Link>
 
-                        <div className="space-y-2">
-                            <h1 className="text-4xl lg:text-6xl font-display font-black italic uppercase leading-none tracking-tighter">
-                                ATIVAR <span className="text-primary">ECOSSISTEMA</span>
-                            </h1>
-                            <p className="text-white/40 font-display font-bold uppercase italic text-xs tracking-widest">
-                                Complete seu cadastro e comece a escalar agora.
-                            </p>
-                        </div>
-
-                        <div className="athletic-card p-8 bg-zinc-900/40 border border-white/5 space-y-6 backdrop-blur-sm relative">
-                            <div className="absolute top-0 right-0 p-4 opacity-5">
-                                <User size={100} />
-                            </div>
-
-                            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic mb-4 flex items-center gap-2">
-                                <Check size={14} />
-                                1. DADOS DA CONTA
-                            </h2>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                        {step === 1 ? (
+                            <div className="space-y-8 animate-in fade-in duration-500">
                                 <div className="space-y-2">
-                                    <Label className="text-[9px] font-bold uppercase tracking-widest text-white/40 italic">Nome Profissional</Label>
-                                    <Input
-                                        placeholder="EX: FELIPE SILVA"
-                                        value={fullName}
-                                        onChange={e => setFullName(e.target.value)}
-                                        className="bg-black/40 border-white/10 h-14 font-display font-bold italic text-xs tracking-widest uppercase rounded-none focus:border-primary transition-all"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[9px] font-bold uppercase tracking-widest text-white/40 italic">Nome da sua Marca</Label>
-                                    <Input
-                                        placeholder="EX: APEX ELITE"
-                                        value={businessName}
-                                        onChange={e => setBusinessName(e.target.value)}
-                                        className="bg-black/40 border-white/10 h-14 font-display font-bold italic text-xs tracking-widest uppercase rounded-none focus:border-primary transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2 relative z-10">
-                                <Label className="text-[9px] font-bold uppercase tracking-widest text-white/40 italic">Usuário de Acesso (Dê preferência ao Nome)</Label>
-                                <Input
-                                    placeholder=" EX: FELIPESILVA"
-                                    value={email}
-                                    onChange={e => setEmail(e.target.value)}
-                                    className="bg-black/40 border-white/10 h-14 font-display font-bold italic text-xs tracking-widest uppercase rounded-none focus:border-primary transition-all"
-                                />
-                                <div className="p-3 bg-primary/5 border border-primary/20 mt-2">
-                                    <p className="text-[9px] font-bold text-primary italic uppercase tracking-widest leading-relaxed">
-                                        🚀 Dica Pro: Use seu "Nome e Segundo Nome" (ex: marcosfit), como no Instagram. É muito mais prático!
+                                    <h1 className="text-4xl lg:text-6xl font-display font-black italic uppercase leading-none tracking-tighter">
+                                        PASSO 1: <span className="text-primary">IDENTIFICAÇÃO</span>
+                                    </h1>
+                                    <p className="text-white/40 font-display font-bold uppercase italic text-xs tracking-widest">
+                                        Crie sua conta profissional no ecossistema.
                                     </p>
                                 </div>
-                            </div>
 
-                            <div className="space-y-2 relative z-10">
-                                <Label className="text-[9px] font-bold uppercase tracking-widest text-white/40 italic">Senha de Segurança</Label>
-                                <div className="relative">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40" size={18} />
-                                    <Input
-                                        type="password"
-                                        placeholder="••••••••"
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                        className="bg-black/40 border-white/10 h-14 pl-12 font-display font-bold italic text-xs tracking-widest rounded-none focus:border-primary transition-all"
-                                    />
+                                <div className="athletic-card p-8 bg-zinc-900/40 border border-white/5 space-y-6 backdrop-blur-sm relative">
+                                    <div className="absolute top-0 right-0 p-4 opacity-5">
+                                        <User size={100} />
+                                    </div>
+
+                                    <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic mb-4 flex items-center gap-2">
+                                        <Check size={14} />
+                                        DADOS DA CONTA
+                                    </h2>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                                        <div className="space-y-2">
+                                            <Label className="text-[9px] font-bold uppercase tracking-widest text-white/40 italic">Nome Profissional</Label>
+                                            <Input
+                                                placeholder="EX: FELIPE SILVA"
+                                                value={fullName}
+                                                onChange={e => setFullName(e.target.value)}
+                                                className="bg-black/40 border-white/10 h-14 font-display font-bold italic text-xs tracking-widest uppercase rounded-none focus:border-primary transition-all"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-[9px] font-bold uppercase tracking-widest text-white/40 italic">Nome da sua Marca</Label>
+                                            <Input
+                                                placeholder="EX: APEX ELITE"
+                                                value={businessName}
+                                                onChange={e => setBusinessName(e.target.value)}
+                                                className="bg-black/40 border-white/10 h-14 font-display font-bold italic text-xs tracking-widest uppercase rounded-none focus:border-primary transition-all"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2 relative z-10">
+                                        <Label className="text-[9px] font-bold uppercase tracking-widest text-white/40 italic">Usuário de Acesso (Dê preferência ao Nome)</Label>
+                                        <Input
+                                            placeholder=" EX: FELIPESILVA"
+                                            value={email}
+                                            onChange={e => setEmail(e.target.value)}
+                                            className="bg-black/40 border-white/10 h-14 font-display font-bold italic text-xs tracking-widest uppercase rounded-none focus:border-primary transition-all"
+                                        />
+                                        <div className="p-3 bg-primary/5 border border-primary/20 mt-2">
+                                            <p className="text-[9px] font-bold text-primary italic uppercase tracking-widest leading-relaxed">
+                                                🚀 Dica Pro: Use seu "Nome e Segundo Nome" (ex: marcosfit), como no Instagram. É muito mais prático!
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2 relative z-10">
+                                        <Label className="text-[9px] font-bold uppercase tracking-widest text-white/40 italic">Senha de Segurança</Label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40" size={18} />
+                                            <Input
+                                                type="password"
+                                                placeholder="••••••••"
+                                                value={password}
+                                                onChange={e => setPassword(e.target.value)}
+                                                className="bg-black/40 border-white/10 h-14 pl-12 font-display font-bold italic text-xs tracking-widest rounded-none focus:border-primary transition-all"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <Button
+                                        onClick={handleNextStep}
+                                        className="w-full btn-athletic h-16 group text-base mt-2"
+                                    >
+                                        PROSSEGUIR PARA PAGAMENTO
+                                        <ArrowRight className="group-hover:translate-x-2 transition-transform" size={20} />
+                                    </Button>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="space-y-8 animate-in fade-in duration-500">
+                                <div className="space-y-2">
+                                    <h1 className="text-4xl lg:text-6xl font-display font-black italic uppercase leading-none tracking-tighter">
+                                        PASSO 2: <span className="text-primary">PAGAMENTO</span>
+                                    </h1>
+                                    <p className="text-white/40 font-display font-bold uppercase italic text-xs tracking-widest">
+                                        Finalize sua assinatura para ativar o sistema.
+                                    </p>
+                                </div>
 
-                        <div className="hidden lg:grid grid-cols-2 gap-4">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setStep(1)}
+                                    className="text-white/40 hover:text-white uppercase tracking-widest text-[10px] font-bold p-0 h-auto"
+                                >
+                                    <ArrowRight size={14} className="mr-2 rotate-180" />
+                                    VOLTAR PARA DADOS DA CONTA
+                                </Button>
+
+                                <div className="lg:hidden">
+                                    {/* Mobile Plan Summary will go here or keep it in the Right Column as is */}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="p-5 border border-white/5 bg-white/2 space-y-3">
                                 <div className="h-8 w-8 bg-primary/10 flex items-center justify-center">
                                     <Check className="text-primary" size={16} />
@@ -300,11 +433,11 @@ const CheckoutPage = () => {
 
                             <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic mb-6 flex items-center gap-2">
                                 <CreditCard size={14} />
-                                2. PLANO & PAGAMENTO
+                                {step === 1 ? "SUMÁRIO DO PLANO" : "2. PLANO & PAGAMENTO"}
                             </h2>
 
                             {/* Cycle Toggle */}
-                            <div className="flex gap-2 p-1 bg-white/5 border border-white/5 w-full mb-8">
+                            <div className="flex gap-2 p-1 bg-white/5 border border-white/10 w-full mb-8">
                                 <button
                                     onClick={() => setSelectedCycle('MENSAL')}
                                     className={cn(
@@ -360,112 +493,132 @@ const CheckoutPage = () => {
                                 </div>
                             </div>
 
-                            {/* Payment Method Switcher */}
-                            <div className="flex gap-2 mb-8">
-                                <button
-                                    onClick={() => setPaymentMethod('CREDIT_CARD')}
-                                    className={cn(
-                                        "flex-1 h-14 border transition-all flex items-center justify-center gap-3 font-display font-bold italic text-[11px] uppercase tracking-widest",
-                                        paymentMethod === 'CREDIT_CARD' ? "bg-white text-black border-white" : "bg-transparent text-white/40 border-white/10 hover:border-white/30"
-                                    )}
-                                >
-                                    <CreditCard size={16} />
-                                    Cartão
-                                </button>
-                                <button
-                                    onClick={() => setPaymentMethod('PIX')}
-                                    className={cn(
-                                        "flex-1 h-14 border transition-all flex items-center justify-center gap-3 font-display font-bold italic text-[11px] uppercase tracking-widest",
-                                        paymentMethod === 'PIX' ? "bg-white text-black border-white" : "bg-transparent text-white/40 border-white/10 hover:border-white/30"
-                                    )}
-                                >
-                                    <QrCode size={16} />
-                                    Pix
-                                </button>
-                            </div>
+                            {step === 2 && (
+                                <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                                    {/* Payment Method Switcher */}
+                                    <div className="flex gap-2 mb-8">
+                                        <button
+                                            onClick={() => setPaymentMethod('CREDIT_CARD')}
+                                            className={cn(
+                                                "flex-1 h-14 border transition-all flex items-center justify-center gap-3 font-display font-bold italic text-[11px] uppercase tracking-widest",
+                                                paymentMethod === 'CREDIT_CARD' ? "bg-white text-black border-white" : "bg-transparent text-white/40 border-white/10 hover:border-white/30"
+                                            )}
+                                        >
+                                            <CreditCard size={16} />
+                                            Cartão
+                                        </button>
+                                        <button
+                                            onClick={() => setPaymentMethod('PIX')}
+                                            className={cn(
+                                                "flex-1 h-14 border transition-all flex items-center justify-center gap-3 font-display font-bold italic text-[11px] uppercase tracking-widest",
+                                                paymentMethod === 'PIX' ? "bg-white text-black border-white" : "bg-transparent text-white/40 border-white/10 hover:border-white/30"
+                                            )}
+                                        >
+                                            <QrCode size={16} />
+                                            Pix
+                                        </button>
+                                    </div>
 
-                            <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 italic">CPF / CNPJ do Titular</Label>
-                                    <Input
-                                        placeholder="000.000.000-00"
-                                        value={cpfCnpj}
-                                        onChange={e => setCpfCnpj(e.target.value)}
-                                        className="bg-black border-white/10 h-14 font-display font-bold text-xs tracking-[0.2em] rounded-none focus:border-primary transition-all"
-                                    />
-                                </div>
-
-                                {paymentMethod === 'CREDIT_CARD' ? (
-                                    <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                                    <div className="space-y-6">
                                         <div className="space-y-2">
-                                            <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 italic">Número do Cartão</Label>
-                                            <div className="relative">
-                                                <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-                                                <Input
-                                                    placeholder="0000 0000 0000 0000"
-                                                    value={cardDetails.number}
-                                                    onChange={e => setCardDetails({ ...cardDetails, number: e.target.value })}
-                                                    className="bg-black border-white/10 h-14 pl-12 font-display font-bold text-xs tracking-[0.2em] rounded-none focus:border-primary transition-all"
-                                                />
-                                            </div>
+                                            <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 italic">CPF / CNPJ do Titular</Label>
+                                            <Input
+                                                placeholder="000.000.000-00"
+                                                value={cpfCnpj}
+                                                onChange={e => setCpfCnpj(e.target.value)}
+                                                className="bg-black border-white/10 h-14 font-display font-bold text-xs tracking-[0.2em] rounded-none focus:border-primary transition-all"
+                                            />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 italic">Validade</Label>
-                                                <Input
-                                                    placeholder="MM / AA"
-                                                    value={cardDetails.expiry}
-                                                    onChange={e => setCardDetails({ ...cardDetails, expiry: e.target.value })}
-                                                    className="bg-black border-white/10 h-14 font-display font-bold text-xs tracking-[0.2em] rounded-none focus:border-primary transition-all text-center"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 italic">CVV</Label>
-                                                <Input
-                                                    placeholder="123"
-                                                    value={cardDetails.cvv}
-                                                    onChange={e => setCardDetails({ ...cardDetails, cvv: e.target.value })}
-                                                    className="bg-black border-white/10 h-14 font-display font-bold text-xs tracking-[0.2em] rounded-none focus:border-primary transition-all text-center"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="p-5 border border-amber-500/20 bg-amber-500/5 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
-                                        <ShieldAlert size={20} className="text-amber-500 mt-1 flex-shrink-0" />
-                                        <p className="text-[10px] font-bold text-amber-500/80 uppercase italic tracking-widest leading-relaxed">
-                                            O Pix não oferece período de teste. Seu QR Code será gerado após clicar em concluir.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
 
-                            <div className="flex items-start space-x-3 pt-10">
-                                <Checkbox
-                                    id="terms"
-                                    checked={termsAccepted}
-                                    onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
-                                    className="mt-1 border-white/20 data-[state=checked]:bg-primary data-[state=checked]:text-black"
-                                />
-                                <label htmlFor="terms" className="text-[10px] font-bold uppercase italic tracking-widest text-white/30 leading-relaxed cursor-pointer select-none">
-                                    Concordo com os <Link to="/terms" target="_blank" className="text-primary/60 hover:text-primary transition-colors">Termos</Link> e <Link to="/privacy" target="_blank" className="text-primary/60 hover:text-primary transition-colors">Privacidade</Link>.
-                                </label>
-                            </div>
+                                        {paymentMethod === 'CREDIT_CARD' ? (
+                                            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                                                <div className="space-y-2">
+                                                    <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 italic">Número do Cartão</Label>
+                                                    <div className="relative">
+                                                        <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
+                                                        <Input
+                                                            placeholder="0000 0000 0000 0000"
+                                                            value={cardDetails.number}
+                                                            onChange={e => setCardDetails({ ...cardDetails, number: e.target.value })}
+                                                            className="bg-black border-white/10 h-14 pl-12 font-display font-bold text-xs tracking-[0.2em] rounded-none focus:border-primary transition-all"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 italic">Validade</Label>
+                                                        <Input
+                                                            placeholder="MM / AA"
+                                                            value={cardDetails.expiry}
+                                                            onChange={e => setCardDetails({ ...cardDetails, expiry: e.target.value })}
+                                                            className="bg-black border-white/10 h-14 font-display font-bold text-xs tracking-[0.2em] rounded-none focus:border-primary transition-all text-center"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label className="text-[10px] font-bold uppercase tracking-widest text-white/40 italic">CVV</Label>
+                                                        <Input
+                                                            placeholder="123"
+                                                            value={cardDetails.cvv}
+                                                            onChange={e => setCardDetails({ ...cardDetails, cvv: e.target.value })}
+                                                            className="bg-black border-white/10 h-14 font-display font-bold text-xs tracking-[0.2em] rounded-none focus:border-primary transition-all text-center"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="p-5 border border-amber-500/20 bg-amber-500/5 flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                                                <ShieldAlert size={20} className="text-amber-500 mt-1 flex-shrink-0" />
+                                                <p className="text-[10px] font-bold text-amber-500/80 uppercase italic tracking-widest leading-relaxed">
+                                                    O Pix não oferece período de teste. Seu QR Code será gerado após clicar em concluir.
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
 
-                            <Button
-                                onClick={handleCheckout}
-                                disabled={loading || !termsAccepted}
-                                className="w-full btn-athletic h-20 group text-lg mt-8 shadow-[0_15px_40px_rgba(var(--primary-rgb),0.3)] hover:shadow-primary/50 transition-all"
-                            >
-                                {loading ? (
-                                    <Loader2 className="animate-spin text-black" size={24} />
-                                ) : (
-                                    <>
-                                        ATIVAR MINHA LICENÇA AGORA
+                                    <div className="flex items-start space-x-3 pt-6">
+                                        <Checkbox
+                                            id="terms"
+                                            checked={termsAccepted}
+                                            onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                                            className="mt-1 border-white/20 data-[state=checked]:bg-primary data-[state=checked]:text-black"
+                                        />
+                                        <label htmlFor="terms" className="text-[10px] font-bold uppercase italic tracking-widest text-white/30 leading-relaxed cursor-pointer select-none">
+                                            Concordo com os <Link to="/terms" target="_blank" className="text-primary/60 hover:text-primary transition-colors">Termos</Link> e <Link to="/privacy" target="_blank" className="text-primary/60 hover:text-primary transition-colors">Privacidade</Link>.
+                                        </label>
+                                    </div>
+
+                                    <Button
+                                        onClick={handleCheckout}
+                                        disabled={loading || !termsAccepted}
+                                        className="w-full btn-athletic h-20 group text-lg mt-4 shadow-[0_15px_40px_rgba(var(--primary-rgb),0.3)] hover:shadow-primary/50 transition-all"
+                                    >
+                                        {loading ? (
+                                            <Loader2 className="animate-spin text-black" size={24} />
+                                        ) : (
+                                            <>
+                                                ATIVAR MINHA LICENÇA AGORA
+                                                <ArrowRight className="group-hover:translate-x-2 transition-transform" size={24} />
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            )}
+
+                            {step === 1 && (
+                                <div className="space-y-6 pt-6 border-t border-white/5 animate-in fade-in duration-700">
+                                    <div className="flex items-center gap-3 text-white/40">
+                                        <ShieldCheck size={16} className="text-primary/60" />
+                                        <p className="text-[9px] font-bold uppercase tracking-widest italic">Dados Criptografados</p>
+                                    </div>
+                                    <Button
+                                        onClick={handleNextStep}
+                                        className="w-full btn-athletic h-20 group text-lg shadow-[0_15px_40px_rgba(var(--primary-rgb),0.2)]"
+                                    >
+                                        PROSSEGUIR
                                         <ArrowRight className="group-hover:translate-x-2 transition-transform" size={24} />
-                                    </>
-                                )}
-                            </Button>
+                                    </Button>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex items-center justify-center gap-2 py-4">

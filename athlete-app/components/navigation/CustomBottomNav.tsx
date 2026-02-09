@@ -16,7 +16,7 @@ export const CustomBottomNav: React.FC = () => {
         {
             name: '/(tabs)',
             displayName: 'index',
-            label: 'Home',
+            label: 'Início',
             icon: Home,
         },
         {

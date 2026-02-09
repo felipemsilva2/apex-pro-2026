@@ -30,6 +30,16 @@ serve(async (req) => {
 
         console.log(`[admin-delete-user] Starting deletion for user: ${userId}`)
 
+        // 0. Get user's tenant_id and role before deletion
+        const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('tenant_id, role')
+            .eq('id', userId)
+            .single()
+
+        const tenantId = profile?.tenant_id
+        const isCoach = profile?.role === 'coach'
+
         // 1. Delete from clients table (if exists)
         const { error: clientsError } = await supabaseAdmin
             .from('clients')
@@ -57,6 +67,27 @@ serve(async (req) => {
         if (authError) {
             console.error('[admin-delete-user] Error deleting auth user:', authError)
             throw new Error(`Erro ao deletar usuário: ${authError.message}`)
+        }
+
+        // 4. If user was a coach, check if the tenant should be deleted
+        if (isCoach && tenantId) {
+            const { count } = await supabaseAdmin
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('tenant_id', tenantId)
+                .eq('role', 'coach')
+
+            if (count === 0) {
+                console.log(`[admin-delete-user] No more coaches for tenant ${tenantId}. Deleting tenant.`)
+                const { error: tenantDeleteError } = await supabaseAdmin
+                    .from('tenants')
+                    .delete()
+                    .eq('id', tenantId)
+
+                if (tenantDeleteError) {
+                    console.error('[admin-delete-user] Error deleting empty tenant:', tenantDeleteError.message)
+                }
+            }
         }
 
         console.log(`[admin-delete-user] User ${userId} deleted successfully`)

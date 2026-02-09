@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
 const screenWidth = Dimensions.get('window').width;
@@ -23,7 +23,7 @@ export function ProgressChart({ data, title, color, suffix = '', decimalPlaces =
                 <Text style={styles.title}>{title}</Text>
                 <View style={styles.emptyChart}>
                     <Text style={styles.emptyText}>
-                        Dados insuficientes{'\n'}Necessário pelo menos 2 avaliações
+                        Aguardando dados{'\n'}Mínimo de 2 check-ins necessário
                     </Text>
                 </View>
             </View>
@@ -31,7 +31,7 @@ export function ProgressChart({ data, title, color, suffix = '', decimalPlaces =
     }
 
     // Prepara dados para o gráfico (máximo 10 pontos para não ficar muito denso)
-    const chartData = data.slice(0, 10).reverse();
+    const chartData = [...data].slice(0, 10).reverse();
 
     const values = chartData.map(d => d.value);
     const labels = chartData.map(d => {
@@ -48,7 +48,7 @@ export function ProgressChart({ data, title, color, suffix = '', decimalPlaces =
     return (
         <View style={styles.container}>
             <Text style={styles.title}>{title}</Text>
-            <View style={styles.chartContainer}>
+            <View style={styles.chartWrapper}>
                 <LineChart
                     data={{
                         labels: labels,
@@ -58,25 +58,25 @@ export function ProgressChart({ data, title, color, suffix = '', decimalPlaces =
                         }],
                     }}
                     width={screenWidth - 40}
-                    height={220}
+                    height={200}
                     chartConfig={{
-                        backgroundColor: '#0A0A0B',
-                        backgroundGradientFrom: 'rgba(255,255,255,0.03)',
-                        backgroundGradientTo: 'rgba(255,255,255,0.03)',
+                        backgroundColor: '#050505',
+                        backgroundGradientFrom: 'rgba(255,255,255,0.01)',
+                        backgroundGradientTo: 'rgba(255,255,255,0.01)',
                         decimalPlaces: decimalPlaces,
                         color: (opacity = 1) => color.replace(')', `, ${opacity})`).replace('rgb', 'rgba'),
-                        labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity * 0.4})`,
+                        labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity * 0.3})`,
                         style: {
-                            borderRadius: 0,
+                            borderRadius: 24,
                         },
                         propsForDots: {
-                            r: '5',
+                            r: '4',
                             strokeWidth: '2',
                             stroke: color,
-                            fill: '#0A0A0B',
+                            fill: '#050505',
                         },
                         propsForBackgroundLines: {
-                            strokeDasharray: '', // solid lines
+                            strokeDasharray: '5, 5',
                             stroke: 'rgba(255,255,255,0.05)',
                             strokeWidth: 1,
                         },
@@ -85,31 +85,35 @@ export function ProgressChart({ data, title, color, suffix = '', decimalPlaces =
                     style={styles.chart}
                     fromZero={false}
                     yAxisSuffix={suffix}
-                    segments={4}
+                    segments={3}
                 />
 
-                {/* Trend Indicator */}
+                {/* Trend Indicator (Bento Style) */}
                 <View style={styles.trendContainer}>
-                    {values[values.length - 1] < values[0] ? (
-                        <>
-                            <Text style={styles.trendDown}>↓</Text>
-                            <Text style={styles.trendLabel}>
-                                Redução: {(values[0] - values[values.length - 1]).toFixed(decimalPlaces)}{suffix}
-                            </Text>
-                        </>
-                    ) : values[values.length - 1] > values[0] ? (
-                        <>
-                            <Text style={styles.trendUp}>↑</Text>
-                            <Text style={styles.trendLabel}>
-                                Aumento: {(values[values.length - 1] - values[0]).toFixed(decimalPlaces)}{suffix}
-                            </Text>
-                        </>
-                    ) : (
-                        <>
-                            <Text style={styles.trendNeutral}>→</Text>
-                            <Text style={styles.trendLabel}>Estável</Text>
-                        </>
-                    )}
+                    <View style={styles.trendRow}>
+                        <View style={[styles.trendBadge, { backgroundColor: 'rgba(255,255,255,0.03)' }]}>
+                            {values[values.length - 1] < values[0] ? (
+                                <>
+                                    <Text style={[styles.trendSymbol, { color: '#D4FF00' }]}>↓</Text>
+                                    <Text style={styles.trendLabel}>
+                                        VARIANDO: -{(values[0] - values[values.length - 1]).toFixed(decimalPlaces)}{suffix}
+                                    </Text>
+                                </>
+                            ) : values[values.length - 1] > values[0] ? (
+                                <>
+                                    <Text style={[styles.trendSymbol, { color: '#FF4444' }]}>↑</Text>
+                                    <Text style={styles.trendLabel}>
+                                        VARIANDO: +{(values[values.length - 1] - values[0]).toFixed(decimalPlaces)}{suffix}
+                                    </Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Text style={[styles.trendSymbol, { color: 'rgba(255,255,255,0.3)' }]}>→</Text>
+                                    <Text style={styles.trendLabel}>ESTÁVEL</Text>
+                                </>
+                            )}
+                        </View>
+                    </View>
                 </View>
             </View>
         </View>
@@ -121,29 +125,29 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     title: {
-        color: '#D4FF00',
         fontSize: 12,
-        fontWeight: '900',
-        fontStyle: 'italic',
-        marginBottom: 12,
-        textTransform: 'uppercase',
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        color: 'rgba(255,255,255,0.5)',
         letterSpacing: 1,
+        marginBottom: 16,
     },
-    chartContainer: {
+    chartWrapper: {
         backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 24,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: 'rgba(255,255,255,0.05)',
         overflow: 'hidden',
+        paddingTop: 16,
     },
     chart: {
-        marginVertical: 8,
-        borderRadius: 0,
+        borderRadius: 24,
     },
     emptyChart: {
         backgroundColor: 'rgba(255,255,255,0.03)',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-        height: 220,
+        borderColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 24,
+        height: 200,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -151,35 +155,34 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.3)',
         fontSize: 12,
         textAlign: 'center',
-        fontWeight: '900',
-        fontStyle: 'italic',
+        fontWeight: '800',
+        lineHeight: 18,
     },
     trendContainer: {
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+    },
+    trendRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingBottom: 12,
         gap: 8,
     },
-    trendUp: {
-        color: '#FF4444',
-        fontSize: 20,
-        fontWeight: '900',
+    trendBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        gap: 8,
     },
-    trendDown: {
-        color: '#D4FF00',
-        fontSize: 20,
-        fontWeight: '900',
-    },
-    trendNeutral: {
-        color: 'rgba(255,255,255,0.4)',
-        fontSize: 20,
+    trendSymbol: {
+        fontSize: 16,
         fontWeight: '900',
     },
     trendLabel: {
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: 11,
+        color: 'rgba(255,255,255,0.4)',
+        fontSize: 9,
         fontWeight: '900',
-        fontStyle: 'italic',
+        letterSpacing: 0.5,
     },
-} as any);
+});

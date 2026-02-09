@@ -2,6 +2,7 @@
 export { Container } from './Container';
 export { Header } from './Header';
 export { StatCard } from './StatCard';
+export { Button } from './Button';
 export { EmptyState } from './EmptyState';
 export { MetricRow } from './MetricRow';
 export { LoadingSpinner } from './LoadingSpinner';

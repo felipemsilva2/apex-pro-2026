@@ -89,6 +89,20 @@ serve(async (req) => {
             })
         }
 
+        if (action === 'get-pix-qr-code') {
+            const { paymentId } = payload
+            const asaasResponse = await fetch(`${ASAAS_API_URL}/payments/${paymentId}/pixQrCode`, {
+                method: 'GET',
+                headers: { 'access_token': ASAAS_API_KEY }
+            })
+            const asaasData = await asaasResponse.json()
+            if (!asaasResponse.ok) throw new Error(asaasData.errors?.[0]?.description || 'Error fetching PIX QR Code')
+
+            return new Response(JSON.stringify(asaasData), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            })
+        }
+
         if (action === 'create-subscription') {
             const { planType, creditCard, asaasId } = payload // planType: 'MENSAL' | 'ANUAL'
 
@@ -101,15 +115,22 @@ serve(async (req) => {
 
             if (!plan) throw new Error('No billing plans found in database')
 
+            // Get Tenant Trial Info
+            const { data: tenantTrial } = await supabaseAdmin
+                .from('tenants')
+                .select('trial_used')
+                .eq('id', tenantId)
+                .single()
+
             const value = planType === 'MENSAL' ? plan.price_monthly : plan.price_yearly
-            const isTrialable = !!creditCard // Only credit card gets trial
+            const isTrialable = !!creditCard && !tenantTrial?.trial_used // Only credit card gets trial, and only once
 
             const nextDueDate = new Date()
             if (isTrialable) {
                 // For trial: first payment is 31 days from now
                 nextDueDate.setDate(nextDueDate.getDate() + 31)
             } else {
-                // For Pix: first payment is tomorrow
+                // For Pix or returning credit card: first payment is tomorrow
                 nextDueDate.setDate(nextDueDate.getDate() + 1)
             }
 
@@ -151,13 +172,16 @@ serve(async (req) => {
                 current_period_end: nextDueDate.toISOString()
             })
 
-            // Update tenant status
-            if (isTrialable) {
-                await supabaseAdmin.from('tenants').update({
-                    subscription_status: 'trialing',
-                    trial_end: nextDueDate.toISOString()
-                }).eq('id', tenantId)
+            // Update tenant status and trial usage
+            const updatePayload: any = {
+                subscription_status: isTrialable ? 'trialing' : 'pending'
             }
+            if (isTrialable) {
+                updatePayload.trial_end = nextDueDate.toISOString()
+                updatePayload.trial_used = true
+            }
+
+            await supabaseAdmin.from('tenants').update(updatePayload).eq('id', tenantId)
 
             return new Response(JSON.stringify(asaasData), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },

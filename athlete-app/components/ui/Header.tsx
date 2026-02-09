@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { ChevronLeft, ShieldCheck } from 'lucide-react-native';
 import { SvgUri } from 'react-native-svg';
+import { BlurView } from 'expo-blur';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
@@ -13,8 +14,8 @@ interface HeaderProps {
 }
 
 /**
- * Header component with tactical HUD styling
- * Supports back navigation and right actions
+ * Header component with Reacticx-inspired aesthetic
+ * Uses BlurView for depth and clean technical typography
  */
 export const Header: React.FC<HeaderProps> = ({
     title,
@@ -25,8 +26,19 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
     const { brandColors, tenant } = useAuth();
 
+    const Wrapper = variant === 'hero' ? View : BlurView;
+
     return (
-        <View style={[styles.container, variant === 'hero' && styles.heroContainer, variant === 'brand' && styles.brandContainer]}>
+        <Wrapper
+            intensity={variant === 'hero' ? 0 : 80}
+            tint="dark"
+            style={[
+                styles.container,
+                variant === 'hero' && styles.heroContainer,
+                variant === 'brand' && styles.brandContainer,
+                variant !== 'hero' && styles.floatingHeader
+            ]}
+        >
             {onBack && (
                 <TouchableOpacity
                     onPress={onBack}
@@ -34,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
                     accessibilityLabel="Voltar"
                     accessibilityRole="button"
                 >
-                    <ChevronLeft size={24} color="rgba(255,255,255,0.7)" />
+                    <ChevronLeft size={24} color="#FFF" opacity={0.7} />
                 </TouchableOpacity>
             )}
 
@@ -49,7 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 <SvgUri
                                     uri={tenant.logo_url}
                                     width={140}
-                                    height={50}
+                                    height={40}
                                     preserveAspectRatio="xMinYMin meet"
                                 />
                             ) : (
@@ -62,24 +74,23 @@ export const Header: React.FC<HeaderProps> = ({
                         ) : (
                             <View>
                                 <Text style={[styles.brandTitle, { color: '#FFF' }]}>
-                                    TEAM {tenant.business_name?.split(' ')[0]}
+                                    EQUIPE {tenant.business_name?.split(' ')[0]}
                                 </Text>
-                                <View style={[styles.line, { backgroundColor: brandColors.primary, width: 20, marginTop: 2 }]} />
                             </View>
                         )}
-                        {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+                        {subtitle && <Text style={styles.brandSubtitle}>{subtitle}</Text>}
                     </View>
                 ) : (
                     <>
                         {variant === 'hero' ? (
                             <View style={styles.heroProfileRow}>
-                                <View style={[styles.heroAvatarContainer, { borderColor: brandColors.primary }]}>
+                                <View style={[styles.heroAvatarContainer, { borderColor: `${brandColors.primary}40` }]}>
                                     {tenant?.logo_url ? (
                                         tenant.logo_url.toLowerCase().endsWith('.svg') ? (
                                             <SvgUri
                                                 uri={tenant.logo_url}
-                                                width={64}
-                                                height={64}
+                                                width={56}
+                                                height={56}
                                                 preserveAspectRatio="xMidYMid meet"
                                             />
                                         ) : (
@@ -90,11 +101,14 @@ export const Header: React.FC<HeaderProps> = ({
                                             />
                                         )
                                     ) : (
-                                        <ShieldCheck size={32} color={brandColors.primary} />
+                                        <ShieldCheck size={28} color={brandColors.primary} />
                                     )}
                                 </View>
                                 <View style={styles.heroTextContainer}>
-                                    {title && <Text style={styles.heroTitle} numberOfLines={1}>{title}</Text>}
+                                    <View style={styles.heroTitleRow}>
+                                        <Text style={styles.heroTitle} numberOfLines={1}>{title}</Text>
+                                        <View style={[styles.heroStatusDot, { backgroundColor: brandColors.primary }]} />
+                                    </View>
                                     {subtitle && <Text style={styles.heroSubtitle} numberOfLines={1}>{subtitle}</Text>}
                                 </View>
                             </View>
@@ -105,14 +119,8 @@ export const Header: React.FC<HeaderProps> = ({
                                         {title}
                                     </Text>
                                 )}
-                                <View
-                                    style={[
-                                        styles.line,
-                                        { backgroundColor: `${brandColors.primary}4D` },
-                                    ]}
-                                />
                                 {subtitle && (
-                                    <Text style={styles.subtitle} numberOfLines={2}>
+                                    <Text style={styles.subtitle} numberOfLines={1}>
                                         {subtitle}
                                     </Text>
                                 )}
@@ -123,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
             </View>
 
             {rightAction && <View style={styles.rightAction}>{rightAction}</View>}
-        </View>
+        </Wrapper>
     );
 };
 
@@ -132,108 +140,128 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 12,
-        paddingHorizontal: 20, // Standard app padding
-        minHeight: 60,
+        paddingHorizontal: 20,
+        minHeight: 64,
+        zIndex: 100,
+    },
+    floatingHeader: {
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.05)',
+        position: 'relative',
     },
     heroContainer: {
-        paddingVertical: 24,
-        paddingHorizontal: 20, // Keep consistent with standard
-        minHeight: 100,
+        paddingTop: 32,
+        paddingBottom: 24,
+        paddingHorizontal: 20,
+        minHeight: 120,
     },
     backButton: {
-        padding: 8,
-        marginRight: 8,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 12,
     },
     content: {
         flex: 1,
-        alignItems: 'flex-start',
+        justifyContent: 'center',
     },
     heroContentRow: {
         flex: 1,
     },
     titleContainer: {
-        width: '100%',
-        marginBottom: 4,
+        flex: 1,
     },
     title: {
+        fontSize: 18,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        color: '#FFFFFF',
+        letterSpacing: -0.5,
+    },
+    subtitle: {
+        fontSize: 12,
+        fontWeight: '500',
+        color: 'rgba(255,255,255,0.5)',
+        letterSpacing: 0.5,
+        marginTop: 2,
+    },
+    heroTitle: {
         fontSize: 20,
-        fontWeight: '900',
-        fontStyle: 'italic',
+        fontFamily: Platform.OS === 'ios' ? 'PlusJakartaSans-Bold' : 'PlusJakartaSans_700Bold',
         color: '#FFFFFF',
         letterSpacing: 0.5,
         textTransform: 'uppercase',
     },
-    heroTitle: {
-        fontSize: 24,
-        fontWeight: '900',
-        fontStyle: 'italic',
-        color: '#FFFFFF',
-        textTransform: 'uppercase',
-        lineHeight: 28,
+    heroTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    heroStatusDot: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        marginLeft: 8,
+        opacity: 0.8,
     },
     heroProfileRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingRight: 12,
     },
     heroAvatarContainer: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        borderWidth: 2,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        borderWidth: 1,
         padding: 2,
         overflow: 'hidden',
-        backgroundColor: 'rgba(255,255,255,0.03)',
+        backgroundColor: 'rgba(255,255,255,0.02)',
         marginRight: 16,
     },
     heroAvatar: {
         width: '100%',
         height: '100%',
-        borderRadius: 31,
+        borderRadius: 22,
     },
     heroTextContainer: {
         flex: 1,
-        justifyContent: 'center',
     },
     heroSubtitle: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: 'rgba(255,255,255,0.6)',
-        letterSpacing: 0.5,
+        fontSize: 10,
+        fontFamily: 'SpaceMono',
+        color: 'rgba(255,255,255,0.3)',
+        letterSpacing: 1.5,
         textTransform: 'uppercase',
         marginTop: 2,
-    },
-    line: {
-        height: 2,
-        width: 40,
-        marginTop: 6,
-    },
-    subtitle: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: 'rgba(255,255,255,0.4)',
-        letterSpacing: 1,
-        textTransform: 'uppercase',
-        marginTop: 4,
     },
     rightAction: {
         marginLeft: 12,
     },
     brandContainer: {
         paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.05)',
     },
     brandContent: {
         justifyContent: 'center',
     },
     brandLogo: {
-        height: 40,
-        width: 120,
+        height: 32,
+        width: 100,
     },
     brandTitle: {
-        fontSize: 22,
-        fontWeight: '900',
-        fontStyle: 'italic',
+        fontSize: 20,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-ExtraBold' : 'Syne_800ExtraBold',
         letterSpacing: -0.5,
         textTransform: 'uppercase',
     },
+    brandSubtitle: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: 'rgba(255,255,255,0.3)',
+        letterSpacing: 1.5,
+        textTransform: 'uppercase',
+        marginTop: 2,
+    }
 });

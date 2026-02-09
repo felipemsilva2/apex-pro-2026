@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Modal, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Container, Header, EmptyState, LoadingSpinner } from '../../components/ui';
-import { Dumbbell, Zap, ChevronRight, Calendar, Clock, AlertTriangle } from 'lucide-react-native';
+import { Container, Header, EmptyState, LoadingSpinner, Button } from '../../components/ui';
+import { Dumbbell, Zap, ChevronRight, Calendar, Clock, Info } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAthleteWorkouts, useAthleteProtocols } from '../../hooks/useAthleteData';
-import { format, differenceInWeeks, parseISO, startOfDay } from 'date-fns';
+import { format, differenceInWeeks, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { getVisibleColor } from '../../lib/whitelabel';
 
-// Helper to parse "YYYY-MM-DD" as local date, avoiding UTC shift
 const parseLocalDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-').map(Number);
     return new Date(year, month - 1, day);
@@ -19,6 +19,7 @@ type Tab = 'workouts' | 'protocols';
 export default function TrainingScreen() {
     const { brandColors } = useAuth();
     const router = useRouter();
+    const visiblePrimary = getVisibleColor(brandColors.primary);
     const [activeTab, setActiveTab] = useState<Tab>('workouts');
     const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
 
@@ -33,327 +34,229 @@ export default function TrainingScreen() {
         refetchProtocols();
     };
 
-    if (isLoading) {
-        return <LoadingSpinner message="Carregando treinos..." />;
-    }
+    if (isLoading) return <LoadingSpinner message="Atualizando treinos..." />;
 
     return (
-        <Container variant="page">
+        <Container variant="page" seamless>
             <Header
-                title="Treinos"
-                subtitle="Meus Treinos"
+                title="CT Atleta"
+                subtitle="PLANOS DE TREINO"
+                variant="hero"
             />
 
-            {/* Custom Tabs */}
-            <View style={styles.tabContainer}>
-                <TouchableOpacity
-                    style={[
-                        styles.tab,
-                        activeTab === 'workouts' && { backgroundColor: brandColors.primary }
-                    ]}
-                    onPress={() => setActiveTab('workouts')}
-                >
-                    <Dumbbell
-                        size={16}
-                        color={activeTab === 'workouts' ? brandColors.secondary : 'rgba(255,255,255,0.4)'}
-                    />
-                    <Text style={[
-                        styles.tabText,
-                        activeTab === 'workouts' ? { color: brandColors.secondary } : { color: 'rgba(255,255,255,0.4)' }
-                    ]}>
-                        TREINOS ({workouts?.length || 0})
-                    </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[
-                        styles.tab,
-                        activeTab === 'protocols' && { backgroundColor: brandColors.primary }
-                    ]}
-                    onPress={() => setActiveTab('protocols')}
-                >
-                    <Zap
-                        size={16}
-                        color={activeTab === 'protocols' ? brandColors.secondary : 'rgba(255,255,255,0.4)'}
-                    />
-                    <Text style={[
-                        styles.tabText,
-                        activeTab === 'protocols' && { color: brandColors.secondary }
-                    ]}>
-                        PROTOCOLOS ({protocols?.length || 0})
-                    </Text>
-                </TouchableOpacity>
-            </View>
-
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={isRefetching}
-                        onRefresh={handleRefresh}
-                        tintColor={brandColors.primary}
-                        colors={[brandColors.primary]}
-                    />
-                }
-            >
-                {activeTab === 'workouts' ? (
-                    <>
-                        {workouts && workouts.length > 0 ? (
-                            workouts.map((workout, index) => {
-                                // Highlight logic: Find if this workout is for today
-                                const workoutDate = workout.scheduled_date ? parseLocalDate(workout.scheduled_date) : null;
-                                const today = startOfDay(new Date());
-                                const isToday = workoutDate && startOfDay(workoutDate).getTime() === today.getTime();
-                                const isNext = isToday || (index === 0 && !workouts.some(w => w.scheduled_date && startOfDay(parseLocalDate(w.scheduled_date)).getTime() === today.getTime()));
-
-                                return (
-                                    <TouchableOpacity
-                                        key={workout.id}
-                                        activeOpacity={0.9}
-                                        style={[
-                                            styles.card,
-                                            isNext && { borderColor: brandColors.primary, borderWidth: 1 }
-                                        ]}
-                                        onPress={() => router.push(`/workout/${workout.id}` as any)}
-                                    >
-                                        <View style={[styles.statusStripe, { backgroundColor: isNext ? brandColors.primary : 'rgba(255,255,255,0.1)' }]} />
-
-                                        <View style={styles.cardContent}>
-                                            <View style={styles.cardHeader}>
-                                                <View style={{ flex: 1 }}>
-                                                    <View style={styles.headerTopRow}>
-                                                        {isToday ? (
-                                                            <View style={[styles.nextBadge, { backgroundColor: brandColors.primary }]}>
-                                                                <Text style={[styles.nextBadgeText, { color: brandColors.secondary }]}>MISSÃO DE HOJE</Text>
-                                                            </View>
-                                                        ) : isNext ? (
-                                                            <View style={[styles.nextBadge, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-                                                                <Text style={[styles.nextBadgeText, { color: 'rgba(255,255,255,0.4)' }]}>DURANTE A SEMANA</Text>
-                                                            </View>
-                                                        ) : null}
-                                                        {workout.scheduled_date ? (
-                                                            <Text style={[styles.dateText, isNext && { color: brandColors.primary }]}>
-                                                                {format(parseLocalDate(workout.scheduled_date), "EEEE", { locale: ptBR }).toUpperCase()}
-                                                                <Text style={{ opacity: 0.3 }}> • {format(parseLocalDate(workout.scheduled_date), "d 'DE' MMM", { locale: ptBR }).toUpperCase()}</Text>
-                                                            </Text>
-                                                        ) : (
-                                                            (() => {
-                                                                const days = Array.from(new Set(workout.exercises?.map((ex: any) => ex.day).filter(Boolean))) as string[];
-                                                                if (days.length > 0) {
-                                                                    const dayOrder: any = { segunda: 1, terca: 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6, domingo: 7 };
-                                                                    const dayLabels: any = { segunda: 'SEG', terca: 'TER', quarta: 'QUA', quinta: 'QUI', sexta: 'SEX', sabado: 'SÁB', domingo: 'DOM' };
-                                                                    const sortedDays = days.sort((a, b) => dayOrder[a] - dayOrder[b]);
-                                                                    return (
-                                                                        <Text style={[styles.dateText, isNext && { color: brandColors.primary }]}>
-                                                                            {sortedDays.map(d => dayLabels[d] || d.toUpperCase()).join(' • ')}
-                                                                        </Text>
-                                                                    );
-                                                                }
-                                                                return null;
-                                                            })()
-                                                        )}
-                                                    </View>
-                                                    <Text style={styles.cardTitle}>{workout.title}</Text>
-                                                </View>
-                                                <View style={[styles.iconBox, { borderColor: isNext ? brandColors.primary : 'rgba(255,255,255,0.1)' }]}>
-                                                    <ChevronRight size={20} color={isNext ? brandColors.primary : 'rgba(255,255,255,0.4)'} />
-                                                </View>
-                                            </View>
-
-                                            <View style={styles.statsRow}>
-                                                <View style={styles.statItem}>
-                                                    <Dumbbell size={12} color="rgba(255,255,255,0.4)" />
-                                                    <Text style={styles.statText}>{workout.exercises?.length || 0} EXERCÍCIOS</Text>
-                                                </View>
-                                                <View style={styles.statDivider} />
-                                                <View style={styles.statItem}>
-                                                    <Clock size={12} color="rgba(255,255,255,0.4)" />
-                                                    <Text style={styles.statText}>~60 MIN</Text>
-                                                </View>
-                                            </View>
-
-                                            <View style={styles.divider} />
-
-                                            <View style={styles.previewList}>
-                                                {workout.exercises?.slice(0, 3).map((ex: any, i: number) => {
-                                                    // FIX: Usar name_pt se disponível, senão name, senão exercise_name
-                                                    const name = ex.exercise?.name_pt || ex.exercise?.name || ex.exercise_name || "Exercício";
-                                                    return (
-                                                        <View key={i} style={styles.previewRow}>
-                                                            <View style={[styles.bullet, { backgroundColor: isNext ? brandColors.primary : 'rgba(255,255,255,0.2)' }]} />
-                                                            <Text style={styles.previewText} numberOfLines={1}>
-                                                                {name}
-                                                            </Text>
-                                                            <Text style={styles.previewSets}>
-                                                                {ex.sets}x{ex.reps}
-                                                            </Text>
-                                                        </View>
-                                                    );
-                                                })}
-                                                {workout.exercises && workout.exercises.length > 3 && (
-                                                    <Text style={styles.moreText}>
-                                                        + {workout.exercises.length - 3} outros exercícios...
-                                                    </Text>
-                                                )}
-                                            </View>
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            })
-                        ) : (
-                            <EmptyState
-                                icon={<Dumbbell size={40} color={brandColors.primary} />}
-                                title="Nenhum Treino"
-                                description="Seus treinos aparecerão aqui."
-                            />
+            <View style={styles.scrollContent}>
+                {/* Bento Tab Switcher */}
+                <View style={styles.tabContainer}>
+                    <TouchableOpacity
+                        style={[
+                            styles.tab,
+                            activeTab === 'workouts' && { backgroundColor: 'rgba(255,255,255,0.06)' }
+                        ]}
+                        onPress={() => setActiveTab('workouts')}
+                    >
+                        <Dumbbell
+                            size={16}
+                            color={activeTab === 'workouts' ? visiblePrimary : 'rgba(255,255,255,0.3)'}
+                        />
+                        <Text style={[
+                            styles.tabText,
+                            activeTab === 'workouts' ? { color: '#FFF' } : { color: 'rgba(255,255,255,0.3)' }
+                        ]}>
+                            Treinos
+                        </Text>
+                        {workouts && workouts.length > 0 && (
+                            <View style={[styles.tabBadge, { backgroundColor: activeTab === 'workouts' ? visiblePrimary : 'rgba(255,255,255,0.1)' }]}>
+                                <Text style={[styles.tabBadgeText, { color: activeTab === 'workouts' ? brandColors.secondary : 'rgba(255,255,255,0.4)' }]}>{workouts.length}</Text>
+                            </View>
                         )}
-                    </>
-                ) : (
-                    <>
-                        {protocols && protocols.length > 0 ? (
-                            protocols.map((protocol) => {
-                                const startDate = protocol.start_date ? new Date(protocol.start_date) : new Date();
-                                const currentWeek = differenceInWeeks(new Date(), startDate) + 1;
+                    </TouchableOpacity>
 
-                                return (
-                                    <TouchableOpacity
-                                        key={protocol.id}
-                                        activeOpacity={0.9}
-                                        style={styles.card}
-                                        onPress={() => setSelectedProtocol(protocol)}
-                                    >
-                                        <View style={[styles.statusStripe, { backgroundColor: brandColors.primary }]} />
+                    <TouchableOpacity
+                        style={[
+                            styles.tab,
+                            activeTab === 'protocols' && { backgroundColor: 'rgba(255,255,255,0.06)' }
+                        ]}
+                        onPress={() => setActiveTab('protocols')}
+                    >
+                        <Zap
+                            size={16}
+                            color={activeTab === 'protocols' ? visiblePrimary : 'rgba(255,255,255,0.3)'}
+                        />
+                        <Text style={[
+                            styles.tabText,
+                            activeTab === 'protocols' ? { color: '#FFF' } : { color: 'rgba(255,255,255,0.3)' }
+                        ]}>
+                            Protocolos
+                        </Text>
+                    </TouchableOpacity>
+                </View>
 
-                                        <View style={styles.cardContent}>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                        <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={brandColors.primary} />
+                    }
+                >
+                    {activeTab === 'workouts' ? (
+                        <>
+                            {workouts && workouts.length > 0 ? (
+                                workouts.map((workout, index) => {
+                                    const workoutDate = workout.scheduled_date ? parseLocalDate(workout.scheduled_date) : null;
+                                    const today = startOfDay(new Date());
+                                    const isToday = workoutDate && startOfDay(workoutDate).getTime() === today.getTime();
+                                    const isNext = isToday || (index === 0 && !workouts.some(w => w.scheduled_date && startOfDay(parseLocalDate(w.scheduled_date)).getTime() === today.getTime()));
+
+                                    return (
+                                        <TouchableOpacity
+                                            key={workout.id}
+                                            activeOpacity={0.7}
+                                            style={[styles.workoutCard, isNext && { borderColor: `${visiblePrimary}40` }]}
+                                            onPress={() => router.push(`/workout/${workout.id}` as any)}
+                                        >
                                             <View style={styles.cardHeader}>
-                                                <View style={{ flex: 1 }}>
-                                                    <View style={styles.headerTopRow}>
-                                                        <View style={[styles.nextBadge, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-                                                            <Text style={styles.nextBadgeText}>PROTOCOLO</Text>
+                                                <View style={styles.headerInfo}>
+                                                    {isToday && (
+                                                        <View style={[styles.statusBadge, { backgroundColor: visiblePrimary }]}>
+                                                            <Text style={[styles.statusBadgeText, { color: brandColors.secondary }]}>AGENDADO HOJE</Text>
                                                         </View>
-                                                        <Text style={styles.dateText}>SEMANA {currentWeek}</Text>
-                                                    </View>
-                                                    <Text style={styles.cardTitle}>{protocol.name}</Text>
+                                                    )}
+                                                    <Text style={styles.cardTitle}>{workout.title}</Text>
+                                                    <Text style={styles.cardSubtitle}>
+                                                        {workout.scheduled_date
+                                                            ? format(parseLocalDate(workout.scheduled_date), "EEEE, d 'de' MMMM", { locale: ptBR })
+                                                            : 'Treino Flexível'}
+                                                    </Text>
                                                 </View>
-                                                <View style={[styles.iconBox, { borderColor: 'rgba(255,255,255,0.1)' }]}>
-                                                    <Zap size={20} color={brandColors.primary} />
+                                                <View style={[styles.actionIcon, { backgroundColor: isNext ? `${visiblePrimary}15` : 'rgba(255,255,255,0.05)' }]}>
+                                                    <ChevronRight size={20} color={isNext ? visiblePrimary : 'rgba(255,255,255,0.4)'} />
                                                 </View>
                                             </View>
 
                                             <View style={styles.statsRow}>
-                                                <View style={styles.statItem}>
-                                                    <Clock size={12} color="rgba(255,255,255,0.4)" />
-                                                    <Text style={styles.statText}>INÍCIO: {protocol.start_date ? format(new Date(protocol.start_date), "dd/MM/yy") : '--/--/--'}</Text>
+                                                <View style={styles.statChip}>
+                                                    <Dumbbell size={12} color="rgba(255,255,255,0.4)" />
+                                                    <Text style={styles.statLabel}>{workout.exercises?.length || 0} Atividades</Text>
                                                 </View>
-                                                <View style={styles.statDivider} />
-                                                <View style={styles.statItem}>
-                                                    <Calendar size={12} color="rgba(255,255,255,0.4)" />
-                                                    <Text style={styles.statText}>FIM: {protocol.end_date ? format(new Date(protocol.end_date), "dd/MM/yy") : 'CONTÍNUO'}</Text>
+                                                <View style={styles.statChip}>
+                                                    <Clock size={12} color="rgba(255,255,255,0.4)" />
+                                                    <Text style={styles.statLabel}>~55 min</Text>
                                                 </View>
                                             </View>
 
-                                            <View style={styles.divider} />
-
-                                            <View style={styles.previewList}>
-                                                {protocol.compounds?.map((compound: any, i: number) => (
-                                                    <View key={i} style={styles.previewRow}>
-                                                        <View style={[styles.bullet, { backgroundColor: brandColors.primary }]} />
-                                                        <Text style={styles.previewText} numberOfLines={1}>
-                                                            {compound.name}
+                                            <View style={styles.previewContainer}>
+                                                {workout.exercises?.slice(0, 3).map((ex: any, i: number) => (
+                                                    <View key={i} style={styles.previewItem}>
+                                                        <Text style={styles.previewName} numberOfLines={1}>
+                                                            {ex.exercise?.name_pt || ex.exercise?.name || ex.exercise_name || "Exercício"}
                                                         </Text>
-                                                        <Text style={styles.previewSets}>
-                                                            {compound.dosage} {compound.frequency ? `• ${compound.frequency}` : ''}
-                                                        </Text>
+                                                        <Text style={styles.previewMeta}>{ex.sets}x{ex.reps}</Text>
                                                     </View>
                                                 ))}
                                             </View>
+                                        </TouchableOpacity>
+                                    );
+                                })
+                            ) : (
+                                <EmptyState
+                                    icon={<Dumbbell size={40} color={visiblePrimary} />}
+                                    title="Tudo pronto!"
+                                    description="Seus novos treinos e planos aparecerão aqui em breve."
+                                />
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            {protocols && protocols.length > 0 ? (
+                                protocols.map((protocol) => (
+                                    <TouchableOpacity
+                                        key={protocol.id}
+                                        activeOpacity={0.7}
+                                        style={styles.protocolCard}
+                                        onPress={() => setSelectedProtocol(protocol)}
+                                    >
+                                        <View style={styles.protocolHeader}>
+                                            <Zap size={20} color={visiblePrimary} />
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.protocolTitle}>{protocol.name}</Text>
+                                                <Text style={styles.protocolSubtitle}>
+                                                    {protocol.start_date ? `Início em ${format(new Date(protocol.start_date), "dd/MM/yy")}` : 'Plano Vitalício'}
+                                                </Text>
+                                            </View>
+                                            <TouchableOpacity style={styles.infoButton} onPress={() => setSelectedProtocol(protocol)}>
+                                                <Info size={18} color="rgba(255,255,255,0.3)" />
+                                            </TouchableOpacity>
+                                        </View>
 
-                                            {protocol.description && (
-                                                <View style={styles.noteContainer}>
-                                                    <AlertTriangle size={12} color={brandColors.primary} />
-                                                    <Text style={[styles.noteText, { color: brandColors.primary }]} numberOfLines={3}>
-                                                        {protocol.description}
-                                                    </Text>
+                                        <View style={styles.compoundGrid}>
+                                            {protocol.compounds?.slice(0, 2).map((comp: any, i: number) => (
+                                                <View key={i} style={styles.compoundItem}>
+                                                    <Text style={styles.compoundName} numberOfLines={1}>{comp.name}</Text>
+                                                    <Text style={[styles.compoundMeta, { color: visiblePrimary }]}>{comp.dosage}</Text>
                                                 </View>
+                                            ))}
+                                            {protocol.compounds?.length > 2 && (
+                                                <Text style={styles.moreCount}>+ {protocol.compounds.length - 2} itens</Text>
                                             )}
                                         </View>
                                     </TouchableOpacity>
-                                );
-                            })
-                        ) : (
-                            <EmptyState
-                                icon={<Zap size={40} color={brandColors.primary} />}
-                                title="Nenhum Protocolo"
-                                description="Seus protocolos hormonais aparecerão aqui."
-                            />
-                        )}
-                    </>
-                )}
+                                ))
+                            ) : (
+                                <EmptyState
+                                    icon={<Zap size={40} color={visiblePrimary} />}
+                                    title="Sem protocolos"
+                                    description="Você não possui protocolos auxiliares ativos."
+                                />
+                            )}
+                        </>
+                    )}
+                    <View style={{ height: 120 }} />
+                </ScrollView>
+            </View>
 
-                <View style={{ height: 100 }} />
-            </ScrollView>
-
-            {/* Protocol Detail Modal */}
+            {/* Premium Protocol Modal */}
             <Modal
                 visible={!!selectedProtocol}
-                animationType="slide"
+                animationType="fade"
                 transparent={true}
                 onRequestClose={() => setSelectedProtocol(null)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
+                    <View style={styles.modalSheet}>
                         <View style={styles.modalHeader}>
-                            <View style={{ flex: 1 }}>
-                                <View style={styles.headerTopRow}>
-                                    <View style={[styles.nextBadge, { backgroundColor: brandColors.primary }]}>
-                                        <Text style={[styles.nextBadgeText, { color: brandColors.secondary }]}>MISSÃO ATUAL</Text>
-                                    </View>
-                                    <Text style={styles.modalDateText}>PROTOCOLO EM VIGOR</Text>
-                                </View>
-                                <Text style={styles.modalTitle}>{selectedProtocol?.name}</Text>
-                            </View>
-                            <TouchableOpacity
-                                style={styles.closeButton}
-                                onPress={() => setSelectedProtocol(null)}
-                            >
-                                <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 24 }}>×</Text>
+                            <Zap size={24} color={visiblePrimary} />
+                            <Text style={styles.modalTitle}>{selectedProtocol?.name}</Text>
+                            <TouchableOpacity onPress={() => setSelectedProtocol(null)} style={styles.closeBtn}>
+                                <Text style={styles.closeBtnText}>FECHAR</Text>
                             </TouchableOpacity>
                         </View>
 
-                        <ScrollView showsVerticalScrollIndicator={false} style={styles.modalBody}>
+                        <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
                             {selectedProtocol?.description && (
-                                <View style={styles.modalDescriptionBox}>
-                                    <Text style={styles.modalLabel}>ORIENTAÇÕES DO COACH</Text>
-                                    <Text style={styles.modalDescriptionText}>
-                                        {selectedProtocol.description}
-                                    </Text>
+                                <View style={styles.instructionBox}>
+                                    <Text style={styles.boxLabel}>ORIENTAÇÕES</Text>
+                                    <Text style={styles.boxText}>{selectedProtocol.description}</Text>
                                 </View>
                             )}
 
-                            <Text style={[styles.modalLabel, { marginTop: 24, marginBottom: 16 }]}>EXERCÍCIOS</Text>
-                            {selectedProtocol?.compounds?.map((compound: any, i: number) => (
-                                <View key={i} style={styles.modalCompoundRow}>
-                                    <View style={[styles.compoundIcon, { backgroundColor: `${brandColors.primary}20` }]}>
-                                        <Zap size={16} color={brandColors.primary} />
-                                    </View>
+                            <Text style={styles.compoundLabel}>CONTEÚDO DO PLANO</Text>
+                            {selectedProtocol?.compounds?.map((comp: any, i: number) => (
+                                <View key={i} style={styles.modalCompoundItem}>
+                                    <View style={[styles.dot, { backgroundColor: visiblePrimary }]} />
                                     <View style={{ flex: 1 }}>
-                                        <Text style={styles.compoundName}>{compound.name}</Text>
-                                        <Text style={[styles.compoundDosage, { color: brandColors.primary }]}>
-                                            {compound.dosage} {compound.frequency ? <Text style={{ color: 'rgba(255,255,255,0.4)', fontWeight: '400' }}> • {compound.frequency}</Text> : ''}
-                                        </Text>
+                                        <Text style={styles.modalCompName}>{comp.name}</Text>
+                                        <Text style={styles.modalCompFreq}>{comp.frequency || 'Sob demanda'}</Text>
                                     </View>
+                                    <Text style={[styles.modalCompDosage, { color: visiblePrimary }]}>{comp.dosage}</Text>
                                 </View>
                             ))}
-
-                            <View style={{ height: 40 }} />
                         </ScrollView>
 
-                        <TouchableOpacity
-                            style={[styles.modalCloseButton, { backgroundColor: brandColors.primary }]}
+                        <Button
+                            title="ENTENDIDO"
                             onPress={() => setSelectedProtocol(null)}
-                        >
-                            <Text style={[styles.modalCloseText, { color: brandColors.secondary }]}>ENTENDIDO</Text>
-                        </TouchableOpacity>
+                            brandColors={brandColors}
+                            style={{ marginTop: 20 }}
+                        />
                     </View>
                 </View>
             </Modal>
@@ -362,116 +265,19 @@ export default function TrainingScreen() {
 }
 
 const styles = StyleSheet.create({
-    modalOverlay: {
+    scrollContent: {
+        paddingHorizontal: 20,
+        paddingTop: 12,
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.9)',
-        justifyContent: 'flex-end',
-    },
-    modalContent: {
-        backgroundColor: '#0F0F0F',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        padding: 24,
-        maxHeight: '85%',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 24,
-    },
-    modalTitle: {
-        fontSize: 24,
-        fontWeight: '900',
-        fontStyle: 'italic',
-        color: '#FFF',
-        textTransform: 'uppercase',
-        marginTop: 4,
-    },
-    modalDateText: {
-        fontSize: 10,
-        fontWeight: '700',
-        color: 'rgba(255,255,255,0.4)',
-        letterSpacing: 2,
-    },
-    closeButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    modalBody: {
-        marginBottom: 24,
-    },
-    modalDescriptionBox: {
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        padding: 16,
-        borderRadius: 8,
-        borderLeftWidth: 3,
-        borderLeftColor: 'rgba(255,255,255,0.1)',
-    },
-    modalLabel: {
-        fontSize: 10,
-        fontWeight: '900',
-        color: 'rgba(255,255,255,0.4)',
-        letterSpacing: 1.5,
-        marginBottom: 8,
-    },
-    modalDescriptionText: {
-        color: '#FFF',
-        fontSize: 14,
-        lineHeight: 22,
-        fontWeight: '500',
-    },
-    modalCompoundRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.02)',
-        padding: 12,
-        borderRadius: 8,
-        marginBottom: 8,
-        gap: 12,
-    },
-    compoundIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    compoundName: {
-        color: '#FFF',
-        fontSize: 15,
-        fontWeight: '700',
-    },
-    compoundDosage: {
-        fontSize: 12,
-        fontWeight: '800',
-        marginTop: 2,
-    },
-    modalCloseButton: {
-        paddingVertical: 16,
-        borderRadius: 8,
-        alignItems: 'center',
-        transform: [{ skewX: '-10deg' }],
-    },
-    modalCloseText: {
-        fontWeight: '900',
-        fontSize: 14,
-        textTransform: 'uppercase',
-        fontStyle: 'italic',
-        transform: [{ skewX: '10deg' }],
     },
     tabContainer: {
         flexDirection: 'row',
         backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 20,
         padding: 4,
-        borderRadius: 8,
         marginBottom: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
     },
     tab: {
         flex: 1,
@@ -479,145 +285,257 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 12,
-        borderRadius: 6,
+        borderRadius: 16,
         gap: 8,
     },
     tabText: {
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-SemiBold' : 'Syne_600SemiBold',
+    },
+    tabBadge: {
+        paddingHorizontal: 6,
+        paddingVertical: 1,
+        borderRadius: 8,
+    },
+    tabBadgeText: {
         fontSize: 10,
         fontWeight: '900',
-        letterSpacing: 1,
     },
-    card: {
-        backgroundColor: 'rgba(255,255,255,0.02)',
-        borderRadius: 4,
+    workoutCard: {
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 24,
+        padding: 24,
         marginBottom: 16,
-        overflow: 'hidden',
-        flexDirection: 'row',
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
     },
-    statusStripe: {
-        width: 4,
-        height: '100%',
-    },
-    cardContent: {
-        flex: 1,
-        padding: 16,
-    },
     cardHeader: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: 12,
+        gap: 16,
+        marginBottom: 20,
     },
-    headerTopRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 4,
+    headerInfo: {
+        flex: 1,
     },
-    nextBadge: {
-        paddingHorizontal: 6,
+    statusBadge: {
+        alignSelf: 'flex-start',
+        paddingHorizontal: 8,
         paddingVertical: 2,
-        borderRadius: 2,
+        borderRadius: 6,
+        marginBottom: 8,
     },
-    nextBadgeText: {
+    statusBadgeText: {
         fontSize: 9,
         fontWeight: '900',
-    },
-    dateText: {
-        fontSize: 10,
-        fontWeight: '700',
-        color: 'rgba(255,255,255,0.4)',
         letterSpacing: 0.5,
     },
     cardTitle: {
         fontSize: 18,
-        fontWeight: '900',
-        fontStyle: 'italic',
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
         color: '#FFF',
-        textTransform: 'uppercase',
-        letterSpacing: -0.5,
+        marginBottom: 4,
     },
-    iconBox: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        borderWidth: 1,
-        justifyContent: 'center',
+    cardSubtitle: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: 'rgba(255,255,255,0.4)',
+        textTransform: 'capitalize',
+    },
+    actionIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 14,
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.2)',
+        justifyContent: 'center',
     },
     statsRow: {
         flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
+        gap: 12,
+        marginBottom: 20,
     },
-    statItem: {
+    statChip: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-    },
-    statText: {
-        fontSize: 10,
-        fontWeight: '700',
-        color: 'rgba(255,255,255,0.4)',
-    },
-    statDivider: {
-        width: 1,
-        height: 10,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-    },
-    previewList: {
+        backgroundColor: 'rgba(255,255,255,0.04)',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 10,
         gap: 6,
     },
-    previewRow: {
+    statLabel: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: 'rgba(255,255,255,0.5)',
+    },
+    previewContainer: {
+        backgroundColor: 'rgba(0,0,0,0.15)',
+        borderRadius: 16,
+        padding: 16,
+        gap: 8,
+    },
+    previewItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    previewName: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: 'rgba(255,255,255,0.7)',
+        flex: 1,
+    },
+    previewMeta: {
+        fontSize: 12,
+        fontFamily: 'monospace',
+        color: 'rgba(255,255,255,0.3)',
+    },
+    protocolCard: {
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
+    },
+    protocolHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        gap: 12,
+        marginBottom: 16,
     },
-    bullet: {
-        width: 4,
-        height: 4,
-        borderRadius: 2,
-        marginRight: 8,
+    protocolTitle: {
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        color: '#FFF',
     },
-    previewText: {
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.8)',
-        flex: 1,
+    protocolSubtitle: {
+        fontSize: 12,
         fontWeight: '500',
+        color: 'rgba(255,255,255,0.4)',
     },
-    previewSets: {
-        fontSize: 11,
-        color: 'rgba(255,255,255,0.3)',
-        fontWeight: '700',
-        fontFamily: 'monospace',
-    },
-    moreText: {
-        fontSize: 11,
-        color: 'rgba(255,255,255,0.3)',
-        marginTop: 4,
-        fontStyle: 'italic',
-    },
-    divider: {
-        height: 1,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        marginVertical: 12,
-    },
-    noteContainer: {
-        backgroundColor: 'rgba(255,255,255,0.03)',
+    infoButton: {
         padding: 8,
-        marginTop: 12,
-        flexDirection: 'row',
-        gap: 8,
-        alignItems: 'flex-start',
-        borderRadius: 4,
     },
-    noteText: {
-        flex: 1,
+    compoundGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    compoundItem: {
+        backgroundColor: 'rgba(255,255,255,0.05)',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        minWidth: '45%',
+    },
+    compoundName: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#FFF',
+        marginBottom: 2,
+    },
+    compoundMeta: {
+        fontSize: 10,
+        fontWeight: '900',
+    },
+    moreCount: {
         fontSize: 11,
-        fontWeight: '600',
-        lineHeight: 16,
+        color: 'rgba(255,255,255,0.3)',
+        alignSelf: 'center',
+        marginLeft: 8,
+        fontWeight: '700',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.85)',
+        justifyContent: 'center',
+        padding: 20,
+    },
+    modalSheet: {
+        backgroundColor: '#0A0A0B',
+        borderRadius: 32,
+        padding: 24,
+        maxHeight: '80%',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 20,
+    },
+    modalTitle: {
+        flex: 1,
+        fontSize: 20,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        color: '#FFF',
+    },
+    closeBtn: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+    },
+    closeBtnText: {
+        fontSize: 11,
+        fontWeight: '900',
+        color: 'rgba(255,255,255,0.4)',
+        letterSpacing: 1,
+    },
+    modalBody: {
+        marginVertical: 20,
+    },
+    instructionBox: {
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 24,
+    },
+    boxLabel: {
+        fontSize: 10,
+        fontWeight: '900',
+        color: 'rgba(255,255,255,0.3)',
+        letterSpacing: 1,
+        marginBottom: 8,
+    },
+    boxText: {
+        fontSize: 14,
+        lineHeight: 20,
+        color: '#FFF',
+    },
+    compoundLabel: {
+        fontSize: 11,
+        fontWeight: '900',
+        color: 'rgba(255,255,255,0.3)',
+        letterSpacing: 1,
+        marginBottom: 16,
+    },
+    modalCompoundItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        marginBottom: 12,
+        backgroundColor: 'rgba(255,255,255,0.02)',
+        padding: 16,
+        borderRadius: 16,
+    },
+    dot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+    },
+    modalCompName: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#FFF',
+    },
+    modalCompFreq: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.4)',
+        marginTop: 2,
+    },
+    modalCompDosage: {
+        fontSize: 14,
+        fontWeight: '900',
     },
 });

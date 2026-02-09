@@ -34,8 +34,8 @@
     --input: 240 3.7% 15.9%;
     --ring: 67 100% 50%;
 
-    --radius: 0rem;
-    /* Sharp edges for athletic feel */
+    --radius: 1.25rem;
+    /* Balanced premium curves for Reacticx */
 
     /* Custom tokens */
     --surface: 240 10% 6%;
@@ -100,44 +100,17 @@
     @apply font-display font-black tracking-tighter uppercase italic;
   }
 
-  /* Global System Texture (Apex Protocol Anchor) */
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
-    opacity: 0.03;
-    pointer-events: none;
-    z-index: -1;
-  }
 
-  body::after {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-    background-size: 100% 3px, 3px 100%;
-    pointer-events: none;
-    z-index: -2;
-    opacity: 0.15;
-  }
 }
 
 @layer components {
   .athletic-card {
-    @apply bg-card border border-border p-6 relative overflow-hidden transition-all duration-300;
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+    @apply bg-card border border-white/5 p-7 rounded-[var(--radius)] relative overflow-hidden transition-all duration-500 backdrop-blur-md;
   }
 
   .athletic-card::after {
     content: '';
-    @apply absolute top-0 left-0 w-1 h-full bg-primary opacity-30 transition-all duration-300;
+    @apply absolute top-0 left-0 w-[2px] h-full bg-primary opacity-0 transition-all duration-500;
   }
 
   .athletic-card:hover {

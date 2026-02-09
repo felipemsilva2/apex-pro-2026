@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, RefreshControl, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Container, Header, ConfirmationModal } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,23 +11,32 @@ import {
     Shield,
     LogOut,
     ChevronRight,
-    ExternalLink,
-    Info
+    Info,
+    Settings,
+    Bell,
+    CreditCard
 } from 'lucide-react-native';
 import { getVisibleColor } from '../lib/whitelabel';
+import * as Haptics from 'expo-haptics';
 
 export default function SettingsScreen() {
-    const { profile: contextProfile, tenant, brandColors, signOut } = useAuth();
+    const { profile: contextProfile, tenant, brandColors, signOut, deleteAccount } = useAuth();
     const router = useRouter();
     const { data: serverProfile, refetch, isRefetching } = useAthleteProfile();
     const profile = serverProfile || contextProfile;
 
     const visiblePrimary = getVisibleColor(brandColors.primary);
-
     const [modalVisible, setModalVisible] = React.useState(false);
+    const [deleteModalVisible, setDeleteModalVisible] = React.useState(false);
 
     const handleLogout = () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
         setModalVisible(true);
+    };
+
+    const handleDeleteAccount = () => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        setDeleteModalVisible(true);
     };
 
     const confirmLogout = async () => {
@@ -35,27 +44,37 @@ export default function SettingsScreen() {
         await signOut();
     };
 
-    const SettingItem = ({ icon: Icon, label, onPress, subLabel }: any) => (
+    const confirmDelete = async () => {
+        setDeleteModalVisible(false);
+        await deleteAccount();
+    };
+
+    const SettingItem = ({ icon: Icon, label, onPress, subLabel, isLast }: any) => (
         <TouchableOpacity
-            style={[styles.item, { borderColor: 'rgba(255,255,255,0.05)' }]}
-            onPress={onPress}
+            style={[styles.item, !isLast && styles.itemBorder]}
+            onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onPress();
+            }}
             activeOpacity={0.7}
         >
             <View style={[styles.iconContainer, { backgroundColor: 'rgba(255,255,255,0.03)' }]}>
-                <Icon size={20} color={visiblePrimary} />
+                <Icon size={18} color={visiblePrimary} />
             </View>
             <View style={styles.itemContent}>
                 <Text style={styles.itemLabel}>{label}</Text>
                 {subLabel && <Text style={styles.itemSubLabel}>{subLabel}</Text>}
             </View>
-            <ChevronRight size={18} color="rgba(255,255,255,0.2)" />
+            <ChevronRight size={16} color="rgba(255,255,255,0.2)" />
         </TouchableOpacity>
     );
 
     return (
-        <Container variant="page">
+        <Container variant="page" seamless>
             <Header
-                title="Ajustes"
+                title="Configurações"
+                subtitle="PREFERÊNCIAS E PERFIL"
+                variant="hero"
                 onBack={() => router.back()}
             />
 
@@ -67,97 +86,160 @@ export default function SettingsScreen() {
                         refreshing={isRefetching}
                         onRefresh={refetch}
                         tintColor={brandColors.primary}
-                        colors={[brandColors.primary]}
                     />
                 }
             >
-                {/* User Info Header */}
-                <View style={[styles.userCard, { borderColor: `${visiblePrimary}20` }]}>
-                    <View style={[styles.avatarContainer, { borderColor: visiblePrimary }]}>
-                        {profile?.avatar_url ? (
-                            <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
-                        ) : (
-                            <User size={32} color={visiblePrimary} />
-                        )}
-                    </View>
-                    <View style={styles.userInfo}>
-                        <Text style={styles.userName}>{profile?.full_name || 'Atleta'}</Text>
-                        <Text style={styles.userEmail}>{profile?.email}</Text>
-                        <View style={[styles.roleBadge, { backgroundColor: `${visiblePrimary}15` }]}>
-                            <Text style={[styles.roleText, { color: visiblePrimary }]}>ALUNO ATIVO</Text>
+                <View style={styles.content}>
+                    {/* Bento Grid Header */}
+                    <View style={styles.bentoGrid}>
+                        {/* Profile Main Card */}
+                        <TouchableOpacity
+                            style={styles.profileCard}
+                            onPress={() => router.push('/profile_edit')}
+                            activeOpacity={0.9}
+                        >
+                            <View style={[styles.avatarWrapper, { borderColor: `${visiblePrimary}40` }]}>
+                                {profile?.avatar_url ? (
+                                    <Image source={{ uri: profile.avatar_url }} style={styles.avatar} />
+                                ) : (
+                                    <User size={32} color={visiblePrimary} />
+                                )}
+                            </View>
+                            <View style={styles.profileInfo}>
+                                <Text style={styles.userName}>{profile?.full_name || 'Atleta'}</Text>
+                                <Text style={styles.userEmail}>{profile?.email}</Text>
+                                <View style={[styles.roleBadge, { backgroundColor: `${visiblePrimary}15` }]}>
+                                    <Text style={[styles.roleText, { color: visiblePrimary }]}>MEMBRO ATIVO</Text>
+                                </View>
+                            </View>
+                            <View style={styles.editBadge}>
+                                <Settings size={14} color="rgba(255,255,255,0.4)" />
+                            </View>
+                        </TouchableOpacity>
+
+                        <View style={styles.bentoRow}>
+                            {/* Coach Card */}
+                            <TouchableOpacity
+                                style={styles.coachCardMini}
+                                onPress={() => router.push('/coach_profile')}
+                            >
+                                <Award size={20} color={brandColors.primary} />
+                                <Text style={styles.miniCardLabel}>TREINADOR</Text>
+                                <Text style={styles.miniCardValue}>
+                                    {tenant?.business_name || "Profissional"}
+                                </Text>
+                            </TouchableOpacity>
+
+                            {/* Status Card */}
+                            <View style={styles.statusCardMini}>
+                                <Bell size={20} color="#10B981" />
+                                <Text style={styles.miniCardLabel}>STATUS</Text>
+                                <Text style={[styles.miniCardValue, { color: '#10B981' }]}>ATIVO</Text>
+                            </View>
                         </View>
                     </View>
-                </View>
 
-                {/* Account Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>CONTA</Text>
-                    <View style={styles.sectionItems}>
+                    {/* Account Settings Section */}
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionLabel}>GERENCIAMENTO DE CONTA</Text>
+                    </View>
+                    <View style={styles.listContainer}>
                         <SettingItem
                             icon={User}
-                            label="Editar Perfil"
-                            subLabel="Dados biométricos e contato"
+                            label="Dados Biométricos"
+                            subLabel="Peso, altura e objetivos"
                             onPress={() => router.push('/profile_edit')}
                         />
                         <SettingItem
-                            icon={Award}
-                            label="Meu Treinador"
-                            subLabel={tenant?.business_name || "Ver perfil profissional"}
-                            onPress={() => router.push('/coach_profile')}
-                        />
-                    </View>
-                </View>
-
-                {/* Support Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>SUPORTE E LEGAL</Text>
-                    <View style={styles.sectionItems}>
-                        <SettingItem
-                            icon={MessageSquare}
-                            label="Falar com Suporte"
-                            subLabel="Dúvidas e suporte técnico"
+                            icon={CreditCard}
+                            label="Assinatura e Planos"
+                            subLabel="Status do plano (Ativo)"
                             onPress={() => {
-                                // Logic for WhatsApp support could be added here
-                                router.push('/chat');
+                                Alert.alert("Informação", "Sua assinatura é gerenciada diretamente com seu treinador.");
                             }}
                         />
                         <SettingItem
+                            icon={Award}
+                            label="Perfil do Treinador"
+                            subLabel="Especialidades e contato"
+                            onPress={() => router.push('/coach_profile')}
+                            isLast
+                        />
+                    </View>
+
+                    {/* Support Settings Section */}
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionLabel}>AJUDA E SEGURANÇA</Text>
+                    </View>
+                    <View style={styles.listContainer}>
+                        <SettingItem
+                            icon={MessageSquare}
+                            label="Suporte Técnico"
+                            subLabel="Dúvidas e feedback"
+                            onPress={() => router.push('/chat')}
+                        />
+                        <SettingItem
                             icon={Shield}
-                            label="Privacidade & Termos"
-                            onPress={() => { }}
+                            label="Privacidade e Termos"
+                            onPress={() => router.push('/privacy')}
                         />
                         <SettingItem
                             icon={Info}
-                            label="Versão do App"
-                            subLabel="Build 1.0.5 (Beta)"
+                            label="Termos de Uso"
+                            onPress={() => router.push('/terms')}
+                        />
+                        <SettingItem
+                            icon={Info}
+                            label="Sobre o Aplicativo"
+                            subLabel="Versão Beta 1.2.0"
                             onPress={() => { }}
+                            isLast
                         />
                     </View>
-                </View>
 
-                {/* Logout Button */}
-                <TouchableOpacity
-                    style={styles.logoutButton}
-                    onPress={handleLogout}
-                    activeOpacity={0.8}
-                >
-                    <LogOut size={20} color="rgba(255, 68, 68, 0.8)" />
-                    <Text style={styles.logoutText}>ENCERRAR SESSÃO</Text>
-                </TouchableOpacity>
+                    {/* Logout Section */}
+                    <TouchableOpacity
+                        style={styles.logoutButton}
+                        onPress={handleLogout}
+                        activeOpacity={0.8}
+                    >
+                        <LogOut size={18} color="#EF4444" />
+                        <Text style={styles.logoutText}>Encerrar Sessão</Text>
+                    </TouchableOpacity>
 
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>POWERED BY APEX PRO</Text>
+                    <TouchableOpacity
+                        style={[styles.logoutButton, { marginTop: 12, backgroundColor: 'rgba(255, 0, 0, 0.02)', borderColor: 'rgba(255, 0, 0, 0.05)' }]}
+                        onPress={handleDeleteAccount}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={[styles.logoutText, { color: 'rgba(255, 255, 255, 0.2)', fontSize: 10 }]}>SOLICITAR EXCLUSÃO DE CONTA</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.footer}>
+                        <Text style={styles.footerText}>POWERED BY APEX PRO ECOSYSTEM</Text>
+                    </View>
                 </View>
             </ScrollView>
 
             <ConfirmationModal
                 visible={modalVisible}
-                title="SAIR"
-                message="Deseja realmente encerrar sua sessão?"
+                title="Sair da Conta"
+                message="Deseja realmente encerrar sua sessão neste dispositivo?"
                 type="warning"
                 onConfirm={confirmLogout}
                 onCancel={() => setModalVisible(false)}
-                confirmText="SAIR"
+                confirmText="Sair"
+                brandColors={brandColors}
+            />
+
+            <ConfirmationModal
+                visible={deleteModalVisible}
+                title="Excluir Conta"
+                message="Esta ação é permanente. Todos os seus dados de treino e evolução serão removidos. Deseja prosseguir?"
+                type="warning"
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteModalVisible(false)}
+                confirmText="Excluir"
                 brandColors={brandColors}
             />
         </Container>
@@ -166,89 +248,142 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
     scrollContent: {
-        paddingBottom: 40,
+        paddingBottom: 100,
     },
-    userCard: {
+    content: {
+        paddingHorizontal: 20,
+        paddingTop: 12,
+    },
+    bentoGrid: {
+        gap: 12,
+        marginBottom: 32,
+    },
+    profileCard: {
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 32,
+        padding: 24,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.02)',
         borderWidth: 1,
-        borderRadius: 12,
-        padding: 20,
-        marginBottom: 24,
-        marginTop: 8,
+        borderColor: 'rgba(255,255,255,0.05)',
+        position: 'relative',
     },
-    avatarContainer: {
+    avatarWrapper: {
         width: 64,
         height: 64,
-        borderRadius: 32,
+        borderRadius: 20,
         borderWidth: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.03)',
+        backgroundColor: 'rgba(255,255,255,0.02)',
         overflow: 'hidden',
     },
     avatar: {
         width: '100%',
         height: '100%',
     },
-    userInfo: {
+    profileInfo: {
         marginLeft: 16,
         flex: 1,
     },
     userName: {
         color: '#FFF',
         fontSize: 18,
-        fontWeight: '900',
-        fontStyle: 'italic',
-        textTransform: 'uppercase',
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        marginBottom: 2,
     },
     userEmail: {
         color: 'rgba(255,255,255,0.4)',
-        fontSize: 12,
-        fontWeight: '600',
-        marginTop: 2,
+        fontSize: 13,
+        fontWeight: '500',
     },
     roleBadge: {
         alignSelf: 'flex-start',
         paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 4,
-        marginTop: 8,
+        paddingVertical: 3,
+        borderRadius: 8,
+        marginTop: 10,
     },
     roleText: {
-        fontSize: 10,
-        fontWeight: '900',
-        letterSpacing: 1,
+        fontSize: 9,
+        fontWeight: '800',
+        letterSpacing: 0.5,
     },
-    section: {
-        marginBottom: 24,
-    },
-    sectionTitle: {
-        fontSize: 11,
-        fontWeight: '900',
-        color: 'rgba(255,255,255,0.3)',
-        letterSpacing: 2,
-        marginBottom: 12,
-        marginLeft: 4,
-    },
-    sectionItems: {
-        backgroundColor: 'rgba(255,255,255,0.02)',
+    editBadge: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        width: 32,
+        height: 32,
         borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    bentoRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    coachCardMini: {
+        flex: 1,
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 28,
+        padding: 22,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
+        gap: 8,
+    },
+    statusCardMini: {
+        flex: 1,
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 28,
+        padding: 22,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
+        gap: 8,
+    },
+    miniCardLabel: {
+        fontSize: 9,
+        fontWeight: '800',
+        color: 'rgba(255,255,255,0.3)',
+        letterSpacing: 1,
+    },
+    miniCardValue: {
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        color: '#FFF',
+    },
+    sectionHeader: {
+        marginBottom: 12,
+        paddingLeft: 4,
+    },
+    sectionLabel: {
+        fontSize: 11,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        color: 'rgba(255,255,255,0.3)',
+        letterSpacing: 1,
+    },
+    listContainer: {
+        backgroundColor: 'rgba(255,255,255,0.02)',
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
+        marginBottom: 32,
         overflow: 'hidden',
     },
     item: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 16,
+    },
+    itemBorder: {
         borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.03)',
     },
     iconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 8,
+        width: 36,
+        height: 36,
+        borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -270,28 +405,27 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(255, 68, 68, 0.05)',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 68, 68, 0.1)',
-        borderRadius: 12,
-        padding: 16,
-        marginTop: 12,
+        backgroundColor: 'rgba(239, 68, 68, 0.05)',
+        borderRadius: 24,
+        padding: 18,
+        marginTop: 8,
         gap: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.1)',
     },
     logoutText: {
-        color: 'rgba(255, 68, 68, 0.8)',
-        fontSize: 12,
-        fontWeight: '900',
-        letterSpacing: 1,
+        color: '#EF4444',
+        fontSize: 14,
+        fontWeight: '700',
     },
     footer: {
-        marginTop: 40,
+        marginTop: 48,
         alignItems: 'center',
     },
     footerText: {
         color: 'rgba(255,255,255,0.1)',
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: '900',
-        letterSpacing: 3,
+        letterSpacing: 2,
     },
 });

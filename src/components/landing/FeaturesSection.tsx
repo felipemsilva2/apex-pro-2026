@@ -57,8 +57,8 @@ const FeaturesSection = () => {
               </span>
             </div>
             <h2 className="text-3xl sm:text-6xl lg:text-[70px] font-display font-black mb-6 italic leading-[0.9] tracking-tighter uppercase">
-              SEU <span className="text-primary text-blur-sm">APP PRÓPRIO</span> NAS LOJAS <br />
-              <span className="text-white">100% GRÁTIS</span>
+              SUA MARCA EM UM <br />
+              <span className="text-primary text-blur-sm">SISTEMA NATIVO</span>
             </h2>
             <div className="bg-primary/10 border-l-4 border-primary p-6 mt-8 max-w-2xl">
               <p className="font-display font-bold uppercase italic text-sm tracking-widest text-white/90">
