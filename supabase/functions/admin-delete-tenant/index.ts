@@ -15,6 +15,7 @@ serve(async (req) => {
         const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
+        // Create Admin client (Service Role)
         const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
             auth: {
                 autoRefreshToken: false,
@@ -22,42 +23,58 @@ serve(async (req) => {
             }
         })
 
+        // 1. Verify Requesting User's Role (Internal Security)
+        const authHeader = req.headers.get('Authorization')!
+        const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+            global: { headers: { Authorization: authHeader } }
+        })
+
+        const { data: { user }, error: authError } = await userClient.auth.getUser()
+        if (authError || !user) throw new Error('Não autorizado.')
+
+        const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (profile?.role !== 'admin') {
+            throw new Error('Acesso negado. Apenas administradores master podem remover ambientes.')
+        }
+
         const { tenantId } = await req.json()
 
         if (!tenantId) {
             throw new Error('tenantId é obrigatório.')
         }
 
-        console.log(`[admin-delete-tenant] Starting deletion for tenant: ${tenantId}`)
+        console.log(`[admin-delete-tenant] Starting deletion for tenant: ${tenantId} requested by ${user.id}`)
 
-        // 1. Get all profiles associated with this tenant
-        const { data: profiles, error: profilesError } = await supabaseAdmin
+        // 2. Get all profiles associated with this tenant
+        const { data: victims, error: victimsError } = await supabaseAdmin
             .from('profiles')
             .select('id')
             .eq('tenant_id', tenantId)
 
-        if (profilesError) {
-            console.error('[admin-delete-tenant] Error fetching profiles:', profilesError)
-            throw new Error(`Erro ao buscar perfis vinculados: ${profilesError.message}`)
+        if (victimsError) {
+            console.error('[admin-delete-tenant] Error fetching victims:', victimsError)
+            throw new Error(`Erro ao buscar perfis vinculados: ${victimsError.message}`)
         }
 
-        console.log(`[admin-delete-tenant] Found ${profiles?.length || 0} users to delete.`)
+        console.log(`[admin-delete-tenant] Found ${victims?.length || 0} users to delete.`)
 
-        // 2. Delete each user from Supabase Auth
-        if (profiles && profiles.length > 0) {
-            for (const profile of profiles) {
-                console.log(`[admin-delete-tenant] Deleting auth user: ${profile.id}`)
-                const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(profile.id)
-                if (authError) {
-                    console.warn(`[admin-delete-tenant] Warning deleting auth user ${profile.id}:`, authError.message)
-                    // We continue even if one user fails (e.g., already deleted)
+        // 3. Delete each user from Supabase Auth
+        if (victims && victims.length > 0) {
+            for (const victim of victims) {
+                console.log(`[admin-delete-tenant] Deleting auth user: ${victim.id}`)
+                const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(victim.id)
+                if (deleteAuthError) {
+                    console.warn(`[admin-delete-tenant] Warning deleting auth user ${victim.id}:`, deleteAuthError.message)
                 }
             }
         }
 
-        // 3. Delete the tenant record
-        // Associated profiles, clients, and app data should cascade if FKs are set to CASCADE
-        // Profiles are already mostly "shadows" after auth deletion, but we ensure the tenant goes away.
+        // 4. Delete the tenant record
         const { error: tenantDeleteError } = await supabaseAdmin
             .from('tenants')
             .delete()
