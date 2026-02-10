@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname } from 'expo-router';
 import { Home, Dumbbell, Apple, TrendingUp } from 'lucide-react-native';
 import { TabButton } from './TabButton';
@@ -11,6 +12,7 @@ import { TabButton } from './TabButton';
 export const CustomBottomNav: React.FC = () => {
     const router = useRouter();
     const pathname = usePathname();
+    const insets = useSafeAreaInsets();
 
     const tabs = [
         {
@@ -57,7 +59,7 @@ export const CustomBottomNav: React.FC = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingBottom: insets.bottom + 20 }]}>
             <View style={styles.content}>
                 {tabs.map((tab) => (
                     <TabButton
@@ -94,7 +96,6 @@ const styles = StyleSheet.create({
     content: {
         flexDirection: 'row',
         paddingTop: 4,
-        paddingBottom: Platform.OS === 'ios' ? 20 : 8,
         paddingHorizontal: 8,
     },
 });

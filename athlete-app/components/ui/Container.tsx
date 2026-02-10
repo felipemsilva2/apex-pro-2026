@@ -26,7 +26,6 @@ export const Container: React.FC<ContainerProps> = ({
         styles.base,
         variant === 'page' && [
             styles.page,
-            { paddingTop: insets.top, paddingBottom: insets.bottom },
             seamless && { paddingHorizontal: 0 }
         ],
         variant === 'card' && styles.card,
@@ -43,7 +42,7 @@ const styles = StyleSheet.create({
     },
     page: {
         flex: 1,
-        backgroundColor: '#050505',
+        backgroundColor: '#0A0A0B',
         paddingHorizontal: 20,
     },
     card: {

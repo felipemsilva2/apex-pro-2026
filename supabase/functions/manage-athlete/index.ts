@@ -24,6 +24,29 @@ serve(async (req) => {
             }
         })
 
+        // --- MANUAL AUTH VERIFICATION (DEBUGGING) ---
+        // We disabled verify_jwt in deployment to catch the specific error here.
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) {
+            throw new Error('Authorization header missing')
+        }
+
+        const token = authHeader.replace('Bearer ', '')
+        const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token)
+
+        if (userError || !userData.user) {
+            console.error('AUTH VERIFICATION FAILED:', userError)
+            return new Response(JSON.stringify({
+                error: 'Authentication failed',
+                details: userError,
+                debug: 'Manual JWT verification failed inside Edge Function'
+            }), {
+                status: 401,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            })
+        }
+        // --------------------------------------------
+
         const { fullName, username, password, tenantId, role = 'client' } = await req.json()
 
         if (!fullName || !username || !password || !tenantId) {
@@ -52,49 +75,21 @@ serve(async (req) => {
             email: phantomEmail,
             password: password,
             email_confirm: true,
-            user_metadata: { full_name: fullName, managed: true, role: role }
+            user_metadata: {
+                full_name: fullName,
+                managed: true,
+                role: role,
+                tenant_id: tenantId // Fix: Pass tenant_id to trigger logic
+            }
         })
 
         if (authError) throw authError
 
         const userId = authUser.user.id
 
-        // 4. Create Profile
-        const { error: profileError } = await supabaseAdmin
-            .from('profiles')
-            .insert({
-                id: userId,
-                full_name: fullName,
-                email: phantomEmail,
-                role: role,
-                tenant_id: tenantId
-            })
-
-        if (profileError) {
-            // Rollback auth user
-            await supabaseAdmin.auth.admin.deleteUser(userId)
-            throw profileError
-        }
-
-        // 5. Create Client record (ONLY if role is client)
-        if (role === 'client') {
-            const { error: clientError } = await supabaseAdmin
-                .from('clients')
-                .insert({
-                    user_id: userId,
-                    tenant_id: tenantId,
-                    full_name: fullName,
-                    email: phantomEmail,
-                    status: 'active'
-                })
-
-            if (clientError) {
-                // Rollback profile and user
-                await supabaseAdmin.from('profiles').delete().eq('id', userId)
-                await supabaseAdmin.auth.admin.deleteUser(userId)
-                throw clientError
-            }
-        }
+        // 4. Create Profile & Client
+        // REMOVED: Managed by trigger 'on_auth_user_created' -> 'handle_new_user'
+        // This avoids race conditions and duplicate key errors.
 
         return new Response(JSON.stringify({ success: true, userId }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -102,7 +97,8 @@ serve(async (req) => {
         })
 
     } catch (error: any) {
-        return new Response(JSON.stringify({ error: error.message }), {
+        console.error('CRITICAL ERROR in manage-athlete:', error)
+        return new Response(JSON.stringify({ error: error.message, details: error }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400,
         })

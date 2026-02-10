@@ -9,7 +9,8 @@ import {
     Linking,
     Share,
     Alert,
-    RefreshControl
+    RefreshControl,
+    Platform
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Container, Header, LoadingSpinner } from '../components/ui';
@@ -85,11 +86,12 @@ export default function CoachProfileScreen() {
     };
 
     return (
-        <Container variant="page">
+        <Container variant="page" seamless>
             <Header
                 title="MEU TREINADOR"
                 subtitle="CARTÃO PROFISSIONAL"
                 onBack={() => router.back()}
+                variant="hero"
                 rightAction={
                     <View style={{ flexDirection: 'row', gap: 16 }}>
                         <TouchableOpacity onPress={handleShare}>
@@ -297,8 +299,8 @@ const styles = StyleSheet.create({
     },
     coachName: {
         color: 'white',
-        fontSize: 24,
-        fontWeight: '900',
+        fontSize: 26,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         textTransform: 'uppercase',
         marginBottom: 8,
         letterSpacing: -0.5,
@@ -315,7 +317,7 @@ const styles = StyleSheet.create({
     },
     badgeText: {
         fontSize: 10,
-        fontWeight: '900',
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         letterSpacing: 1,
     },
     crefBadge: {
@@ -328,8 +330,8 @@ const styles = StyleSheet.create({
     },
     crefText: {
         color: 'rgba(255,255,255,0.6)',
-        fontSize: 10,
-        fontWeight: '800',
+        fontSize: 11,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
     },
     masterSection: {
         marginBottom: 24,
@@ -341,28 +343,28 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     masterSectionTitle: {
-        fontSize: 10,
-        fontWeight: '900',
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         letterSpacing: 1.5,
         textTransform: 'uppercase',
     },
     masterSpecialtyText: {
         color: 'white',
-        fontSize: 16,
-        fontWeight: '700',
-        lineHeight: 22,
+        fontSize: 18,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Medium' : 'Outfit_500Medium',
+        lineHeight: 24,
     },
     masterBioText: {
         color: 'rgba(255,255,255,0.7)',
-        fontSize: 14,
-        fontWeight: '400',
-        lineHeight: 22,
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
+        lineHeight: 24,
     },
     masterEducationText: {
         color: 'rgba(255,255,255,0.6)',
-        fontSize: 13,
-        fontWeight: '500',
-        lineHeight: 20,
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Medium' : 'Outfit_500Medium',
+        lineHeight: 22,
     },
     masterFooter: {
         marginTop: 8,
@@ -376,8 +378,8 @@ const styles = StyleSheet.create({
     },
     masterFooterText: {
         color: 'white',
-        fontSize: 12,
-        fontWeight: '500',
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Medium' : 'Outfit_500Medium',
     },
     // --- Connect Section Styles ---
     connectSection: {
@@ -385,8 +387,8 @@ const styles = StyleSheet.create({
     },
     connectLabel: {
         color: 'rgba(255,255,255,0.3)',
-        fontSize: 11,
-        fontWeight: '900',
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         letterSpacing: 2,
         textAlign: 'center',
         textTransform: 'uppercase',
@@ -415,8 +417,8 @@ const styles = StyleSheet.create({
     socialButtonText: {
         flex: 1,
         color: 'white',
-        fontSize: 13,
-        fontWeight: '800',
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         letterSpacing: 1,
     },
     spotifyButton: {
@@ -440,14 +442,14 @@ const styles = StyleSheet.create({
     },
     spotifyTitle: {
         color: '#1DB954',
-        fontSize: 12,
-        fontWeight: '900',
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         letterSpacing: 1,
     },
     spotifySubtitle: {
         color: 'rgba(255,255,255,0.4)',
-        fontSize: 11,
-        fontWeight: '400',
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
         marginTop: 2,
     },
 });

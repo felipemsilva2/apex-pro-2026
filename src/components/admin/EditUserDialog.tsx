@@ -36,6 +36,7 @@ interface EditUserDialogProps {
 
 export function EditUserDialog({ open, onOpenChange, onSuccess, user }: EditUserDialogProps) {
     const [loading, setLoading] = useState(false);
+    const [monthsToAdd, setMonthsToAdd] = useState(1);
     const [tenants, setTenants] = useState<{ id: string; business_name: string }[]>([]);
     const [formData, setFormData] = useState({
         full_name: "",
@@ -136,6 +137,68 @@ export function EditUserDialog({ open, onOpenChange, onSuccess, user }: EditUser
                             </Select>
                         </div>
                     </div>
+
+                    {formData.role === 'coach' && (
+                        <div className="space-y-4 pt-4 border-t border-white/5">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-primary italic">Plano do Profissional (B2B)</Label>
+                            <p className="text-[9px] text-white/40 -mt-2">
+                                Gerencie a assinatura do ambiente deste profissional. Ao ativar/suspender, todos os recursos do tenant serão afetados.
+                            </p>
+
+                            <div className="flex gap-4 items-end">
+                                <div className="flex-1 space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-white/40 italic">Período (Meses)</Label>
+                                    <Input
+                                        type="number"
+                                        value={monthsToAdd}
+                                        onChange={(e) => setMonthsToAdd(Number(e.target.value))}
+                                        min={1}
+                                        max={60}
+                                        className="bg-white/5 border-white/10 rounded-none h-12 text-white font-display uppercase italic text-[12px]"
+                                    />
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1 border-primary/20 text-primary hover:bg-primary/10 rounded-none h-12 font-display font-bold italic uppercase text-[10px] tracking-widest"
+                                    onClick={async () => {
+                                        if (!user?.tenant_id) return;
+                                        try {
+                                            await AdminService.manageSubscription({
+                                                tenantId: user.tenant_id,
+                                                status: 'ACTIVE',
+                                                monthsToAdd: monthsToAdd
+                                            });
+                                            toast.success(`Assinatura (${monthsToAdd} meses) ativada com sucesso!`);
+                                        } catch (err: any) {
+                                            toast.error(err.message || "Erro ao ativar assinatura.");
+                                        }
+                                    }}
+                                >
+                                    ATIVAR PLANO
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1 border-red-500/20 text-red-500 hover:bg-red-500/10 rounded-none h-12 font-display font-bold italic uppercase text-[10px] tracking-widest"
+                                    onClick={async () => {
+                                        if (!user?.tenant_id) return;
+                                        try {
+                                            await AdminService.manageSubscription({
+                                                tenantId: user.tenant_id,
+                                                status: 'suspended'
+                                            });
+                                            toast.success("Assinatura suspensa com sucesso!");
+                                        } catch (err: any) {
+                                            toast.error(err.message || "Erro ao suspender assinatura.");
+                                        }
+                                    }}
+                                >
+                                    SUSPENDER
+                                </Button>
+                            </div>
+                        </div>
+                    )}
 
                     <DialogFooter>
                         <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="rounded-none">

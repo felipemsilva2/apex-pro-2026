@@ -43,11 +43,12 @@ export default function ChatScreen() {
     }, [messages]);
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={styles.container}>
             <Header
                 title="COMUNICAÇÃO"
                 subtitle={tenant?.business_name ? `CANAL DIRETO: ${tenant.business_name}` : "CANAL DIRETO"}
                 onBack={() => router.back()}
+                variant="hero"
             />
 
             <KeyboardAvoidingView
@@ -153,14 +154,13 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'rgba(255,255,255,0.05)',
         borderWidth: 1,
-        borderRadius: 8,
+        borderRadius: 12,
         padding: 12,
         paddingTop: 12,
         color: '#fff',
-        fontFamily: 'Inter_500Medium',
-        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
+        fontSize: 15,
         maxHeight: 100,
-        fontStyle: 'italic'
     },
     sendButton: {
         width: 44,
@@ -185,18 +185,17 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         color: '#fff',
-        fontFamily: 'Inter_900Black',
-        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
+        fontSize: 18,
         textTransform: 'uppercase',
-        fontStyle: 'italic',
         letterSpacing: 1
     },
     emptySubtext: {
         color: 'rgba(255,255,255,0.4)',
-        fontFamily: 'Inter_700Bold',
-        fontSize: 10,
-        marginTop: 4,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
+        fontSize: 12,
+        marginTop: 6,
         textTransform: 'uppercase',
-        letterSpacing: 2
+        letterSpacing: 1.5
     }
 });

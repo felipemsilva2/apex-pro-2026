@@ -17,6 +17,11 @@ import {
   Syne_800ExtraBold
 } from '@expo-google-fonts/syne';
 import {
+  Outfit_400Regular,
+  Outfit_600SemiBold,
+  Outfit_700Bold
+} from '@expo-google-fonts/outfit';
+import {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_700Bold
 } from '@expo-google-fonts/plus-jakarta-sans';
@@ -42,6 +47,9 @@ export default function RootLayout() {
     Syne_400Regular,
     Syne_700Bold,
     Syne_800ExtraBold,
+    Outfit_400Regular,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
     PlusJakartaSans_400Regular,
     PlusJakartaSans_700Bold,
     ...FontAwesome.font,

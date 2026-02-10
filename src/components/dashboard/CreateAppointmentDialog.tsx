@@ -32,6 +32,13 @@ export function CreateAppointmentDialog({ trigger, appointmentToEdit, open: cont
     const { profile } = useAuth();
     const { data: clients } = useCoachClients();
 
+    const generateMeetingLink = (clientName: string = "") => {
+        const timestamp = Date.now();
+        const cleanName = clientName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
+        const coachId = profile?.id?.split('-')[0] || "coach";
+        return `https://meet.jit.si/ApexPro-${coachId}-${cleanName || "Atleta"}-${timestamp}`;
+    };
+
     const createMutation = useCreateAppointment();
     const updateMutation = useUpdateAppointment();
     const deleteMutation = useDeleteAppointment();
@@ -82,9 +89,24 @@ export function CreateAppointmentDialog({ trigger, appointmentToEdit, open: cont
 
     const selectedClientId = watch("client_id");
     const selectedType = watch("type");
+    const videoLink = watch("video_link");
+
+    // Auto-generate link when type changes to call
+    useEffect(() => {
+        if (selectedType === 'call' && !videoLink) {
+            const client = clients?.find(c => c.id === selectedClientId);
+            setValue("video_link", generateMeetingLink(client?.full_name));
+        }
+    }, [selectedType, selectedClientId]);
 
     const onSubmit = async (data: AppointmentInput) => {
         try {
+            // Robust Link Generation: If it's a call and video_link is empty, generate it now
+            if (data.type === 'call' && (!data.video_link || data.video_link.trim() === '')) {
+                const client = clients?.find(c => c.id === data.client_id);
+                data.video_link = generateMeetingLink(client?.full_name);
+            }
+
             if (appointmentToEdit) {
                 await updateMutation.mutateAsync({ id: appointmentToEdit.id, ...data });
             } else {
@@ -178,9 +200,21 @@ export function CreateAppointmentDialog({ trigger, appointmentToEdit, open: cont
 
                     {/* Video Link */}
                     <div className="space-y-2">
-                        <Label htmlFor="video_link" className="font-display font-bold text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <LinkIcon size={12} /> LINK DA VIDEOCONFERÊNCIA
-                        </Label>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="video_link" className="font-display font-bold text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                                <LinkIcon size={12} /> LINK DA VIDEOCONFERÊNCIA
+                            </Label>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const client = clients?.find(c => c.id === selectedClientId);
+                                    setValue("video_link", generateMeetingLink(client?.full_name));
+                                }}
+                                className="text-[9px] font-black text-primary uppercase italic hover:underline"
+                            >
+                                GERAR LINK INSTANTÂNEO
+                            </button>
+                        </div>
                         <Input
                             id="video_link"
                             placeholder="EX: GOOGLE MEET, ZOOM (OPCIONAL)"

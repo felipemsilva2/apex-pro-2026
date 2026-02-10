@@ -6,6 +6,7 @@ const config = getDefaultConfig(__dirname);
 
 // Add support for .cjs files (needed for date-fns v4)
 config.resolver.sourceExts.push('cjs');
+// config.resolver.unstable_enablePackageExports = true; // Disabled to fix Skia resolution error
 
 // Fix for Windows absolute path issue in Node 25 ESM loader
 try {

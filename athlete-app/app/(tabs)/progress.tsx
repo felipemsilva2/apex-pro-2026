@@ -248,8 +248,8 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     dayTabText: {
-        fontSize: 10,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         letterSpacing: 0.5,
     },
     activeIndicator: {
@@ -269,8 +269,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     sectionLabel: {
-        fontSize: 12,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: 'rgba(255,255,255,0.5)',
         letterSpacing: 1,
     },
@@ -280,8 +280,8 @@ const styles = StyleSheet.create({
         borderRadius: 8,
     },
     countText: {
-        fontSize: 10,
-        fontWeight: '900',
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
     },
     insufficientData: {
         alignItems: 'center',

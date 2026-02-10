@@ -198,7 +198,7 @@ const UsersListAdmin = () => {
                                             <span className="text-[10px] font-black italic uppercase tracking-widest">RESETAR SENHA</span>
                                         </DropdownMenuItem>
 
-                                        {user.role === 'client' && (
+                                        {user.role === 'coach' && (
                                             <DropdownMenuItem
                                                 className="p-4 flex items-center gap-3 cursor-pointer group focus:bg-emerald-500/10"
                                                 onClick={() => { setSelectedUser(user); setExtendPlanDialogOpen(true); }}
@@ -253,8 +253,7 @@ const UsersListAdmin = () => {
                 open={extendPlanDialogOpen}
                 onOpenChange={setExtendPlanDialogOpen}
                 onSuccess={fetchUsers}
-                userId={selectedUser?.id || null}
-                userName={selectedUser?.full_name || ""}
+                user={selectedUser}
             />
 
             {/* Delete Confirmation Dialog */}

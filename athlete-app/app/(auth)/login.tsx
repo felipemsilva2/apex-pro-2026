@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -12,6 +12,8 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { Shield, ChevronRight, Scale, Info } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import AnimatedMeshGradient from '../../components/AnimatedMeshGradient';
+import { IMeshGradientColor } from '../../components/AnimatedMeshGradient/types';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('');
@@ -45,11 +47,36 @@ export default function LoginScreen() {
         }
     };
 
+    const gradientColors = useMemo<IMeshGradientColor[]>(() => {
+        // Convert hex to normalized RGB for the shader
+        const hexToRgb = (hex: string) => {
+            const r = parseInt(hex.slice(1, 3), 16) / 255;
+            const g = parseInt(hex.slice(3, 5), 16) / 255;
+            const b = parseInt(hex.slice(5, 7), 16) / 255;
+            return { r, g, b };
+        };
+
+        const primary = hexToRgb(brandColors.primary);
+        return [
+            primary,
+            { r: 0.05, g: 0.05, b: 0.06 }, // Dark background color
+            { r: primary.r * 0.5, g: primary.g * 0.5, b: primary.b * 0.5 }, // Dimmed primary
+            { r: 0.1, g: 0.1, b: 0.12 }, // Another dark tone
+        ];
+    }, [brandColors.primary]);
+
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}
         >
+            <AnimatedMeshGradient
+                style={StyleSheet.absoluteFill}
+                colors={gradientColors}
+                speed={0.8}
+                blur={0.6}
+            />
+            <View style={styles.overlay} />
             <View style={styles.inner}>
                 {/* Header */}
                 <View style={styles.header}>
@@ -143,6 +170,10 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#0A0A0B',
         minHeight: '100%',
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(10, 10, 11, 0.85)', // Strong overlay to keep text readable
     },
     inner: {
         flex: 1,

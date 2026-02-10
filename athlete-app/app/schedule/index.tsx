@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAthleteAppointments } from '@/hooks/useAthleteData';
@@ -15,11 +15,12 @@ export default function ScheduleScreen() {
     const { data: appointments, isLoading, refetch, isRefetching } = useAthleteAppointments();
 
     return (
-        <Container variant="page">
+        <Container variant="page" seamless>
             <Header
-                title="AGENDA TÁTICA"
-                subtitle="PRÓXIMAS MISSÕES"
+                title="AGENDA"
+                subtitle="CONSULTAS E SESSÕES"
                 onBack={() => router.back()}
+                variant="hero"
             />
 
             <View style={styles.content}>
@@ -85,18 +86,17 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         color: '#fff',
-        fontFamily: 'Inter_900Black',
-        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
+        fontSize: 18,
         textTransform: 'uppercase',
-        fontStyle: 'italic',
         letterSpacing: 1
     },
     emptySubtext: {
         color: 'rgba(255,255,255,0.4)',
-        fontFamily: 'Inter_700Bold',
-        fontSize: 10,
-        marginTop: 4,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
+        fontSize: 12,
+        marginTop: 6,
         textTransform: 'uppercase',
-        letterSpacing: 2
+        letterSpacing: 1.5
     }
 });

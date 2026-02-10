@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     },
     avatarLabel: {
         fontSize: 10,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: 'rgba(255,255,255,0.3)',
         letterSpacing: 1,
         marginTop: 16,
@@ -473,8 +473,8 @@ const styles = StyleSheet.create({
         paddingLeft: 4,
     },
     label: {
-        fontSize: 11,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: 'rgba(255,255,255,0.5)',
         letterSpacing: 0.5,
     },
@@ -489,8 +489,8 @@ const styles = StyleSheet.create({
     },
     input: {
         color: '#FFF',
-        fontSize: 15,
-        fontWeight: '600',
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Medium' : 'Outfit_500Medium',
     },
     pickerTrigger: {
         backgroundColor: 'rgba(255,255,255,0.03)',
@@ -505,8 +505,8 @@ const styles = StyleSheet.create({
     },
     pickerText: {
         color: '#FFF',
-        fontSize: 15,
-        fontWeight: '600',
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Medium' : 'Outfit_500Medium',
     },
     saveButton: {
         height: 64,
@@ -523,8 +523,8 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     saveButtonText: {
-        fontSize: 16,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 18,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
     },
     modalOptions: {
         gap: 8,
@@ -540,8 +540,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     optionText: {
-        fontSize: 14,
-        fontWeight: '700',
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFF',
     },
 });

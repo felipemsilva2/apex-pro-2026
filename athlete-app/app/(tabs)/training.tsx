@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Modal, Platform } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Container, Header, EmptyState, LoadingSpinner, Button } from '../../components/ui';
 import { Dumbbell, Zap, ChevronRight, Calendar, Clock, Info } from 'lucide-react-native';
@@ -100,60 +101,64 @@ export default function TrainingScreen() {
                     {activeTab === 'workouts' ? (
                         <>
                             {workouts && workouts.length > 0 ? (
-                                workouts.map((workout, index) => {
+                                workouts.map((workout: any, index: number) => {
                                     const workoutDate = workout.scheduled_date ? parseLocalDate(workout.scheduled_date) : null;
                                     const today = startOfDay(new Date());
                                     const isToday = workoutDate && startOfDay(workoutDate).getTime() === today.getTime();
                                     const isNext = isToday || (index === 0 && !workouts.some(w => w.scheduled_date && startOfDay(parseLocalDate(w.scheduled_date)).getTime() === today.getTime()));
 
                                     return (
-                                        <TouchableOpacity
+                                        <Animated.View
                                             key={workout.id}
-                                            activeOpacity={0.7}
-                                            style={[styles.workoutCard, isNext && { borderColor: `${visiblePrimary}40` }]}
-                                            onPress={() => router.push(`/workout/${workout.id}` as any)}
+                                            entering={FadeInDown.delay(index * 100).duration(600).springify()}
                                         >
-                                            <View style={styles.cardHeader}>
-                                                <View style={styles.headerInfo}>
-                                                    {isToday && (
-                                                        <View style={[styles.statusBadge, { backgroundColor: visiblePrimary }]}>
-                                                            <Text style={[styles.statusBadgeText, { color: brandColors.secondary }]}>AGENDADO HOJE</Text>
-                                                        </View>
-                                                    )}
-                                                    <Text style={styles.cardTitle}>{workout.title}</Text>
-                                                    <Text style={styles.cardSubtitle}>
-                                                        {workout.scheduled_date
-                                                            ? format(parseLocalDate(workout.scheduled_date), "EEEE, d 'de' MMMM", { locale: ptBR })
-                                                            : 'Treino Flexível'}
-                                                    </Text>
-                                                </View>
-                                                <View style={[styles.actionIcon, { backgroundColor: isNext ? `${visiblePrimary}15` : 'rgba(255,255,255,0.05)' }]}>
-                                                    <ChevronRight size={20} color={isNext ? visiblePrimary : 'rgba(255,255,255,0.4)'} />
-                                                </View>
-                                            </View>
-
-                                            <View style={styles.statsRow}>
-                                                <View style={styles.statChip}>
-                                                    <Dumbbell size={12} color="rgba(255,255,255,0.4)" />
-                                                    <Text style={styles.statLabel}>{workout.exercises?.length || 0} Atividades</Text>
-                                                </View>
-                                                <View style={styles.statChip}>
-                                                    <Clock size={12} color="rgba(255,255,255,0.4)" />
-                                                    <Text style={styles.statLabel}>~55 min</Text>
-                                                </View>
-                                            </View>
-
-                                            <View style={styles.previewContainer}>
-                                                {workout.exercises?.slice(0, 3).map((ex: any, i: number) => (
-                                                    <View key={i} style={styles.previewItem}>
-                                                        <Text style={styles.previewName} numberOfLines={1}>
-                                                            {ex.exercise?.name_pt || ex.exercise?.name || ex.exercise_name || "Exercício"}
+                                            <TouchableOpacity
+                                                activeOpacity={0.7}
+                                                style={[styles.workoutCard, isNext && { borderColor: `${visiblePrimary}40` }]}
+                                                onPress={() => router.push(`/workout/${workout.id}` as any)}
+                                            >
+                                                <View style={styles.cardHeader}>
+                                                    <View style={styles.headerInfo}>
+                                                        {isToday && (
+                                                            <View style={[styles.statusBadge, { backgroundColor: visiblePrimary }]}>
+                                                                <Text style={[styles.statusBadgeText, { color: brandColors.secondary }]}>AGENDADO HOJE</Text>
+                                                            </View>
+                                                        )}
+                                                        <Text style={styles.cardTitle}>{workout.title}</Text>
+                                                        <Text style={styles.cardSubtitle}>
+                                                            {workout.scheduled_date
+                                                                ? format(parseLocalDate(workout.scheduled_date), "EEEE, d 'de' MMMM", { locale: ptBR })
+                                                                : 'Treino Flexível'}
                                                         </Text>
-                                                        <Text style={styles.previewMeta}>{ex.sets}x{ex.reps}</Text>
                                                     </View>
-                                                ))}
-                                            </View>
-                                        </TouchableOpacity>
+                                                    <View style={[styles.actionIcon, { backgroundColor: isNext ? `${visiblePrimary}15` : 'rgba(255,255,255,0.05)' }]}>
+                                                        <ChevronRight size={20} color={isNext ? visiblePrimary : 'rgba(255,255,255,0.4)'} />
+                                                    </View>
+                                                </View>
+
+                                                <View style={styles.statsRow}>
+                                                    <View style={styles.statChip}>
+                                                        <Dumbbell size={12} color="rgba(255,255,255,0.4)" />
+                                                        <Text style={styles.statLabel}>{workout.exercises?.length || 0} Atividades</Text>
+                                                    </View>
+                                                    <View style={styles.statChip}>
+                                                        <Clock size={12} color="rgba(255,255,255,0.4)" />
+                                                        <Text style={styles.statLabel}>~55 min</Text>
+                                                    </View>
+                                                </View>
+
+                                                <View style={styles.previewContainer}>
+                                                    {workout.exercises?.slice(0, 3).map((ex: any, i: number) => (
+                                                        <View key={i} style={styles.previewItem}>
+                                                            <Text style={styles.previewName} numberOfLines={1}>
+                                                                {ex.exercise?.name_pt || ex.exercise?.name || ex.exercise_name || "Exercício"}
+                                                            </Text>
+                                                            <Text style={styles.previewMeta}>{ex.sets}x{ex.reps}</Text>
+                                                        </View>
+                                                    ))}
+                                                </View>
+                                            </TouchableOpacity>
+                                        </Animated.View>
                                     );
                                 })
                             ) : (
@@ -167,38 +172,42 @@ export default function TrainingScreen() {
                     ) : (
                         <>
                             {protocols && protocols.length > 0 ? (
-                                protocols.map((protocol) => (
-                                    <TouchableOpacity
+                                protocols.map((protocol: any, index: number) => (
+                                    <Animated.View
                                         key={protocol.id}
-                                        activeOpacity={0.7}
-                                        style={styles.protocolCard}
-                                        onPress={() => setSelectedProtocol(protocol)}
+                                        entering={FadeInDown.delay(index * 100).duration(600).springify()}
                                     >
-                                        <View style={styles.protocolHeader}>
-                                            <Zap size={20} color={visiblePrimary} />
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={styles.protocolTitle}>{protocol.name}</Text>
-                                                <Text style={styles.protocolSubtitle}>
-                                                    {protocol.start_date ? `Início em ${format(new Date(protocol.start_date), "dd/MM/yy")}` : 'Plano Vitalício'}
-                                                </Text>
-                                            </View>
-                                            <TouchableOpacity style={styles.infoButton} onPress={() => setSelectedProtocol(protocol)}>
-                                                <Info size={18} color="rgba(255,255,255,0.3)" />
-                                            </TouchableOpacity>
-                                        </View>
-
-                                        <View style={styles.compoundGrid}>
-                                            {protocol.compounds?.slice(0, 2).map((comp: any, i: number) => (
-                                                <View key={i} style={styles.compoundItem}>
-                                                    <Text style={styles.compoundName} numberOfLines={1}>{comp.name}</Text>
-                                                    <Text style={[styles.compoundMeta, { color: visiblePrimary }]}>{comp.dosage}</Text>
+                                        <TouchableOpacity
+                                            activeOpacity={0.7}
+                                            style={styles.protocolCard}
+                                            onPress={() => setSelectedProtocol(protocol)}
+                                        >
+                                            <View style={styles.protocolHeader}>
+                                                <Zap size={20} color={visiblePrimary} />
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={styles.protocolTitle}>{protocol.name}</Text>
+                                                    <Text style={styles.protocolSubtitle}>
+                                                        {protocol.start_date ? `Início em ${format(new Date(protocol.start_date), "dd/MM/yy")}` : 'Plano Vitalício'}
+                                                    </Text>
                                                 </View>
-                                            ))}
-                                            {protocol.compounds?.length > 2 && (
-                                                <Text style={styles.moreCount}>+ {protocol.compounds.length - 2} itens</Text>
-                                            )}
-                                        </View>
-                                    </TouchableOpacity>
+                                                <TouchableOpacity style={styles.infoButton} onPress={() => setSelectedProtocol(protocol)}>
+                                                    <Info size={18} color="rgba(255,255,255,0.3)" />
+                                                </TouchableOpacity>
+                                            </View>
+
+                                            <View style={styles.compoundGrid}>
+                                                {protocol.compounds?.slice(0, 2).map((comp: any, i: number) => (
+                                                    <View key={i} style={styles.compoundItem}>
+                                                        <Text style={styles.compoundName} numberOfLines={1}>{comp.name}</Text>
+                                                        <Text style={[styles.compoundMeta, { color: visiblePrimary }]}>{comp.dosage}</Text>
+                                                    </View>
+                                                ))}
+                                                {protocol.compounds?.length > 2 && (
+                                                    <Text style={styles.moreCount}>+ {protocol.compounds.length - 2} itens</Text>
+                                                )}
+                                            </View>
+                                        </TouchableOpacity>
+                                    </Animated.View>
                                 ))
                             ) : (
                                 <EmptyState
@@ -260,7 +269,7 @@ export default function TrainingScreen() {
                     </View>
                 </View>
             </Modal>
-        </Container>
+        </Container >
     );
 }
 
@@ -289,8 +298,8 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     tabText: {
-        fontSize: 14,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-SemiBold' : 'Syne_600SemiBold',
+        fontSize: 15,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-SemiBold' : 'Outfit_600SemiBold',
     },
     tabBadge: {
         paddingHorizontal: 6,
@@ -331,14 +340,14 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     cardTitle: {
-        fontSize: 18,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 20,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFF',
         marginBottom: 4,
     },
     cardSubtitle: {
-        fontSize: 13,
-        fontWeight: '500',
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
         color: 'rgba(255,255,255,0.4)',
         textTransform: 'capitalize',
     },
@@ -364,8 +373,8 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     statLabel: {
-        fontSize: 11,
-        fontWeight: '700',
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-SemiBold' : 'Outfit_600SemiBold',
         color: 'rgba(255,255,255,0.5)',
     },
     previewContainer: {
@@ -405,13 +414,13 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     protocolTitle: {
-        fontSize: 16,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 18,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFF',
     },
     protocolSubtitle: {
-        fontSize: 12,
-        fontWeight: '500',
+        fontSize: 13,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
         color: 'rgba(255,255,255,0.4)',
     },
     infoButton: {
@@ -468,8 +477,8 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         flex: 1,
-        fontSize: 20,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 24,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFF',
     },
     closeBtn: {
@@ -525,8 +534,8 @@ const styles = StyleSheet.create({
         borderRadius: 3,
     },
     modalCompName: {
-        fontSize: 15,
-        fontWeight: '700',
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFF',
     },
     modalCompFreq: {

@@ -83,12 +83,20 @@ const TenantsList = () => {
         try {
             setIsDeleting(true);
             await AdminService.deleteTenant(selectedTenant.id);
+
+            // Optimistic update: Remove from state immediately
+            setTenants(current => current.filter(t => t.id !== selectedTenant.id));
+
             toast.success("Ambiente removido com sucesso.");
             setDeleteDialogOpen(false);
+
+            // Refetch in background to ensure consistency
             fetchTenants();
         } catch (err: any) {
             console.error("Error deleting tenant:", err);
             toast.error(err.message || "Erro ao remover ambiente.");
+            // If error, rollback (refetch)
+            fetchTenants();
         } finally {
             setIsDeleting(false);
             setSelectedTenant(null);
@@ -100,6 +108,22 @@ const TenantsList = () => {
         t.subdomain?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.master_coach?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const handleViewTenant = (tenant: TenantAdminInfo) => {
+        // Construct URL: prioritize custom domain, fallback to subdomain
+        const url = tenant.custom_domain
+            ? `https://${tenant.custom_domain}`
+            : `https://${tenant.subdomain}.apexpro.fit`;
+
+        window.open(url, '_blank');
+    };
+
+    const sortedTenants = [...filteredTenants].sort((a, b) => {
+        // Active first
+        if (a.status === 'active' && b.status !== 'active') return -1;
+        if (a.status !== 'active' && b.status === 'active') return 1;
+        return 0;
+    });
 
     return (
         <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
@@ -210,7 +234,10 @@ const TenantsList = () => {
                                         <DropdownMenuContent align="end" className="bg-black/90 border-white/10 text-white rounded-none w-56">
                                             <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest p-4 text-white/40 italic font-display">AÇÕES DE COMANDO</DropdownMenuLabel>
                                             <DropdownMenuSeparator className="bg-white/5" />
-                                            <DropdownMenuItem className="p-4 flex items-center gap-3 cursor-pointer group focus:bg-primary/10">
+                                            <DropdownMenuItem
+                                                className="p-4 flex items-center gap-3 cursor-pointer group focus:bg-primary/10"
+                                                onClick={() => handleViewTenant(tenant)}
+                                            >
                                                 <Building size={16} className="text-primary transition-transform group-hover:scale-110" />
                                                 <span className="text-[10px] font-black italic uppercase tracking-widest">VER AMBIENTE</span>
                                                 <ExternalLink size={12} className="ml-auto opacity-30" />

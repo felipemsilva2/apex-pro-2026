@@ -4,6 +4,7 @@ import { ChevronLeft, ShieldCheck } from 'lucide-react-native';
 import { SvgUri } from 'react-native-svg';
 import { BlurView } from 'expo-blur';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface HeaderProps {
     title?: string;
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
     variant = 'default',
 }) => {
     const { brandColors, tenant } = useAuth();
+    const insets = useSafeAreaInsets();
 
     const Wrapper = variant === 'hero' ? View : BlurView;
 
@@ -36,7 +38,8 @@ export const Header: React.FC<HeaderProps> = ({
                 styles.container,
                 variant === 'hero' && styles.heroContainer,
                 variant === 'brand' && styles.brandContainer,
-                variant !== 'hero' && styles.floatingHeader
+                variant !== 'hero' && styles.floatingHeader,
+                { paddingTop: insets.top + 24 }
             ]}
         >
             {onBack && (
@@ -139,7 +142,6 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
         paddingHorizontal: 20,
         minHeight: 64,
         zIndex: 100,
@@ -150,10 +152,8 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     heroContainer: {
-        paddingTop: 32,
         paddingBottom: 24,
         paddingHorizontal: 20,
-        minHeight: 120,
     },
     backButton: {
         width: 40,
@@ -175,23 +175,23 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        fontSize: 18,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 22,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFFFFF',
         letterSpacing: -0.5,
     },
     subtitle: {
-        fontSize: 12,
-        fontWeight: '500',
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
         color: 'rgba(255,255,255,0.5)',
         letterSpacing: 0.5,
         marginTop: 2,
     },
     heroTitle: {
-        fontSize: 20,
-        fontFamily: Platform.OS === 'ios' ? 'PlusJakartaSans-Bold' : 'PlusJakartaSans_700Bold',
+        fontSize: 28,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFFFFF',
-        letterSpacing: 0.5,
+        letterSpacing: -0.5,
         textTransform: 'uppercase',
     },
     heroTitleRow: {
@@ -228,12 +228,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     heroSubtitle: {
-        fontSize: 10,
-        fontFamily: 'SpaceMono',
-        color: 'rgba(255,255,255,0.3)',
-        letterSpacing: 1.5,
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-SemiBold' : 'Outfit_600SemiBold',
+        color: 'rgba(255,255,255,0.4)',
+        letterSpacing: 2,
         textTransform: 'uppercase',
-        marginTop: 2,
+        marginTop: 4,
     },
     rightAction: {
         marginLeft: 12,

@@ -11,6 +11,7 @@ export interface TenantAdminInfo {
     id: string;
     business_name: string;
     subdomain: string;
+    custom_domain?: string;
     plan_tier: string;
     status: 'active' | 'suspended';
     created_at: string;
@@ -110,18 +111,27 @@ export class AdminService {
      * Create a new user via Edge Function.
      */
     static async createUser(params: CreateUserParams) {
+        console.log("AdminService.createUser payload:", params); // Debug log
+
         const { data, error } = await supabase.functions.invoke('manage-athlete', {
             body: {
                 fullName: params.fullName,
                 username: params.username,
                 password: params.password,
                 role: params.role,
-                tenantId: params.tenantId
+                tenantId: params.tenantId,
+                tenant_id: params.tenantId // Send both to be safe
             }
         });
 
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
+        if (error) {
+            console.error("Supabase invoke error:", error);
+            throw error;
+        }
+        if (data?.error) {
+            console.error("Edge function returned error:", data.error);
+            throw new Error(data.error);
+        }
         return data;
     }
 
@@ -139,15 +149,20 @@ export class AdminService {
     }
 
     /**
-     * Delete a tenant completely via Edge Function.
+     * Delete a tenant completely via Database RPC (Cascade).
      */
     static async deleteTenant(tenantId: string) {
-        const { data, error } = await supabase.functions.invoke('admin-delete-tenant', {
-            body: { tenantId }
+        const { data, error } = await supabase.rpc('delete_tenant_cascade', {
+            target_tenant_id: tenantId
         });
 
         if (error) throw error;
-        if (data?.error) throw new Error(data.error);
+
+        // RPC returns { success: boolean, message: string, error?: string }
+        if (data && !data.success) {
+            throw new Error(data.error || 'Falha desconhecida ao excluir ambiente via RPC.');
+        }
+
         return data;
     }
 
@@ -208,6 +223,25 @@ export class AdminService {
 
         if (error) throw error;
         return { newTotalDays: newDays };
+    }
+
+    /**
+     * Manage user subscription manually (Admin Only).
+     */
+    static async manageSubscription(params: {
+        tenantId: string;
+        planId?: string;
+        status?: string;
+        billingType?: string;
+        monthsToAdd?: number;
+    }) {
+        const { data, error } = await supabase.functions.invoke('admin-manage-subscription', {
+            body: params
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        return data;
     }
 
     /**

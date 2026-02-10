@@ -106,15 +106,16 @@ const styles = StyleSheet.create({
     },
     title: {
         color: '#FFF',
-        fontSize: 24,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-ExtraBold' : 'Syne_800ExtraBold',
+        fontSize: 26,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         textAlign: 'center',
-        lineHeight: 28,
+        lineHeight: 32,
         letterSpacing: -1,
     },
     subtitle: {
         color: 'rgba(255,255,255,0.4)',
         fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
         textAlign: 'center',
         marginTop: 12,
         lineHeight: 20,
@@ -129,14 +130,15 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 12,
-        fontWeight: '900',
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         letterSpacing: 1,
         marginBottom: 12,
         textTransform: 'uppercase',
     },
     sectionContent: {
         color: 'rgba(255,255,255,0.7)',
-        fontSize: 14,
+        fontSize: 15,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
         lineHeight: 22,
     },
     footer: {
@@ -146,6 +148,6 @@ const styles = StyleSheet.create({
     footerText: {
         color: 'rgba(255,255,255,0.2)',
         fontSize: 11,
-        fontWeight: 'bold',
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
     }
 });

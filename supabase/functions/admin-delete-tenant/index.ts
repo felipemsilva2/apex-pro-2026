@@ -48,8 +48,46 @@ serve(async (req) => {
             throw new Error('tenantId é obrigatório.')
         }
 
-        console.log(`[admin-delete-tenant] Starting deletion for tenant: ${tenantId} requested by ${user.id}`)
+        console.log(`[admin-delete-tenant] Starting CASCADE deletion for tenant: ${tenantId}`)
 
+        // BLOCK A: Delete Dependent Data (Manual Cascade)
+        // Order matters! Delete children before parents.
+
+        const tablesToDelete = [
+            'workout_logs',
+            'checkins',
+            'chat_messages',
+            'measurements',
+            'body_assessments',
+            'client_documents',
+            'appointments',
+            'invitations',
+            'diet_logs',
+            'meal_plans',
+            'diets',
+            'foods',
+            'workouts',
+            'hormonal_protocols',
+            'anamnesis',
+            'asaas_customers',
+            'subscriptions' // CRITICAL: This was likely blocking deletion
+        ]
+
+        for (const table of tablesToDelete) {
+            const { error: deleteError } = await supabaseAdmin
+                .from(table)
+                .delete()
+                .eq('tenant_id', tenantId)
+
+            if (deleteError) {
+                console.warn(`[admin-delete-tenant] Error cleaning table ${table}: ${deleteError.message}`)
+                // Continue? Or throw? For now, log warning but try to proceed as some tables might be empty/missing
+            } else {
+                console.log(`[admin-delete-tenant] Cleaned table ${table}`)
+            }
+        }
+
+        // BLOCK B: Delete Users
         // 2. Get all profiles associated with this tenant
         const { data: victims, error: victimsError } = await supabaseAdmin
             .from('profiles')
@@ -57,15 +95,21 @@ serve(async (req) => {
             .eq('tenant_id', tenantId)
 
         if (victimsError) {
-            console.error('[admin-delete-tenant] Error fetching victims:', victimsError)
             throw new Error(`Erro ao buscar perfis vinculados: ${victimsError.message}`)
         }
 
         console.log(`[admin-delete-tenant] Found ${victims?.length || 0} users to delete.`)
 
-        // 3. Delete each user from Supabase Auth
         if (victims && victims.length > 0) {
+            // First delete from 'clients' table to free up profiles
+            const victimIds = victims.map(v => v.id)
+            await supabaseAdmin.from('clients').delete().in('user_id', victimIds)
+
             for (const victim of victims) {
+                // Delete Profile
+                await supabaseAdmin.from('profiles').delete().eq('id', victim.id)
+
+                // Delete Auth User
                 console.log(`[admin-delete-tenant] Deleting auth user: ${victim.id}`)
                 const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(victim.id)
                 if (deleteAuthError) {
@@ -74,7 +118,7 @@ serve(async (req) => {
             }
         }
 
-        // 4. Delete the tenant record
+        // BLOCK C: Delete the Tenant Record
         const { error: tenantDeleteError } = await supabaseAdmin
             .from('tenants')
             .delete()

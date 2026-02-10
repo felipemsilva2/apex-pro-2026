@@ -288,14 +288,14 @@ const styles = StyleSheet.create({
     },
     userName: {
         color: '#FFF',
-        fontSize: 18,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 20,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         marginBottom: 2,
     },
     userEmail: {
         color: 'rgba(255,255,255,0.4)',
-        fontSize: 13,
-        fontWeight: '500',
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Medium' : 'Outfit_500Medium',
     },
     roleBadge: {
         alignSelf: 'flex-start',
@@ -305,8 +305,8 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     roleText: {
-        fontSize: 9,
-        fontWeight: '800',
+        fontSize: 10,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         letterSpacing: 0.5,
     },
     editBadge: {
@@ -343,14 +343,14 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     miniCardLabel: {
-        fontSize: 9,
-        fontWeight: '800',
+        fontSize: 10,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: 'rgba(255,255,255,0.3)',
         letterSpacing: 1,
     },
     miniCardValue: {
-        fontSize: 14,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFF',
     },
     sectionHeader: {
@@ -358,8 +358,8 @@ const styles = StyleSheet.create({
         paddingLeft: 4,
     },
     sectionLabel: {
-        fontSize: 11,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: 'rgba(255,255,255,0.3)',
         letterSpacing: 1,
     },
@@ -393,12 +393,13 @@ const styles = StyleSheet.create({
     },
     itemLabel: {
         color: '#FFF',
-        fontSize: 14,
-        fontWeight: '700',
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
     },
     itemSubLabel: {
         color: 'rgba(255,255,255,0.4)',
-        fontSize: 11,
+        fontSize: 13,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
         marginTop: 2,
     },
     logoutButton: {
@@ -415,8 +416,8 @@ const styles = StyleSheet.create({
     },
     logoutText: {
         color: '#EF4444',
-        fontSize: 14,
-        fontWeight: '700',
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
     },
     footer: {
         marginTop: 48,

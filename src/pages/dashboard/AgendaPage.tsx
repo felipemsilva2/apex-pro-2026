@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Clock, User, MessageCircle, Video } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Clock, User, MessageCircle, Video, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useCoachAgenda } from "@/hooks/useCoachData";
+import { useCoachAgenda, useDeleteAppointment } from "@/hooks/useCoachData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateAppointmentDialog } from "@/components/dashboard/CreateAppointmentDialog";
 import { type Appointment } from "@/lib/supabase";
@@ -79,6 +79,19 @@ const AgendaPage = () => {
   const handleNewAppointment = () => {
     setSelectedAppointment(null);
     setIsDialogOpen(true);
+  };
+
+  const deleteMutation = useDeleteAppointment();
+
+  const handleDeleteAppointment = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (confirm("Tem certeza que deseja excluir este agendamento?")) {
+      try {
+        await deleteMutation.mutateAsync(id);
+      } catch (error) {
+        // Error handled in hook
+      }
+    }
   };
 
   return (
@@ -400,16 +413,15 @@ const AgendaPage = () => {
                     <MessageCircle size={16} strokeWidth={2.5} />
                   </button>
 
-                  {/* Google Meet Action */}
+                  {/* Google Meet / Jitsi Action */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       // @ts-ignore
                       if (apt.video_link) {
                         try {
-                          // @ts-ignore
-                          navigator.clipboard.writeText(apt.video_link);
-                          toast.success("Link copiado para a área de transferência!");
+                          // Open the meeting link immediately for the coach
+                          window.open(apt.video_link, '_blank');
 
                           // @ts-ignore
                           const phone = apt.client?.phone;
@@ -420,24 +432,26 @@ const AgendaPage = () => {
                             const firstName = apt.client?.full_name?.split(' ')[0] || 'Atleta';
                             // @ts-ignore
                             const message = `Olá ${firstName}, segue o link para nossa sessão de hoje (${date} às ${time}): ${apt.video_link}`;
-                            window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+
+                            // Ask to send via WhatsApp
+                            if (confirm("Deseja enviar o link de acesso para o WhatsApp do aluno?")) {
+                              window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+                            }
                           } else {
-                            // If no phone, just open the link? Or let user paste it manually?
-                            // Let's open the link itself as a fallback or just leave it copied.
-                            // User asked to "Pre-create" and "Send via WhatsApp". 
-                            // Taking a robust approach: Open the link in a new tab so coach can enter the room.
-                            window.open(apt.video_link, '_blank');
+                            toast.success("Link aberto. Lembre-se de compartilhar com o aluno caso ele não tenha o app.");
                           }
                         } catch (err) {
-                          toast.error("Erro ao copiar link.");
+                          toast.error("Erro ao processar link.");
                         }
                       } else {
+                        // Fallback to Google Calendar template if no link is saved
                         const start = new Date(apt.start_time).toISOString().replace(/-|:|\.\d\d\d/g, "");
                         const end = new Date(apt.end_time).toISOString().replace(/-|:|\.\d\d\d/g, "");
                         const title = encodeURIComponent(`Sessão: ${apt.title}`);
                         const details = encodeURIComponent(apt.description || "Sessão de treinamento/avaliação.");
                         const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&dates=${start}/${end}&location=Google+Meet`;
                         window.open(url, '_blank');
+                        toast.info("Redirecionando para o Google Calendar para gerar link.");
                       }
                     }}
                     className={cn(
@@ -449,10 +463,18 @@ const AgendaPage = () => {
                     )}
                     title={
                       // @ts-ignore
-                      apt.video_link ? "Copiar Link e Enviar no WhatsApp" : "Criar sala no Google Meet"
+                      apt.video_link ? "Entrar na Chamada e Notificar Aluno" : "Criar sala no Google Meet"
                     }
                   >
                     <Video size={16} strokeWidth={2.5} />
+                  </button>
+
+                  <button
+                    onClick={(e) => handleDeleteAppointment(e, apt.id)}
+                    className="w-10 h-10 flex items-center justify-center bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 text-red-500 hover:scale-105 transition-all -skew-x-12"
+                    title="Excluir agendamento"
+                  >
+                    <Trash2 size={16} strokeWidth={2.5} />
                   </button>
 
                   <button

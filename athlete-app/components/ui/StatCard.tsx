@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react-native';
 
 interface StatCardProps {
@@ -9,6 +9,7 @@ interface StatCardProps {
     trendValue?: string;
     icon?: React.ReactNode;
     unit?: string;
+    brandColor?: string;
 }
 
 /**
@@ -22,6 +23,7 @@ export const StatCard: React.FC<StatCardProps> = ({
     trendValue,
     icon,
     unit,
+    brandColor = '#FFFFFF',
 }) => {
     const getTrendColor = () => {
         if (trend === 'up') return '#4ADE80'; // Green
@@ -37,6 +39,9 @@ export const StatCard: React.FC<StatCardProps> = ({
 
     return (
         <View style={styles.container}>
+            {/* Subtle Inner Glow */}
+            <View style={[styles.innerGlow, { backgroundColor: brandColor }]} />
+
             <View style={styles.header}>
                 <Text style={styles.label}>{label}</Text>
                 {icon && <View style={styles.iconContainer}>{icon}</View>}
@@ -67,10 +72,21 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: 'rgba(255,255,255,0.03)',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 24, // Consistent bento style
+        borderColor: 'rgba(255,255,255,0.06)', // Slightly more visible for glass effect
+        borderRadius: 24,
         padding: 20,
         flex: 1,
+        overflow: 'hidden', // Contain the glow
+    },
+    innerGlow: {
+        position: 'absolute',
+        top: -40,
+        right: -40,
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        opacity: 0.05,
+        zIndex: 0,
     },
     header: {
         flexDirection: 'row',
@@ -82,8 +98,8 @@ const styles = StyleSheet.create({
         opacity: 0.5,
     },
     label: {
-        fontSize: 11,
-        fontWeight: '800',
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-SemiBold' : 'Outfit_600SemiBold',
         color: 'rgba(255,255,255,0.4)',
         letterSpacing: 1,
         textTransform: 'uppercase',
@@ -94,8 +110,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     value: {
-        fontSize: 32,
-        fontFamily: 'Syne_800ExtraBold',
+        fontSize: 34,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFFFFF',
         letterSpacing: -1,
     },

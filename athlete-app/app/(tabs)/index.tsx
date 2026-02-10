@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity, TextInput, RefreshControl, Platform } from 'react-native';
+import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Container, Header, StatCard, LoadingSpinner, ConfirmationModal } from '../../components/ui';
 import { useAuth } from '../../contexts/AuthContext';
@@ -110,8 +111,8 @@ export default function HomeScreen() {
   return (
     <Container variant="page" seamless>
       <Header
-        title={`Atleta ${profile?.full_name?.split(' ')[0] || ''}`}
-        subtitle={`SISTEMA ${(coach?.full_name || tenant?.business_name || "PRO").split(' ')[0].toUpperCase()}`}
+        title={`Olá, ${profile?.full_name?.split(' ')[0] || ''}`}
+        subtitle={coach?.full_name ? `CONSULTORIA: ${coach.full_name.toUpperCase()}` : "TIME DE ALTA PERFORMANCE"}
         variant="hero"
         rightAction={
           <TouchableOpacity onPress={() => router.push('/settings')} style={styles.profileButton}>
@@ -127,119 +128,135 @@ export default function HomeScreen() {
           <RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={brandColors.primary} />
         }
       >
-        {/* Profile Alert */}
-        {isIncompleteProfile && (
-          <TouchableOpacity
-            onPress={() => router.push('/profile_edit')}
-            activeOpacity={0.9}
-            style={[styles.alertBanner, { borderColor: `${visiblePrimary}20` }]}
-          >
-            <View style={styles.alertContent}>
-              <Text style={[styles.alertTitle, { color: visiblePrimary }]}>DADOS PENDENTES</Text>
-              <Text style={styles.alertText}>Atualize seu perfil para cálculos precisos.</Text>
-            </View>
-            <ChevronRight size={16} color={visiblePrimary} opacity={0.5} />
-          </TouchableOpacity>
-        )}
-
-        {/* Bento Stats Grid */}
-        <View style={styles.bentoGrid}>
-          <View style={styles.bentoCol}>
-            <StatCard
-              label="Peso Atual"
-              value={newWeight || '--'}
-              unit="KG"
-              icon={<TrendingUp size={16} color="rgba(255,255,255,0.2)" />}
-            />
-          </View>
-          <View style={styles.bentoCol}>
-            <StatCard
-              label="Meta"
-              value={profile?.target_weight || '--'}
-              unit="KG"
-              trend="neutral"
-            />
-          </View>
-        </View>
-
-        {/* Bento Quick Action - Interactive Weight */}
-        <View style={styles.bentoSection}>
-          <View style={styles.sectionHeader}>
-            <Activity size={14} color={visiblePrimary} />
-            <Text style={styles.sectionTitle}>Evolução Corporal</Text>
-          </View>
-          <View style={styles.weightInputRow}>
-            <TextInput
-              style={styles.input}
-              placeholder="00,0"
-              placeholderTextColor="rgba(255,255,255,0.2)"
-              keyboardType="decimal-pad"
-              value={newWeight}
-              onChangeText={setNewWeight}
-            />
+        <View style={styles.horizontalPadding}>
+          {/* Profile Alert */}
+          {isIncompleteProfile && (
             <TouchableOpacity
-              style={[styles.saveButton, { backgroundColor: brandColors.primary }]}
-              onPress={handleWeightUpdate}
-              disabled={isUpdating}
+              onPress={() => router.push('/profile_edit')}
+              activeOpacity={0.9}
+              style={[styles.alertBanner, { borderColor: `${visiblePrimary}20` }]}
             >
-              <Text style={styles.saveButtonText}>{isUpdating ? '...' : 'SALVAR'}</Text>
+              <View style={styles.alertContent}>
+                <Text style={[styles.alertTitle, { color: visiblePrimary }]}>DADOS PENDENTES</Text>
+                <Text style={styles.alertText}>Atualize seu perfil para cálculos precisos.</Text>
+              </View>
+              <ChevronRight size={16} color={visiblePrimary} opacity={0.5} />
             </TouchableOpacity>
-          </View>
-        </View>
+          )}
 
-        {/* Main Grid Actions */}
-        <View style={styles.mainGrid}>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push('/(tabs)/training')}
-            style={styles.gridCard}
+          {/* Bento Stats Grid */}
+          <Animated.View
+            entering={FadeInDown.delay(100).duration(600).springify()}
+            style={styles.bentoGrid}
           >
-            <View style={[styles.gridIconBg, { backgroundColor: `${visiblePrimary}10` }]}>
-              <Dumbbell size={24} color={visiblePrimary} />
+            <View style={styles.bentoCol}>
+              <StatCard
+                label="Peso Atual"
+                value={newWeight || '--'}
+                unit="KG"
+                brandColor={brandColors.primary}
+                icon={<TrendingUp size={16} color="rgba(255,255,255,0.2)" />}
+              />
             </View>
-            <Text style={styles.gridTitle}>TREINOS</Text>
-            <Text style={styles.gridSubtitle}>{workouts?.length || 0} TREINOS ATIVOS</Text>
-            <ExternalLink size={12} color="rgba(255,255,255,0.2)" style={styles.gridCornerIcon} />
-          </TouchableOpacity>
+            <View style={styles.bentoCol}>
+              <StatCard
+                label="Meta"
+                value={profile?.target_weight || '--'}
+                unit="KG"
+                brandColor={brandColors.primary}
+                trend="neutral"
+              />
+            </View>
+          </Animated.View>
 
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push('/(tabs)/nutrition')}
-            style={styles.gridCard}
+          {/* Bento Quick Action - Interactive Weight */}
+          <Animated.View
+            entering={FadeInDown.delay(200).duration(600).springify()}
+            style={styles.bentoSection}
           >
-            <View style={[styles.gridIconBg, { backgroundColor: `${visiblePrimary}10` }]}>
-              <Apple size={24} color={visiblePrimary} />
+            <View style={styles.sectionHeader}>
+              <Activity size={14} color={visiblePrimary} />
+              <Text style={styles.sectionTitle}>Evolução Corporal</Text>
             </View>
-            <Text style={styles.gridTitle}>DIETA</Text>
-            <Text style={styles.gridSubtitle}>{diet?.meals?.length || 0} REFEIÇÕES</Text>
-            <ExternalLink size={12} color="rgba(255,255,255,0.2)" style={styles.gridCornerIcon} />
-          </TouchableOpacity>
-        </View>
+            <View style={styles.weightInputRow}>
+              <TextInput
+                style={styles.input}
+                placeholder="00,0"
+                placeholderTextColor="rgba(255,255,255,0.2)"
+                keyboardType="decimal-pad"
+                value={newWeight}
+                onChangeText={setNewWeight}
+              />
+              <TouchableOpacity
+                style={[styles.saveButton, { backgroundColor: brandColors.primary }]}
+                onPress={handleWeightUpdate}
+                disabled={isUpdating}
+              >
+                <Text style={styles.saveButtonText}>{isUpdating ? '...' : 'SALVAR'}</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
 
-        <View style={styles.mainGrid}>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push('/(tabs)/progress')}
-            style={styles.gridCard}
+          {/* Main Grid Actions */}
+          <Animated.View
+            entering={FadeInDown.delay(300).duration(600).springify()}
+            style={styles.mainGrid}
           >
-            <View style={[styles.gridIconBg, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
-              <TrendingUp size={24} color="#FFF" />
-            </View>
-            <Text style={styles.gridTitle}>PROGRESSO</Text>
-            <Text style={styles.gridSubtitle}>FOTOS E MEDIDAS</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => router.push('/(tabs)/training')}
+              style={styles.gridCard}
+            >
+              <View style={[styles.gridIconBg, { backgroundColor: `${visiblePrimary}10` }]}>
+                <Dumbbell size={24} color={visiblePrimary} />
+              </View>
+              <Text style={styles.gridTitle}>TREINOS</Text>
+              <Text style={styles.gridSubtitle}>{workouts?.length || 0} TREINOS ATIVOS</Text>
+              <ExternalLink size={12} color="rgba(255,255,255,0.2)" style={styles.gridCornerIcon} />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push('/schedule')}
-            style={styles.gridCard}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => router.push('/(tabs)/nutrition')}
+              style={styles.gridCard}
+            >
+              <View style={[styles.gridIconBg, { backgroundColor: `${visiblePrimary}10` }]}>
+                <Apple size={24} color={visiblePrimary} />
+              </View>
+              <Text style={styles.gridTitle}>DIETA</Text>
+              <Text style={styles.gridSubtitle}>{diet?.meals?.length || 0} REFEIÇÕES</Text>
+              <ExternalLink size={12} color="rgba(255,255,255,0.2)" style={styles.gridCornerIcon} />
+            </TouchableOpacity>
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInDown.delay(400).duration(600).springify()}
+            style={styles.mainGrid}
           >
-            <View style={[styles.gridIconBg, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
-              <Calendar size={24} color="#FFF" />
-            </View>
-            <Text style={styles.gridTitle}>AGENDA</Text>
-            <Text style={styles.gridSubtitle}>CONSULTAS</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => router.push('/(tabs)/progress')}
+              style={styles.gridCard}
+            >
+              <View style={[styles.gridIconBg, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+                <TrendingUp size={24} color="#FFF" />
+              </View>
+              <Text style={styles.gridTitle}>PROGRESSO</Text>
+              <Text style={styles.gridSubtitle}>FOTOS E MEDIDAS</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => router.push('/schedule')}
+              style={styles.gridCard}
+            >
+              <View style={[styles.gridIconBg, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+                <Calendar size={24} color="#FFF" />
+              </View>
+              <Text style={styles.gridTitle}>AGENDA</Text>
+              <Text style={styles.gridSubtitle}>CONSULTAS</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
 
         <View style={{ height: 100 }} />
@@ -271,8 +288,11 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 0,
+  },
+  horizontalPadding: {
+    paddingHorizontal: 16, // Reduced slightly for more edge-to-edge feel
+    paddingTop: 8,
   },
   profileButton: {
     width: 44,
@@ -309,8 +329,8 @@ const styles = StyleSheet.create({
   },
   bentoGrid: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 16,
+    gap: 12,
+    marginBottom: 12,
   },
   bentoCol: {
     flex: 1,
@@ -319,9 +339,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderRadius: 24,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -330,8 +350,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 11,
-    fontWeight: '800',
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Outfit-SemiBold' : 'Outfit_600SemiBold',
     color: 'rgba(255,255,255,0.4)',
     letterSpacing: 1,
     textTransform: 'uppercase',
@@ -346,8 +366,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     color: '#FFF',
-    fontSize: 18,
-    fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+    fontSize: 20,
+    fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
   },
   saveButton: {
     paddingHorizontal: 24,
@@ -356,15 +376,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveButtonText: {
-    fontSize: 12,
-    fontWeight: '900',
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
     letterSpacing: 0.5,
     color: '#000',
   },
   mainGrid: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 16,
+    gap: 12,
+    marginBottom: 12,
   },
   gridCard: {
     flex: 1,
@@ -372,7 +392,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.06)',
     position: 'relative',
     overflow: 'hidden',
   },
@@ -385,14 +405,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   gridTitle: {
-    fontSize: 13,
-    fontFamily: Platform.OS === 'ios' ? 'Syne-ExtraBold' : 'Syne_800ExtraBold',
+    fontSize: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
     color: '#FFF',
     letterSpacing: -0.5,
   },
   gridSubtitle: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
     color: 'rgba(255,255,255,0.3)',
     marginTop: 4,
     letterSpacing: 0.5,

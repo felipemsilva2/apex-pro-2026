@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity, Modal, Platform, Pressable } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Container, Header, EmptyState, LoadingSpinner, Button } from '../../components/ui';
 import { Apple, Clock, Flame, X, ChevronRight, Target, Activity } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,25 +22,25 @@ export default function NutritionScreen() {
     const meals = diet?.meals || [];
 
     // Check if we have any specific day meals to decide if we show tabs
-    const hasSpecificDays = meals.some(m => m.day_of_week !== null && m.day_of_week !== undefined);
+    const hasSpecificDays = meals.some((m: any) => m.day_of_week !== null && m.day_of_week !== undefined);
 
     // Filter meals for the current view
     const displayedMeals = React.useMemo(() => {
         if (!hasSpecificDays) {
             // If no specific days, show all meals (Daily plan)
-            return [...meals].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+            return [...meals].sort((a: any, b: any) => (a.time || '').localeCompare(b.time || ''));
         }
 
-        return meals.filter(meal => {
+        return meals.filter((meal: any) => {
             const isDaily = meal.day_of_week === null || meal.day_of_week === undefined;
             const isToday = meal.day_of_week === activeDay;
             return isDaily || isToday;
-        }).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+        }).sort((a: any, b: any) => (a.time || '').localeCompare(b.time || ''));
     }, [meals, hasSpecificDays, activeDay]);
 
     // Calculate totals for displayed meals
     const dailyTotals = React.useMemo(() => {
-        return displayedMeals.reduce((acc, meal) => {
+        return displayedMeals.reduce((acc: any, meal: any) => {
             const mealTotals = meal.foods?.reduce((mAcc: any, food: any) => ({
                 kcal: mAcc.kcal + (Number(food.kcal) || 0),
                 protein: mAcc.protein + (Number(food.protein) || 0),
@@ -103,7 +104,10 @@ export default function NutritionScreen() {
                     {diet ? (
                         <>
                             {/* Reacticx Summary Module */}
-                            <View style={styles.summaryModule}>
+                            <Animated.View
+                                entering={FadeInDown.delay(100).duration(600).springify()}
+                                style={styles.summaryModule}
+                            >
                                 <View style={styles.summaryHeader}>
                                     <View style={[styles.statusBadge, { backgroundColor: brandColors.primary }]}>
                                         <Text style={[styles.statusLabel, { color: brandColors.secondary }]}>PLANO ATIVO</Text>
@@ -140,7 +144,7 @@ export default function NutritionScreen() {
                                         </View>
                                     </View>
                                 </View>
-                            </View>
+                            </Animated.View>
 
                             {/* Weekly Tabs (Bento Style) */}
                             {hasSpecificDays && (
@@ -183,41 +187,45 @@ export default function NutritionScreen() {
                             </View>
 
                             {displayedMeals.length > 0 ? (
-                                displayedMeals.map((meal, index) => (
-                                    <TouchableOpacity
+                                displayedMeals.map((meal: any, index: number) => (
+                                    <Animated.View
                                         key={meal.id}
-                                        style={styles.mealCard}
-                                        onPress={() => setSelectedMeal(meal)}
-                                        activeOpacity={0.7}
+                                        entering={FadeInDown.delay(index * 100).duration(600).springify()}
                                     >
-                                        <View style={styles.mealHeader}>
-                                            <View style={[styles.timeBadge, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
-                                                <Clock size={12} color="rgba(255,255,255,0.4)" />
-                                                <Text style={styles.timeText}>
-                                                    {meal.time ? meal.time.slice(0, 5) : `Ref ${index + 1}`}
-                                                </Text>
-                                            </View>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={styles.mealTitle} numberOfLines={1}>{meal.name}</Text>
-                                                {meal.description && (
-                                                    <Text style={styles.mealDescription} numberOfLines={1}>
-                                                        {meal.description}
+                                        <TouchableOpacity
+                                            style={styles.mealCard}
+                                            onPress={() => setSelectedMeal(meal)}
+                                            activeOpacity={0.7}
+                                        >
+                                            <View style={styles.mealHeader}>
+                                                <View style={[styles.timeBadge, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+                                                    <Clock size={12} color="rgba(255,255,255,0.4)" />
+                                                    <Text style={styles.timeText}>
+                                                        {meal.time ? meal.time.slice(0, 5) : `Ref ${index + 1}`}
                                                     </Text>
-                                                )}
+                                                </View>
+                                                <View style={{ flex: 1 }}>
+                                                    <Text style={styles.mealTitle} numberOfLines={1}>{meal.name}</Text>
+                                                    {meal.description && (
+                                                        <Text style={styles.mealDescription} numberOfLines={1}>
+                                                            {meal.description}
+                                                        </Text>
+                                                    )}
+                                                </View>
+                                                <View style={styles.actionIcon}>
+                                                    <ChevronRight size={18} color="rgba(255,255,255,0.2)" />
+                                                </View>
                                             </View>
-                                            <View style={styles.actionIcon}>
-                                                <ChevronRight size={18} color="rgba(255,255,255,0.2)" />
-                                            </View>
-                                        </View>
 
-                                        {meal.foods && meal.foods.length > 0 && (
-                                            <View style={styles.foodsPreview}>
-                                                <Text style={styles.previewText} numberOfLines={1}>
-                                                    {meal.foods.map((f: any) => f.name).join(', ')}
-                                                </Text>
-                                            </View>
-                                        )}
-                                    </TouchableOpacity>
+                                            {meal.foods && meal.foods.length > 0 && (
+                                                <View style={styles.foodsPreview}>
+                                                    <Text style={styles.previewText} numberOfLines={1}>
+                                                        {meal.foods.map((f: any) => f.name).join(', ')}
+                                                    </Text>
+                                                </View>
+                                            )}
+                                        </TouchableOpacity>
+                                    </Animated.View>
                                 ))
                             ) : (
                                 <EmptyState
@@ -320,7 +328,7 @@ const styles = StyleSheet.create({
         padding: 24,
         marginBottom: 24,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: 'rgba(255,255,255,0.06)',
     },
     summaryHeader: {
         flexDirection: 'row',
@@ -411,7 +419,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         padding: 4,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: 'rgba(255,255,255,0.06)',
     },
     dayTab: {
         width: 50,
@@ -421,8 +429,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     dayTabText: {
-        fontSize: 11,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
     },
     activeIndicator: {
         position: 'absolute',
@@ -440,8 +448,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     sectionLabel: {
-        fontSize: 12,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 13,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: 'rgba(255,255,255,0.5)',
         letterSpacing: 1,
     },
@@ -462,7 +470,7 @@ const styles = StyleSheet.create({
         padding: 20,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: 'rgba(255,255,255,0.06)',
     },
     mealHeader: {
         flexDirection: 'row',
@@ -483,15 +491,15 @@ const styles = StyleSheet.create({
         color: '#FFF',
     },
     mealTitle: {
-        fontSize: 15,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 17,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFF',
         marginBottom: 2,
     },
     mealDescription: {
-        fontSize: 12,
+        fontSize: 13,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
         color: 'rgba(255,255,255,0.4)',
-        fontWeight: '500',
     },
     actionIcon: {
         width: 32,
@@ -542,8 +550,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     modalTitle: {
-        fontSize: 18,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        fontSize: 22,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFF',
     },
     modalMetaRow: {
@@ -600,8 +608,8 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     foodName: {
-        fontSize: 15,
-        fontWeight: '700',
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         color: '#FFF',
         marginBottom: 2,
     },

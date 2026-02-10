@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform } from 'react-native';
 import { Calendar, Clock, Video, MapPin } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, parseISO } from 'date-fns';
@@ -15,7 +15,7 @@ type Appointment = {
     location: string | null;
     video_link: string | null;
     status: 'scheduled' | 'completed' | 'cancelled' | 'no_show';
-    type: 'consultation' | 'check_in' | 'training_session' | 'other';
+    type: 'consultation' | 'check_in' | 'training_session' | 'call' | 'evaluation' | 'other';
 };
 
 type Props = {
@@ -57,7 +57,9 @@ export const AppointmentCard = ({ appointment }: Props) => {
                     <Text style={[styles.type, { color: brandColors.primary }]}>
                         {appointment.type === 'consultation' ? 'CONSULTA' :
                             appointment.type === 'check_in' ? 'CHECK-IN' :
-                                appointment.type === 'training_session' ? 'TREINO PRESENCIAL' : 'AGENDA'}
+                                appointment.type === 'evaluation' ? 'AVALIAÇÃO' :
+                                    appointment.type === 'call' ? 'VÍDEO CHAMADA' :
+                                        appointment.type === 'training_session' ? 'TREINO PRESENCIAL' : 'AGENDA'}
                     </Text>
                     {appointment.status === 'scheduled' && (
                         <View style={[styles.badge, { backgroundColor: 'rgba(212, 255, 0, 0.1)' }]}>
@@ -85,7 +87,7 @@ export const AppointmentCard = ({ appointment }: Props) => {
                     </View>
                 )}
 
-                {appointment.video_link && (
+                {appointment.video_link && appointment.video_link.trim() !== '' && (
                     <TouchableOpacity
                         style={[styles.actionButton, { borderColor: brandColors.primary }]}
                         onPress={handleJoinVideo}
@@ -104,7 +106,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.02)',
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 0, // Tactical square
+        borderRadius: 24,
         marginBottom: 16,
         flexDirection: 'row',
         overflow: 'hidden',
@@ -124,29 +126,27 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     type: {
-        fontSize: 10,
-        fontFamily: 'Inter_900Black',
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         textTransform: 'uppercase',
         letterSpacing: 1,
-        fontStyle: 'italic',
     },
     badge: {
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
     },
     badgeText: {
-        fontSize: 8,
-        fontFamily: 'Inter_700Bold',
+        fontSize: 10,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         textTransform: 'uppercase',
     },
     title: {
         color: '#fff',
-        fontSize: 16,
-        fontFamily: 'Inter_700Bold',
+        fontSize: 18,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         marginBottom: 12,
         textTransform: 'uppercase',
-        fontStyle: 'italic',
     },
     infoRow: {
         flexDirection: 'row',
@@ -156,8 +156,8 @@ const styles = StyleSheet.create({
     },
     infoText: {
         color: 'rgba(255,255,255,0.6)',
-        fontSize: 12,
-        fontFamily: 'Inter_500Medium',
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Medium' : 'Outfit_500Medium',
         textTransform: 'uppercase',
     },
     actionButton: {
@@ -166,16 +166,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        paddingVertical: 10,
+        paddingVertical: 12,
         borderWidth: 1,
         backgroundColor: 'rgba(0,0,0,0.2)',
-        transform: [{ skewX: '-6deg' }]
+        borderRadius: 16,
     },
     actionText: {
-        fontSize: 12,
-        fontFamily: 'Inter_900Black',
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         textTransform: 'uppercase',
-        fontStyle: 'italic',
-        transform: [{ skewX: '6deg' }]
     }
 });
