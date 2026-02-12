@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lightbulb, Zap, Rocket, Globe, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import SuggestionDialog from '@/components/dashboard/SuggestionDialog';
 
 const InnovationSection = () => {
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
     const cards = [
         {
             icon: <Lightbulb className="w-6 h-6 text-primary" />,
@@ -29,6 +32,8 @@ const InnovationSection = () => {
             <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
 
             <div className="container mx-auto px-6 relative z-10">
+                <SuggestionDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+
                 <div className="max-w-4xl mx-auto flex flex-col items-center text-center mb-20">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -98,7 +103,10 @@ const InnovationSection = () => {
                 >
                     <div className="relative group">
                         <div className="absolute -inset-1 bg-primary blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200" />
-                        <button className="relative px-12 py-6 bg-primary text-black font-display font-black italic uppercase tracking-widest text-sm -skew-x-12 hover:scale-105 transition-transform active:scale-95 shadow-[8px_8px_0px_#000]">
+                        <button
+                            onClick={() => setIsDialogOpen(true)}
+                            className="relative px-12 py-6 bg-primary text-black font-display font-black italic uppercase tracking-widest text-sm -skew-x-12 hover:scale-105 transition-transform active:scale-95 shadow-[8px_8px_0px_#000]"
+                        >
                             Sugerir Funcionalidade
                         </button>
                     </div>
