@@ -7,7 +7,10 @@ import {
     KeyboardAvoidingView,
     Platform,
     StyleSheet,
-    ActivityIndicator
+    ActivityIndicator,
+    ScrollView,
+    Keyboard,
+    TouchableWithoutFeedback
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { Shield, ChevronRight, Scale, Info } from 'lucide-react-native';
@@ -66,10 +69,7 @@ export default function LoginScreen() {
     }, [brandColors.primary]);
 
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.container}
-        >
+        <View style={styles.container}>
             <AnimatedMeshGradient
                 style={StyleSheet.absoluteFill}
                 colors={gradientColors}
@@ -77,91 +77,104 @@ export default function LoginScreen() {
                 blur={0.6}
             />
             <View style={styles.overlay} />
-            <View style={styles.inner}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <View style={styles.badge}>
-                        <Shield size={12} color={brandColors.primary} />
-                        <Text style={[styles.badgeText, { color: brandColors.primary }]}>ACESSO EXCLUSIVO</Text>
-                    </View>
-                    <Text style={styles.title}>
-                        {tenant?.business_name || 'PORTAL'}<Text style={[styles.titleHighlight, { color: brandColors.primary }]}>{tenant?.business_name ? '' : ' DO ALUNO'}</Text>
-                    </Text>
-                    <View style={[styles.line, { backgroundColor: `${brandColors.primary}4D` }]} />
-                    <Text style={styles.subtitle}>Sua evolução começa aqui</Text>
-                </View>
-
-                {/* Login Form */}
-                <View style={styles.form}>
-                    {error && (
-                        <View style={styles.errorBanner}>
-                            <Text style={styles.errorText}>{error}</Text>
-                        </View>
-                    )}
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>IDENTIFICAÇÃO (E-MAIL OU USUÁRIO)</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="seu@email.com ou usuario"
-                            placeholderTextColor="rgba(255,255,255,0.2)"
-                            value={email}
-                            onChangeText={setEmail}
-                            autoCapitalize="none"
-                            keyboardType="default"
-                        />
-                    </View>
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.inputLabel}>SENHA DE ACESSO</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="••••••••"
-                            placeholderTextColor="rgba(255,255,255,0.2)"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry
-                        />
-                    </View>
-
-                    <TouchableOpacity
-                        style={[
-                            styles.button,
-                            { backgroundColor: brandColors.primary },
-                            loading && styles.buttonDisabled
-                        ]}
-                        onPress={handleLogin}
-                        disabled={loading}
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                style={{ flex: 1 }}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <ScrollView
+                        contentContainerStyle={styles.inner}
+                        keyboardShouldPersistTaps="handled"
+                        bounces={false}
+                        showsVerticalScrollIndicator={false}
                     >
-                        <View style={styles.buttonContent}>
-                            {loading ? (
-                                <ActivityIndicator color={brandColors.secondary} />
-                            ) : (
-                                <>
-                                    <Text style={[styles.buttonText, { color: brandColors.secondary }]}>ENTRAR</Text>
-                                    <ChevronRight size={18} color={brandColors.secondary} />
-                                </>
-                            )}
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <View style={styles.badge}>
+                                <Shield size={12} color={brandColors.primary} />
+                                <Text style={[styles.badgeText, { color: brandColors.primary }]}>ACESSO EXCLUSIVO</Text>
+                            </View>
+                            <Text style={styles.title}>
+                                {tenant?.business_name || 'PORTAL'}<Text style={[styles.titleHighlight, { color: brandColors.primary }]}>{tenant?.business_name ? '' : ' DO ALUNO'}</Text>
+                            </Text>
+                            <View style={[styles.line, { backgroundColor: `${brandColors.primary}4D` }]} />
+                            <Text style={styles.subtitle}>Sua evolução começa aqui</Text>
                         </View>
-                    </TouchableOpacity>
-                </View>
 
-                {/* Footer info */}
-                <View style={styles.footer}>
-                    <View style={styles.legalLinks}>
-                        <TouchableOpacity style={styles.legalButton} onPress={() => router.push('/privacy')}>
-                            <Text style={styles.legalText}>PRIVACIDADE</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.legalDivider}>•</Text>
-                        <TouchableOpacity style={styles.legalButton} onPress={() => router.push('/terms')}>
-                            <Text style={styles.legalText}>TERMOS DE USO</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <Text style={styles.version}>VERSÃO 1.0.4 // PLATAFORMA</Text>
-                    <Text style={styles.copyright}>© 2026 APEXPRO PERFORMANCE</Text>
-                </View>
-            </View>
-        </KeyboardAvoidingView>
+                        {/* Login Form */}
+                        <View style={styles.form}>
+                            {error && (
+                                <View style={styles.errorBanner}>
+                                    <Text style={styles.errorText}>{error}</Text>
+                                </View>
+                            )}
+
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.inputLabel}>IDENTIFICAÇÃO (E-MAIL OU USUÁRIO)</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="seu@email.com ou usuario"
+                                    placeholderTextColor="rgba(255,255,255,0.2)"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    autoCapitalize="none"
+                                    keyboardType="default"
+                                />
+                            </View>
+
+                            <View style={styles.inputContainer}>
+                                <Text style={styles.inputLabel}>SENHA DE ACESSO</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="••••••••"
+                                    placeholderTextColor="rgba(255,255,255,0.2)"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry
+                                />
+                            </View>
+
+                            <TouchableOpacity
+                                style={[
+                                    styles.button,
+                                    { backgroundColor: brandColors.primary },
+                                    loading && styles.buttonDisabled
+                                ]}
+                                onPress={handleLogin}
+                                disabled={loading}
+                            >
+                                <View style={styles.buttonContent}>
+                                    {loading ? (
+                                        <ActivityIndicator color={brandColors.secondary} />
+                                    ) : (
+                                        <>
+                                            <Text style={[styles.buttonText, { color: brandColors.secondary }]}>ENTRAR</Text>
+                                            <ChevronRight size={18} color={brandColors.secondary} />
+                                        </>
+                                    )}
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Footer info */}
+                        <View style={styles.footer}>
+                            <View style={styles.legalLinks}>
+                                <TouchableOpacity style={styles.legalButton} onPress={() => router.push('/privacy')}>
+                                    <Text style={styles.legalText}>PRIVACIDADE</Text>
+                                </TouchableOpacity>
+                                <Text style={styles.legalDivider}>•</Text>
+                                <TouchableOpacity style={styles.legalButton} onPress={() => router.push('/terms')}>
+                                    <Text style={styles.legalText}>TERMOS DE USO</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <Text style={styles.version}>VERSÃO 1.0.4 // PLATAFORMA</Text>
+                            <Text style={styles.copyright}>© 2026 APEXPRO PERFORMANCE</Text>
+                        </View>
+                    </ScrollView>
+                </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
+        </View>
     );
 }
 
@@ -176,10 +189,9 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(10, 10, 11, 0.85)', // Strong overlay to keep text readable
     },
     inner: {
-        flex: 1,
+        flexGrow: 1,
         padding: 30,
         justifyContent: 'center',
-        width: '100%',
     },
     header: {
         marginBottom: 40,
@@ -276,10 +288,8 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     footer: {
-        position: 'absolute',
-        bottom: 40,
-        left: 30,
-        right: 30,
+        marginTop: 40,
+        paddingBottom: 40,
         alignItems: 'center',
         opacity: 0.2,
     },
