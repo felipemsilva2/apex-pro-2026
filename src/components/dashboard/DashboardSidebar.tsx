@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { mockCoach, mockMessages } from "@/data/mockData";
 import { useState } from "react";
+import InnovationCard from "./InnovationCard";
 import {
   Tooltip,
   TooltipContent,
@@ -181,6 +182,9 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
             );
           })}
         </nav>
+
+        {/* Innovation Card */}
+        <InnovationCard collapsed={collapsed} />
 
         {/* Bottom actions */}
         <div className="p-3 border-t border-white/5 space-y-1 shrink-0">
