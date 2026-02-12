@@ -62,7 +62,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         } finally {
             setLoading(false);
         }
-    }, [profile?.tenant_id]); // Re-run if profile tenant changes
+    }, [profile?.tenant_id, user?.id]); // Re-run if profile tenant or user ID changes
 
     useEffect(() => {
         fetchTenant();

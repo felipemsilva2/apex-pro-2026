@@ -18,14 +18,11 @@ export const WorkoutExerciseCard = ({ exercise, index, isCompleted = false, onTo
     const [imageError, setImageError] = useState(false);
     const [imageLoading, setImageLoading] = useState(true);
 
-    // State para controlar estratégia de carregamento
-    const [loadStrategy, setLoadStrategy] = useState<'proxy' | 'direct' | 'error'>('proxy');
-
-    // Recupera URL original de várias fontes possíveis
+    // Recupera URL de GIF — agora sempre é uma URL absoluta do Supabase Storage
     const rawUrl = exercise.gif_url || exercise.video_url || exercise.exercise?.gif_url || exercise.exercise?.video_url;
 
-    // Constrói URL absoluta se for relativa (Supabase Storage)
-    const fullUrl = useMemo(() => {
+    // Constrói URL absoluta caso ainda haja paths relativos legados
+    const gifUrl = useMemo(() => {
         if (!rawUrl) return null;
         if (rawUrl.startsWith('http')) return rawUrl;
         if (rawUrl.startsWith('/')) {
@@ -34,32 +31,11 @@ export const WorkoutExerciseCard = ({ exercise, index, isCompleted = false, onTo
         return rawUrl;
     }, [rawUrl]);
 
-    // Constrói URL Proxy baseada na URL completa
-    const proxyUrl = fullUrl ? `https://wsrv.nl/?url=${encodeURIComponent(fullUrl)}&output=gif` : null;
+    const imageSource = gifUrl ? { uri: gifUrl } : null;
 
-    // Define source baseado na estratégia atual
-    const imageSource = useMemo(() => {
-        if (!fullUrl) return null;
-        if (loadStrategy === 'proxy') return { uri: proxyUrl };
-        return {
-            uri: fullUrl,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
-            }
-        };
-    }, [fullUrl, proxyUrl, loadStrategy]);
-
-    const handleImageError = (e: any) => {
-        // console.log(`Erro carregando imagem (${loadStrategy}):`, e.nativeEvent.error);
-        if (loadStrategy === 'proxy') {
-            setLoadStrategy('direct'); // Fallback para direto com headers
-        } else {
-            // console.log("Falha total na imagem:", fullUrl);
-            setLoadStrategy('error'); // Falha final
-        }
-        // Não para o loading ainda pois vai tentar de novo, a menos que seja erro final
-        if (loadStrategy === 'direct') setImageLoading(false);
+    const handleImageError = () => {
+        setImageError(true);
+        setImageLoading(false);
     };
 
     const handleImageLoad = () => {
@@ -108,12 +84,12 @@ export const WorkoutExerciseCard = ({ exercise, index, isCompleted = false, onTo
 
             {/* Mídia com tratamento de erro e loading */}
             {!isCompleted && (
-                fullUrl && loadStrategy !== 'error' ? (
+                gifUrl && !imageError ? (
                     <TouchableOpacity
                         style={styles.mediaContainer}
                         onPress={() => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            onPressMedia({ ...exercise, gifUrl: imageSource?.uri, exerciseName });
+                            onPressMedia({ ...exercise, gifUrl, exerciseName });
                         }}
                     >
                         {imageLoading && (

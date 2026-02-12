@@ -1,19 +1,23 @@
 
-import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, Keyboard, TouchableWithoutFeedback, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/hooks/useChat';
 import { ChatMessage } from '@/components/ChatMessage';
 import { Header } from '@/components/ui/Header';
-import { Send, MessageSquare } from 'lucide-react-native';
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { supabase } from '@/lib/supabase';
+import { Send, MessageSquare, ShieldAlert } from 'lucide-react-native';
 
 export default function ChatScreen() {
     const { profile, brandColors, tenant } = useAuth();
     const router = useRouter();
-    const { messages, loading, sendMessage, sending } = useChat();
+    const { messages, loading, sendMessage, sending, reportMessage, blockUser } = useChat();
     const [inputText, setInputText] = React.useState('');
+    const [reportModalVisible, setReportModalVisible] = useState(false);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
     const flatListRef = useRef<FlatList>(null);
     const insets = useSafeAreaInsets();
 
@@ -29,6 +33,30 @@ export default function ChatScreen() {
         } catch (error) {
             setInputText(text); // Restore on error
             alert('Erro ao enviar mensagem');
+        }
+    };
+
+    const handleReport = async () => {
+        try {
+            const { error } = await supabase
+                .from('content_reports')
+                .insert({
+                    tenant_id: tenant?.id,
+                    reporter_id: profile?.user_id,
+                    content_type: 'chat_conversation',
+                    content_snapshot: `Denúncia de conversa no chat. Aluno: ${profile?.full_name}. Coach/Tenant: ${tenant?.business_name}`,
+                    status: 'pending'
+                });
+
+            if (error) throw error;
+
+            setReportModalVisible(false);
+            setTimeout(() => {
+                setSuccessModalVisible(true);
+            }, 500);
+        } catch (error) {
+            console.error('Error sending report:', error);
+            Alert.alert('Erro', 'Não foi possível enviar a denúncia. Tente novamente mais tarde.');
         }
     };
 
@@ -49,6 +77,16 @@ export default function ChatScreen() {
                 subtitle={tenant?.business_name ? `CANAL DIRETO: ${tenant.business_name}` : "CANAL DIRETO"}
                 onBack={() => router.back()}
                 variant="hero"
+                rightAction={
+                    <TouchableOpacity
+                        onPress={() => setReportModalVisible(true)}
+                        accessibilityLabel="Denunciar conteúdo impróprio"
+                        accessibilityRole="button"
+                        hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                    >
+                        <ShieldAlert size={22} color="rgba(255,100,100,0.7)" />
+                    </TouchableOpacity>
+                }
             />
 
             <KeyboardAvoidingView
@@ -56,14 +94,24 @@ export default function ChatScreen() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <TouchableWithoutFeedback
+                    onPress={Keyboard.dismiss}
+                    accessible={false}
+                >
                     <View style={styles.flex1}>
                         {loading ? (
                             <View style={styles.center}>
-                                <ActivityIndicator color={brandColors.primary} size="large" />
+                                <ActivityIndicator
+                                    color={brandColors.primary}
+                                    size="large"
+                                    accessibilityLabel="Carregando mensagens"
+                                />
                             </View>
                         ) : messages.length === 0 ? (
-                            <View style={styles.center}>
+                            <View
+                                style={styles.center}
+                                accessibilityRole="summary"
+                            >
                                 <View style={[styles.emptyIcon, { borderColor: 'rgba(255,255,255,0.1)' }]}>
                                     <MessageSquare size={32} color="rgba(255,255,255,0.2)" />
                                 </View>
@@ -79,12 +127,15 @@ export default function ChatScreen() {
                                     <ChatMessage
                                         message={item}
                                         isMe={item.sender_id === profile?.user_id}
+                                        onReport={(messageId, reportedId) => reportMessage(messageId, reportedId, 'Conteúdo Inadequado (App)')}
+                                        onBlock={(blockedId) => blockUser(blockedId)}
                                     />
                                 )}
                                 contentContainerStyle={styles.listContent}
                                 showsVerticalScrollIndicator={false}
                                 onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
                                 keyboardShouldPersistTaps="handled"
+                                accessibilityLabel="Lista de mensagens da conversa"
                             />
                         )}
                     </View>
@@ -100,6 +151,8 @@ export default function ChatScreen() {
                         multiline
                         onSubmitEditing={handleSend}
                         blurOnSubmit={false}
+                        accessibilityLabel="Campo de entrada de texto da mensagem"
+                        accessibilityHint="Digite sua mensagem para o treinador aqui"
                     />
                     <TouchableOpacity
                         style={[
@@ -109,6 +162,9 @@ export default function ChatScreen() {
                         ]}
                         onPress={handleSend}
                         disabled={!inputText.trim() || sending}
+                        accessibilityLabel="Enviar mensagem"
+                        accessibilityRole="button"
+                        accessibilityState={{ disabled: !inputText.trim() || sending }}
                     >
                         {sending ? (
                             <ActivityIndicator size="small" color="#000" />
@@ -118,6 +174,29 @@ export default function ChatScreen() {
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
+
+            <ConfirmationModal
+                visible={reportModalVisible}
+                title="DENUNCIAR CONTEÚDO"
+                message="Deseja denunciar esta conversa por conteúdo impróprio? Nossa equipe de moderação irá analisar em até 24h."
+                confirmText="DENUNCIAR"
+                cancelText="CANCELAR"
+                onConfirm={handleReport}
+                onCancel={() => setReportModalVisible(false)}
+                brandColors={brandColors}
+            />
+
+            <ConfirmationModal
+                visible={successModalVisible}
+                title="DENÚNCIA ENVIADA"
+                message="Obrigado por nos ajudar a manter a comunidade segura. Recebemos sua denúncia e tomaremos as medidas necessárias."
+                confirmText="OK"
+                showFooter
+                onConfirm={() => setSuccessModalVisible(false)}
+                onCancel={() => setSuccessModalVisible(false)}
+                type="success"
+                brandColors={brandColors}
+            />
         </View>
     );
 }

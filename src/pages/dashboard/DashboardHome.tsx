@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Activity, Plus, TrendingUp } from "lucide-react";
 import { useDashboardStats, useCoachClients, useCoachMessages } from "@/hooks/useCoachData";
+import { useTenant } from "@/contexts/TenantContext";
 
 const DashboardHome = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ const DashboardHome = () => {
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: clients, isLoading: clientsLoading } = useCoachClients();
   const { data: messages, isLoading: messagesLoading } = useCoachMessages();
+  const { tenant } = useTenant();
 
   const activeClients = stats?.totalActiveClients || 0;
   const todayApps = stats?.todayAppointments || [];
@@ -41,7 +43,7 @@ const DashboardHome = () => {
           <div className="flex items-center gap-4 mb-4">
             <span className="h-px w-12 bg-primary"></span>
             <span className="font-display font-black italic uppercase text-[10px] tracking-[0.4em] text-primary">
-              APEX PRO // ONLINE
+              {tenant?.business_name || 'APEX PRO'} // ONLINE
             </span>
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-black leading-none mb-2">
@@ -64,7 +66,7 @@ const DashboardHome = () => {
             NOVO PLANO
           </button>
           <span className="text-[10px] font-display font-bold uppercase text-white/40 italic">
-            LOC: SÃO PAULO, BR // APEX PRO
+            LOC: SÃO PAULO, BR // {tenant?.business_name || 'APEX PRO'}
           </span>
         </div>
       </div>

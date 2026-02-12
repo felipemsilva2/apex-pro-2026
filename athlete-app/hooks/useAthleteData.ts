@@ -283,7 +283,7 @@ export function useCoachProfile() {
             return firstCoach;
         },
         enabled: !!tenant?.id,
-        staleTime: 1000 * 60 * 60,
-        gcTime: 1000 * 60 * 60 * 24,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+        gcTime: 1000 * 60 * 60 * 24, // 24 hours
     });
 }

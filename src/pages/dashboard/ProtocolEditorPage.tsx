@@ -11,7 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { getLocalGifPath } from "@/lib/gifMapping";
+import { GifSelector } from "@/components/dashboard/GifSelector"; // Import GifSelector
+
 
 export default function ProtocolEditorPage() {
     const { id } = useParams<{ id: string }>();
@@ -37,6 +38,7 @@ export default function ProtocolEditorPage() {
     });
     const [suggestions, setSuggestions] = useState<ExerciseLibrary[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isGifSelectorOpen, setIsGifSelectorOpen] = useState(false); // State for GifSelector
 
     // Fetch Protocol Details
     const { data: protocol, isLoading } = useQuery({
@@ -165,98 +167,136 @@ export default function ProtocolEditorPage() {
     ];
 
     if (isLoading) {
-        return <div className="p-8 text-white animate-pulse">Carregando editor...</div>;
+        return (
+            <div className="space-y-8 animate-fade-in p-4 lg:p-8">
+                <Skeleton className="h-16 w-96" />
+                <Skeleton className="h-8 w-64" />
+                <div className="flex gap-2">
+                    {Array.from({ length: 7 }).map((_, i) => (
+                        <Skeleton key={i} className="h-12 w-24" />
+                    ))}
+                </div>
+                <Skeleton className="h-[400px] w-full" />
+            </div>
+        );
     }
 
     if (!protocol) {
-        return <div className="p-8 text-white">Protocolo não encontrado.</div>;
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+                <AlertTriangle className="h-16 w-16 text-primary/30" />
+                <p className="font-display font-black italic uppercase text-xl text-white/40 tracking-widest">PROTOCOLO NÃO ENCONTRADO</p>
+                <Button onClick={() => navigate('/dashboard/plans')} className="btn-athletic">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> VOLTAR PARA BIBLIOTECA
+                </Button>
+            </div>
+        );
     }
 
     const currentExercises = protocol.workout_exercises?.filter((e: any) => (e.day || 'segunda') === activeTab) || [];
 
     return (
-        <div className="min-h-screen bg-background text-foreground p-4 lg:p-8 animate-fade-in space-y-6">
+        <div className="space-y-8 animate-fade-in pb-12">
             {/* Header */}
-            <div className="flex flex-col gap-4 border-b border-white/10 pb-6">
-                <Button
-                    variant="ghost"
-                    onClick={() => {
-                        if (protocol?.client_id) {
-                            navigate(`/dashboard/clients/${protocol.client_id}`);
-                        } else {
-                            navigate('/dashboard/plans');
-                        }
-                    }}
-                    className="w-fit text-muted-foreground hover:text-primary mb-2 p-0 h-auto font-display text-xs tracking-widest uppercase"
-                >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    {protocol?.client_id ? `Voltar para ${protocol.client_id ? 'o Aluno' : 'Biblioteca'}` : 'Voltar para Biblioteca'}
-                </Button>
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                <div className="space-y-2">
+                    <Button
+                        variant="ghost"
+                        onClick={() => {
+                            if (protocol?.client_id) {
+                                navigate(`/dashboard/clients/${protocol.client_id}`);
+                            } else {
+                                navigate('/dashboard/plans');
+                            }
+                        }}
+                        className="w-fit text-muted-foreground hover:text-primary p-0 h-auto font-display font-bold italic text-[10px] tracking-[0.3em] uppercase mb-2"
+                    >
+                        <ArrowLeft className="mr-2 h-3 w-3" />
+                        {protocol?.client_id ? 'VOLTAR PARA O ALUNO' : 'VOLTAR PARA BIBLIOTECA'}
+                    </Button>
 
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-3">
-                            <Dumbbell className="text-primary h-6 w-6" />
-                            <h1 className="text-3xl lg:text-4xl font-display font-black italic uppercase tracking-tighter text-white">
-                                EDITOR DE TREINOS
-                            </h1>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                value={protocolName}
-                                onChange={(e) => setProtocolName(e.target.value)}
-                                onBlur={() => updateProtocolMutation.mutate(protocolName)}
-                                className="bg-transparent border-none text-2xl font-bold text-primary placeholder:text-primary/50 focus-visible:ring-0 px-0 h-auto w-fit min-w-[300px]"
-                                placeholder="NOME DO PROTOCOLO"
-                            />
-                            <Save size={16} className="text-primary/50" />
-                        </div>
+                    <h1 className="text-4xl lg:text-6xl font-display font-black italic uppercase leading-none tracking-tighter text-white">
+                        EDITOR <span className="text-primary">DE TREINOS</span>
+                    </h1>
+                    <p className="font-display font-bold uppercase italic text-[10px] tracking-[0.4em] text-primary/80">
+                        CONFIGURAÇÃO DE PROTOCOLO
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-3 bg-white/[0.03] border border-white/5 p-4 min-w-[350px]">
+                    <div className="w-10 h-10 bg-primary/10 border border-primary/20 flex items-center justify-center -skew-x-12">
+                        <Dumbbell className="w-5 h-5 text-primary" />
                     </div>
+                    <div className="flex-1">
+                        <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] mb-1">NOME DO PROTOCOLO</p>
+                        <Input
+                            value={protocolName}
+                            onChange={(e) => setProtocolName(e.target.value)}
+                            onBlur={() => updateProtocolMutation.mutate(protocolName)}
+                            className="bg-transparent border-none text-lg font-display font-black italic text-primary placeholder:text-primary/30 focus-visible:ring-0 px-0 h-auto uppercase tracking-tight"
+                            placeholder="NOME DO PROTOCOLO..."
+                        />
+                    </div>
+                    <Save size={14} className="text-primary/30" />
                 </div>
             </div>
 
             {/* Weekly Tabs */}
-            <Tabs defaultValue="segunda" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="w-full justify-start overflow-x-auto bg-transparent border-b border-white/5 h-auto p-0 gap-2 scrollbar-hide">
-                    {days.map(day => (
-                        <TabsTrigger
-                            key={day.id}
-                            value={day.id}
-                            className="rounded-t-md rounded-b-none border border-transparent data-[state=active]:border-primary/20 data-[state=active]:bg-primary/10 data-[state=active]:text-primary font-display font-bold italic uppercase tracking-widest px-6 py-3 transition-all whitespace-nowrap"
-                        >
-                            {day.label}
-                        </TabsTrigger>
-                    ))}
+            <Tabs defaultValue="segunda" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+                <TabsList className="bg-transparent border-none rounded-none h-auto p-0 gap-0 overflow-x-auto scrollbar-hide">
+                    {days.map(day => {
+                        const dayExercises = protocol.workout_exercises?.filter((e: any) => (e.day || 'segunda') === day.id) || [];
+                        return (
+                            <TabsTrigger
+                                key={day.id}
+                                value={day.id}
+                                className="bg-transparent border-none rounded-none p-0 px-5 pb-3 pt-1 data-[state=active]:bg-transparent data-[state=active]:text-primary border-b-2 border-transparent data-[state=active]:border-primary font-display font-black uppercase italic text-[10px] tracking-[0.15em] transition-all opacity-40 data-[state=active]:opacity-100 whitespace-nowrap relative"
+                            >
+                                {day.label}
+                                {dayExercises.length > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary text-black text-[8px] font-black flex items-center justify-center -skew-x-12">
+                                        {dayExercises.length}
+                                    </span>
+                                )}
+                            </TabsTrigger>
+                        );
+                    })}
                 </TabsList>
 
                 {days.map(day => (
-                    <TabsContent key={day.id} value={day.id} className="min-h-[400px] border border-white/5 rounded-b-md p-6 bg-white/5 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="flex items-center justify-between mb-8">
-                            <div className="space-y-4">
-                                <h3 className="font-display font-black text-2xl italic uppercase text-white/80">
-                                    {day.label} <span className="text-primary/40 text-lg not-italic font-normal"> // Configuração do Dia</span>
-                                </h3>
+                    <TabsContent key={day.id} value={day.id} className="m-0 min-h-[400px] animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+                        {/* Day Config Bar */}
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white/[0.03] border border-white/5 p-6 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-1 h-full bg-primary shadow-[0_0_20px_rgba(212,255,0,0.5)] opacity-40" />
+                            <div className="absolute top-0 right-0 w-32 h-full bg-primary/5 -skew-x-[30deg] translate-x-16 pointer-events-none" />
 
-                                <div className="flex flex-col gap-2 max-w-md">
-                                    <Label className="text-[10px] font-black text-primary/60 uppercase tracking-widest italic">FOCO DO DIA (EX: PEITO E TRÍCEPS)</Label>
+                            <div className="relative z-10 space-y-3 flex-1">
+                                <div className="flex items-center gap-3">
+                                    <Calendar className="text-primary h-4 w-4" />
+                                    <h3 className="font-display font-black text-xl italic uppercase text-white tracking-tight">
+                                        {day.label}
+                                    </h3>
+                                    <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] italic">
+                                        {currentExercises.length} EXERCÍCIOS
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center gap-3 max-w-md">
+                                    <Label className="text-[9px] font-black text-primary/50 uppercase tracking-widest italic whitespace-nowrap">FOCO:</Label>
                                     <Input
                                         value={dayFocusMap[day.id] || ""}
                                         onChange={(e) => setDayFocusMap({ ...dayFocusMap, [day.id]: e.target.value })}
                                         onBlur={() => updateDayFocusMutation.mutate({ dayId: day.id, focus: dayFocusMap[day.id] || "" })}
-                                        className="bg-white/5 border-white/10 text-xl font-bold italic placeholder:text-white/10 text-primary"
-                                        placeholder="DEFINIR FOCO..."
+                                        className="bg-transparent border-none text-sm font-display font-bold italic placeholder:text-white/10 text-primary focus-visible:ring-0 px-0 h-auto uppercase tracking-tight"
+                                        placeholder="PEITO E TRÍCEPS..."
                                     />
                                 </div>
-
-                                <p className="text-muted-foreground text-xs uppercase tracking-widest mt-1">
-                                    {currentExercises.length} Exercícios configurados
-                                </p>
                             </div>
 
                             <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                                 <DialogTrigger asChild>
-                                    <Button variant="outline" className="border-primary/20 hover:bg-primary/10 text-primary">
-                                        <Plus className="mr-2 h-4 w-4" /> Adicionar Exercício
+                                    <Button className="bg-primary hover:bg-primary/80 text-black font-display font-black italic uppercase text-[10px] px-6 py-5 rounded-none tracking-widest transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(212,255,0,0.3)] relative z-10">
+                                        <Plus className="mr-2 h-4 w-4 stroke-[3px]" /> ADICIONAR EXERCÍCIO
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent className="bg-[#0A0A0B] border-white/10 text-white rounded-none sm:max-w-[600px] p-0 overflow-hidden shadow-2xl shadow-primary/5">
@@ -273,7 +313,7 @@ export default function ProtocolEditorPage() {
                                     </DialogHeader>
                                     <div className="p-8 pt-4 space-y-6">
                                         <div className="grid gap-2 relative">
-                                            <Label htmlFor="name">Nome do Exercício</Label>
+                                            <Label htmlFor="name" className="text-[10px] font-black text-white/40 uppercase tracking-widest">Nome do Exercício</Label>
                                             <Input
                                                 id="name"
                                                 value={newExercise.name}
@@ -285,11 +325,11 @@ export default function ProtocolEditorPage() {
                                                 onFocus={() => {
                                                     if (newExercise.name.length >= 2) setShowSuggestions(true);
                                                 }}
-                                                className="bg-background/50 border-white/10"
+                                                className="bg-white/[0.03] border-white/10 rounded-none font-display font-bold italic uppercase text-sm tracking-wide h-12"
                                                 placeholder="Ex: Supino Reto"
                                             />
                                             {showSuggestions && suggestions.length > 0 && (
-                                                <div className="absolute top-full left-0 right-0 z-50 bg-surface border border-white/10 rounded-md mt-1 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                                <div className="absolute top-full left-0 right-0 z-50 bg-[#0A0A0B] border border-white/10 mt-1 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                                     {suggestions.map((suggestion) => (
                                                         <button
                                                             key={suggestion.id}
@@ -303,56 +343,97 @@ export default function ProtocolEditorPage() {
                                                                 });
                                                                 setShowSuggestions(false);
                                                             }}
-                                                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/10 transition-colors border-b border-white/5 last:border-0 text-left"
+                                                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-primary/10 transition-colors border-b border-white/5 last:border-0 text-left group/suggestion"
                                                         >
                                                             {suggestion.gif_url && (
-                                                                <div className="h-10 w-10 rounded overflow-hidden bg-black/40 border border-white/10 flex-shrink-0">
+                                                                <div className="h-10 w-10 overflow-hidden bg-black/40 border border-white/10 -skew-x-12 flex-shrink-0">
                                                                     <img
                                                                         src={suggestion.gif_url}
-                                                                        className="w-full h-full object-cover"
+                                                                        className="w-full h-full object-cover skew-x-12"
                                                                         alt=""
                                                                         onError={(e) => (e.currentTarget.style.display = 'none')}
                                                                     />
                                                                 </div>
                                                             )}
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm font-bold text-white uppercase">{suggestion.name_pt}</span>
-                                                                <span className="text-[10px] text-muted-foreground uppercase tracking-widest">{suggestion.muscle_group}</span>
+                                                                <span className="text-sm font-display font-bold text-white italic uppercase group-hover/suggestion:text-primary transition-colors">{suggestion.name_pt}</span>
+                                                                <span className="text-[9px] text-white/30 uppercase tracking-widest font-bold">{suggestion.muscle_group}</span>
                                                             </div>
                                                         </button>
                                                     ))}
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Manual GIF Selection Button */}
+                                        <div className="flex items-center justify-end">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setIsGifSelectorOpen(true)}
+                                                className="text-[10px] h-auto py-1 px-2 text-primary hover:text-primary/80 hover:bg-primary/5 uppercase font-bold tracking-wider"
+                                            >
+                                                <Search className="w-3 h-3 mr-1.5" />
+                                                {newExercise.gif_url ? "TROCAR GIF" : "BUSCAR GIF NA BIBLIOTECA"}
+                                            </Button>
+                                        </div>
+
+                                        {/* Preview Selected GIF */}
+                                        {newExercise.gif_url && (
+                                            <div className="relative w-full h-32 bg-black/40 border border-white/5 overflow-hidden flex items-center justify-center -skew-x-2">
+                                                <img
+                                                    src={newExercise.gif_url}
+                                                    className="h-full object-contain skew-x-2"
+                                                    alt="Preview"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setNewExercise({ ...newExercise, gif_url: "" })}
+                                                    className="absolute top-2 right-2 h-6 w-6 bg-black/60 hover:bg-red-500/20 text-white/50 hover:text-red-500 skew-x-2 transition-colors rounded-sm"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </Button>
+                                            </div>
+                                        )}
+
+                                        <GifSelector
+                                            open={isGifSelectorOpen}
+                                            onOpenChange={setIsGifSelectorOpen}
+                                            onSelect={(url) => setNewExercise({ ...newExercise, gif_url: url })}
+                                        />
+
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="grid gap-2">
-                                                <Label htmlFor="sets">Séries</Label>
+                                                <Label htmlFor="sets" className="text-[10px] font-black text-white/40 uppercase tracking-widest">Séries</Label>
                                                 <Input
                                                     id="sets"
                                                     type="number"
                                                     value={newExercise.sets}
                                                     onChange={(e) => setNewExercise({ ...newExercise, sets: parseInt(e.target.value) })}
-                                                    className="bg-background/50 border-white/10"
+                                                    className="bg-white/[0.03] border-white/10 rounded-none font-display font-bold h-12"
                                                 />
                                             </div>
                                             <div className="grid gap-2">
-                                                <Label htmlFor="reps">Repetições</Label>
+                                                <Label htmlFor="reps" className="text-[10px] font-black text-white/40 uppercase tracking-widest">Repetições</Label>
                                                 <Input
                                                     id="reps"
                                                     value={newExercise.reps}
                                                     onChange={(e) => setNewExercise({ ...newExercise, reps: e.target.value })}
-                                                    className="bg-background/50 border-white/10"
+                                                    className="bg-white/[0.03] border-white/10 rounded-none font-display font-bold h-12"
                                                     placeholder="Ex: 10-12"
                                                 />
                                             </div>
                                         </div>
                                         <div className="grid gap-2">
-                                            <Label htmlFor="notes">Observações</Label>
+                                            <Label htmlFor="notes" className="text-[10px] font-black text-white/40 uppercase tracking-widest">Observações</Label>
                                             <Textarea
                                                 id="notes"
                                                 value={newExercise.notes}
                                                 onChange={(e) => setNewExercise({ ...newExercise, notes: e.target.value })}
-                                                className="bg-background/50 border-white/10"
+                                                className="bg-white/[0.03] border-white/10 rounded-none font-bold"
                                                 placeholder="Ex: Drop-set na última série"
                                             />
                                         </div>
@@ -369,33 +450,44 @@ export default function ProtocolEditorPage() {
                         {/* Exercise List */}
                         {
                             currentExercises.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 border-2 border-dashed border-white/10 rounded-lg">
-                                    <Dumbbell className="h-12 w-12 text-white/10" />
-                                    <div className="space-y-1">
-                                        <p className="font-display font-bold text-lg text-white/40 uppercase">Nenhum exercício configurado</p>
-                                        <p className="text-xs text-muted-foreground text-white/30">Adicione exercícios para este dia da semana</p>
+                                <div className="flex flex-col items-center justify-center py-16 text-center space-y-4 border border-dashed border-white/10">
+                                    <div className="w-16 h-16 bg-white/[0.03] border border-white/5 flex items-center justify-center -skew-x-12">
+                                        <Dumbbell className="h-8 w-8 text-white/10 skew-x-12" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="font-display font-black italic uppercase text-lg text-white/20 tracking-widest">
+                                            NENHUM EXERCÍCIO
+                                        </p>
+                                        <p className="text-[10px] text-white/10 uppercase tracking-widest font-bold">
+                                            Adicione exercícios para {day.label}
+                                        </p>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="grid gap-4">
                                     {currentExercises.map((exercise: any) => (
-                                        <div key={exercise.id} className="bg-white/5 border border-white/10 rounded-lg p-4 flex flex-col gap-4 group hover:border-primary/30 transition-all">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-display font-bold">
-                                                        {exercise.order_index}
+                                        <div key={exercise.id} className="group bg-[#0A0A0B] border border-white/5 hover:border-primary/40 transition-all relative overflow-hidden p-6">
+                                            {/* Left glow accent */}
+                                            <div className="absolute left-0 top-0 w-1 h-full bg-primary shadow-[0_0_15px_rgba(212,255,0,0.3)] opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                            <div className="flex items-start justify-between relative z-10">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="h-10 w-10 bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-display font-black italic -skew-x-12 flex-shrink-0">
+                                                        <span className="skew-x-12">{exercise.order_index}</span>
                                                     </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-white uppercase">{exercise.name}</h4>
-                                                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                                                            <span className="flex items-center gap-1">
-                                                                <Clock size={12} /> {exercise.sets} Séries
+                                                    <div className="space-y-2">
+                                                        <h4 className="font-display font-black italic text-lg uppercase tracking-tight text-white group-hover:text-primary transition-colors leading-none">
+                                                            {exercise.name}
+                                                        </h4>
+                                                        <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest">
+                                                            <span className="flex items-center gap-1.5 text-white/40">
+                                                                <Clock size={11} className="text-primary/60" /> {exercise.sets} SÉRIES
                                                             </span>
-                                                            <span className="flex items-center gap-1">
-                                                                <Dumbbell size={12} /> {exercise.reps} Reps
+                                                            <span className="flex items-center gap-1.5 text-white/40">
+                                                                <Dumbbell size={11} className="text-primary/60" /> {exercise.reps} REPS
                                                             </span>
                                                             {exercise.notes && (
-                                                                <span className="text-primary/60 italic">
+                                                                <span className="text-primary/40 italic normal-case text-[10px]">
                                                                     "{exercise.notes}"
                                                                 </span>
                                                             )}
@@ -407,55 +499,49 @@ export default function ProtocolEditorPage() {
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => deleteExerciseMutation.mutate(exercise.id)}
-                                                        className="text-white/20 hover:text-destructive hover:bg-destructive/10"
+                                                        className="text-white/10 hover:text-destructive hover:bg-destructive/10 rounded-none"
                                                     >
-                                                        <Trash2 size={16} />
+                                                        <Trash2 size={14} />
                                                     </Button>
                                                 </div>
                                             </div>
 
                                             {/* GIF Preview for Coach */}
                                             {exercise.gif_url && (
-                                                <div className="flex gap-4 items-start">
+                                                <div className="flex gap-4 items-start mt-4 pt-4 border-t border-white/5 relative z-10">
                                                     <div
-                                                        className="relative h-24 w-40 rounded border border-white/5 overflow-hidden bg-black/20 flex items-center justify-center group/gif cursor-pointer transition-transform hover:scale-[1.02]"
+                                                        className="relative h-20 w-36 border border-white/5 overflow-hidden bg-black/40 flex items-center justify-center group/gif cursor-pointer transition-all hover:border-primary/30 -skew-x-6"
                                                         onClick={() => setSelectedGif({ url: exercise.gif_url, name: exercise.name })}
                                                     >
                                                         {!imageErrors[exercise.id] ? (
                                                             <>
                                                                 <img
-                                                                    src={getLocalGifPath(exercise.name, exercise.gif_url)}
-                                                                    className="w-full h-full object-contain opacity-60 group-hover/gif:opacity-100 transition-opacity"
+                                                                    src={exercise.gif_url}
+                                                                    className="w-full h-full object-contain opacity-50 group-hover/gif:opacity-100 transition-opacity skew-x-6"
                                                                     alt="Preview"
                                                                     onError={() => setImageErrors(prev => ({ ...prev, [exercise.id]: true }))}
                                                                 />
                                                                 <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover/gif:opacity-100 flex items-center justify-center transition-all">
-                                                                    <Eye className="text-white drop-shadow-[0_0_10px_rgba(0,0,0,1)]" size={32} />
+                                                                    <Eye className="text-white drop-shadow-[0_0_10px_rgba(0,0,0,1)] skew-x-6" size={24} />
                                                                 </div>
                                                             </>
                                                         ) : (
-                                                            <div className="flex flex-col items-center gap-1 p-2 text-center text-white/10 uppercase tracking-widest font-bold">
-                                                                <Dumbbell className="text-white/10" size={16} />
-                                                                <p className="text-[6px]">ERRO NO GIF</p>
+                                                            <div className="flex flex-col items-center gap-1 p-2 text-center text-white/10 uppercase tracking-widest font-bold skew-x-6">
+                                                                <Dumbbell className="text-white/10" size={14} />
+                                                                <p className="text-[6px]">SEM GIF</p>
                                                             </div>
                                                         )}
-                                                        <div className="absolute bottom-1 right-1 bg-black/60 text-[6px] text-white/60 px-1 uppercase tracking-tighter">
-                                                            {exercise.gif_url.includes('/exercises/') ? 'LOCAL HD' : 'EXTERNAL'}
-                                                        </div>
                                                     </div>
 
-                                                    <div className="flex-1 space-y-2">
-                                                        <p className="text-[10px] font-black text-primary/40 uppercase tracking-widest italic">Análise de Exercício</p>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => setSelectedGif({ url: exercise.gif_url, name: exercise.name })}
-                                                            className="h-auto p-0 flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
-                                                        >
-                                                            <Eye size={12} />
-                                                            <span className="text-[10px] font-bold uppercase tracking-widest">VER EXECUÇÃO</span>
-                                                        </Button>
-                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setSelectedGif({ url: exercise.gif_url, name: exercise.name })}
+                                                        className="h-auto p-0 flex items-center gap-2 text-primary/60 hover:text-primary transition-colors"
+                                                    >
+                                                        <Eye size={12} />
+                                                        <span className="text-[9px] font-black uppercase tracking-widest italic">VER EXECUÇÃO</span>
+                                                    </Button>
                                                 </div>
                                             )}
                                         </div>
@@ -473,17 +559,17 @@ export default function ProtocolEditorPage() {
                     <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
                     <DialogHeader className="p-6 border-b border-white/5 bg-white/[0.02]">
                         <DialogTitle className="font-display font-black italic uppercase text-xl leading-none flex flex-col">
-                            <span className="text-white/40 text-[8px] tracking-[0.4em] mb-1 not-italic font-bold">MODO DE VISUALIZAÇÃO TÁTICA</span>
+                            <span className="text-white/40 text-[8px] tracking-[0.4em] mb-1 not-italic font-bold">MODO DE VISUALIZAÇÃO</span>
                             <span className="flex items-center gap-3 text-primary">
                                 <Eye size={20} />
-                                PREVIEW: {selectedGif?.name}
+                                {selectedGif?.name}
                             </span>
                         </DialogTitle>
                     </DialogHeader>
                     <div className="flex items-center justify-center p-8 min-h-[400px]">
                         {selectedGif?.url ? (
                             <img
-                                src={getLocalGifPath(selectedGif.name, selectedGif.url)}
+                                src={selectedGif.url}
                                 className="max-w-full max-h-[70vh] object-contain shadow-2xl"
                                 alt={selectedGif.name}
                             />
@@ -495,10 +581,10 @@ export default function ProtocolEditorPage() {
                         )}
                     </div>
                     <div className="p-4 bg-white/5 border-t border-white/5 text-center">
-                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em]">MODO DE VISUALIZAÇÃO TÁTICA</p>
+                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em]">VISUALIZAÇÃO DE EXERCÍCIO</p>
                     </div>
                 </DialogContent>
             </Dialog>
-        </div >
+        </div>
     );
 }

@@ -82,21 +82,21 @@ export default function WorkoutDetailScreen() {
         domingo: 'DOM'
     };
 
-    const currentExercises = exercisesByDay[activeDay] || [];
-    const currentDayFocus = workout.day_focus?.[activeDay];
+    const currentExercises = activeDay ? exercisesByDay[activeDay] || [] : [];
+    const currentDayFocus = activeDay ? workout.day_focus?.[activeDay] : null;
 
     return (
-        <Container variant="page">
+        <Container variant="page" seamless>
             <Header
                 title="Execução"
                 subtitle={workout.title}
                 onBack={() => router.back()}
-                variant="default"
+                variant="hero-detail"
             />
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 100 }}
+                contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 20 }}
                 refreshControl={
                     <RefreshControl
                         refreshing={isRefetching}

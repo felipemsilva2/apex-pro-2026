@@ -65,7 +65,7 @@ export default function PrivacyScreen() {
             <Header
                 title="Privacidade"
                 subtitle="POLÍTICA DE DADOS"
-                variant="default"
+                variant="hero"
                 onBack={() => router.back()}
             />
 

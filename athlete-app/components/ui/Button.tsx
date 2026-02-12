@@ -68,9 +68,20 @@ export const Button: React.FC<ButtonProps> = ({
             disabled={disabled || loading}
             activeOpacity={0.8}
             style={buttonStyles}
+            accessibilityRole="button"
+            accessibilityLabel={title}
+            accessibilityState={{
+                disabled: disabled || loading,
+                busy: loading
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
             {loading ? (
-                <ActivityIndicator color={isDark ? brandColors.secondary : visiblePrimary} size="small" />
+                <ActivityIndicator
+                    color={isDark ? brandColors.secondary : visiblePrimary}
+                    size="small"
+                    accessibilityLabel="Carregando"
+                />
             ) : (
                 <>
                     {icon && <React.Fragment>{icon}</React.Fragment>}

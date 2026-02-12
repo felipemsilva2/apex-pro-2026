@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity, Modal, Platform, Pressable } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+
 import { Container, Header, EmptyState, LoadingSpinner, Button } from '../../components/ui';
 import { Apple, Clock, Flame, X, ChevronRight, Target, Activity } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
@@ -104,8 +104,7 @@ export default function NutritionScreen() {
                     {diet ? (
                         <>
                             {/* Reacticx Summary Module */}
-                            <Animated.View
-                                entering={FadeInDown.delay(100).duration(600).springify()}
+                            <View
                                 style={styles.summaryModule}
                             >
                                 <View style={styles.summaryHeader}>
@@ -144,7 +143,7 @@ export default function NutritionScreen() {
                                         </View>
                                     </View>
                                 </View>
-                            </Animated.View>
+                            </View>
 
                             {/* Weekly Tabs (Bento Style) */}
                             {hasSpecificDays && (
@@ -188,9 +187,8 @@ export default function NutritionScreen() {
 
                             {displayedMeals.length > 0 ? (
                                 displayedMeals.map((meal: any, index: number) => (
-                                    <Animated.View
+                                    <View
                                         key={meal.id}
-                                        entering={FadeInDown.delay(index * 100).duration(600).springify()}
                                     >
                                         <TouchableOpacity
                                             style={styles.mealCard}
@@ -225,7 +223,7 @@ export default function NutritionScreen() {
                                                 </View>
                                             )}
                                         </TouchableOpacity>
-                                    </Animated.View>
+                                    </View>
                                 ))
                             ) : (
                                 <EmptyState

@@ -54,7 +54,7 @@ const DashboardLayout = () => {
               <span className="text-primary-foreground font-display font-black text-xl italic">{tenant?.business_name?.charAt(0) || 'N'}</span>
             </div>
             <span className="font-display font-black text-lg italic uppercase tracking-tighter">
-              {tenant?.business_name || 'APEX'}
+              {tenant?.business_name || 'APEX PRO'}
             </span>
           </div>
         </div>

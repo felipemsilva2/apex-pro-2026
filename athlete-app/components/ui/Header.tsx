@@ -11,7 +11,7 @@ interface HeaderProps {
     subtitle?: string;
     rightAction?: React.ReactNode;
     onBack?: () => void;
-    variant?: 'default' | 'hero' | 'brand';
+    variant?: 'default' | 'hero' | 'brand' | 'hero-detail';
 }
 
 /**
@@ -28,17 +28,18 @@ export const Header: React.FC<HeaderProps> = ({
     const { brandColors, tenant } = useAuth();
     const insets = useSafeAreaInsets();
 
-    const Wrapper = variant === 'hero' ? View : BlurView;
+    const Wrapper = (variant === 'hero' || variant === 'hero-detail') ? View : BlurView;
 
     return (
         <Wrapper
-            intensity={variant === 'hero' ? 0 : 80}
+            intensity={(variant === 'hero' || variant === 'hero-detail') ? 0 : 80}
             tint="dark"
             style={[
                 styles.container,
                 variant === 'hero' && styles.heroContainer,
                 variant === 'brand' && styles.brandContainer,
-                variant !== 'hero' && styles.floatingHeader,
+                variant === 'hero-detail' && styles.heroDetailContainer,
+                (variant !== 'hero' && variant !== 'hero-detail') && styles.floatingHeader,
                 { paddingTop: insets.top + 24 }
             ]}
         >
@@ -46,8 +47,9 @@ export const Header: React.FC<HeaderProps> = ({
                 <TouchableOpacity
                     onPress={onBack}
                     style={styles.backButton}
-                    accessibilityLabel="Voltar"
+                    accessibilityLabel="Voltar para tela anterior"
                     accessibilityRole="button"
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                     <ChevronLeft size={24} color="#FFF" opacity={0.7} />
                 </TouchableOpacity>
@@ -58,7 +60,10 @@ export const Header: React.FC<HeaderProps> = ({
                 variant === 'hero' && styles.heroContentRow
             ]}>
                 {variant === 'brand' && tenant ? (
-                    <View style={styles.brandContent}>
+                    <View
+                        style={styles.brandContent}
+                        accessibilityRole="header"
+                    >
                         {tenant.logo_url ? (
                             tenant.logo_url.toLowerCase().endsWith('.svg') ? (
                                 <SvgUri
@@ -66,16 +71,19 @@ export const Header: React.FC<HeaderProps> = ({
                                     width={140}
                                     height={40}
                                     preserveAspectRatio="xMinYMin meet"
+                                    accessibilityLabel={`Logo ${tenant.business_name}`}
                                 />
                             ) : (
                                 <Image
                                     source={{ uri: tenant.logo_url }}
                                     style={styles.brandLogo}
                                     resizeMode="contain"
+                                    accessibilityLabel={`Logo ${tenant.business_name}`}
+                                    accessibilityRole="image"
                                 />
                             )
                         ) : (
-                            <View>
+                            <View accessibilityRole="header">
                                 <Text style={[styles.brandTitle, { color: '#FFF' }]}>
                                     EQUIPE {tenant.business_name?.split(' ')[0]}
                                 </Text>
@@ -86,7 +94,10 @@ export const Header: React.FC<HeaderProps> = ({
                 ) : (
                     <>
                         {variant === 'hero' ? (
-                            <View style={styles.heroProfileRow}>
+                            <View
+                                style={styles.heroProfileRow}
+                                accessibilityRole="header"
+                            >
                                 <View style={[styles.heroAvatarContainer, { borderColor: `${brandColors.primary}40` }]}>
                                     {tenant?.logo_url ? (
                                         tenant.logo_url.toLowerCase().endsWith('.svg') ? (
@@ -95,12 +106,15 @@ export const Header: React.FC<HeaderProps> = ({
                                                 width={56}
                                                 height={56}
                                                 preserveAspectRatio="xMidYMid meet"
+                                                accessibilityLabel={`Logo ${tenant.business_name}`}
                                             />
                                         ) : (
                                             <Image
                                                 source={{ uri: tenant.logo_url }}
                                                 style={styles.heroAvatar}
                                                 resizeMode="cover"
+                                                accessibilityLabel={`Logo ${tenant.business_name}`}
+                                                accessibilityRole="image"
                                             />
                                         )
                                     ) : (
@@ -116,14 +130,23 @@ export const Header: React.FC<HeaderProps> = ({
                                 </View>
                             </View>
                         ) : (
-                            <View style={styles.titleContainer}>
+                            <View
+                                style={styles.titleContainer}
+                                accessibilityRole="header"
+                            >
                                 {title && (
-                                    <Text style={styles.title} numberOfLines={1}>
+                                    <Text
+                                        style={variant === 'hero-detail' ? styles.heroDetailTitle : styles.title}
+                                        numberOfLines={1}
+                                    >
                                         {title}
                                     </Text>
                                 )}
                                 {subtitle && (
-                                    <Text style={styles.subtitle} numberOfLines={1}>
+                                    <Text
+                                        style={variant === 'hero-detail' ? styles.heroDetailSubtitle : styles.subtitle}
+                                        numberOfLines={1}
+                                    >
                                         {subtitle}
                                     </Text>
                                 )}
@@ -155,6 +178,9 @@ const styles = StyleSheet.create({
         paddingBottom: 24,
         paddingHorizontal: 20,
     },
+    heroDetailContainer: {
+        paddingVertical: 8,
+    },
     backButton: {
         width: 40,
         height: 40,
@@ -180,11 +206,26 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         letterSpacing: -0.5,
     },
+    heroDetailTitle: {
+        fontSize: 24,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
+        color: '#FFFFFF',
+        letterSpacing: -0.5,
+        textTransform: 'uppercase',
+    },
     subtitle: {
         fontSize: 14,
         fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
         color: 'rgba(255,255,255,0.5)',
         letterSpacing: 0.5,
+        marginTop: 2,
+    },
+    heroDetailSubtitle: {
+        fontSize: 12,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-SemiBold' : 'Outfit_600SemiBold',
+        color: 'rgba(255,255,255,0.4)',
+        letterSpacing: 1.5,
+        textTransform: 'uppercase',
         marginTop: 2,
     },
     heroTitle: {

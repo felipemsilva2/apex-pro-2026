@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Modal, Platform } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+
 import { useRouter } from 'expo-router';
 import { Container, Header, EmptyState, LoadingSpinner, Button } from '../../components/ui';
 import { Dumbbell, Zap, ChevronRight, Calendar, Clock, Info } from 'lucide-react-native';
@@ -108,9 +108,8 @@ export default function TrainingScreen() {
                                     const isNext = isToday || (index === 0 && !workouts.some(w => w.scheduled_date && startOfDay(parseLocalDate(w.scheduled_date)).getTime() === today.getTime()));
 
                                     return (
-                                        <Animated.View
+                                        <View
                                             key={workout.id}
-                                            entering={FadeInDown.delay(index * 100).duration(600).springify()}
                                         >
                                             <TouchableOpacity
                                                 activeOpacity={0.7}
@@ -158,7 +157,7 @@ export default function TrainingScreen() {
                                                     ))}
                                                 </View>
                                             </TouchableOpacity>
-                                        </Animated.View>
+                                        </View>
                                     );
                                 })
                             ) : (
@@ -173,9 +172,8 @@ export default function TrainingScreen() {
                         <>
                             {protocols && protocols.length > 0 ? (
                                 protocols.map((protocol: any, index: number) => (
-                                    <Animated.View
+                                    <View
                                         key={protocol.id}
-                                        entering={FadeInDown.delay(index * 100).duration(600).springify()}
                                     >
                                         <TouchableOpacity
                                             activeOpacity={0.7}
@@ -207,7 +205,7 @@ export default function TrainingScreen() {
                                                 )}
                                             </View>
                                         </TouchableOpacity>
-                                    </Animated.View>
+                                    </View>
                                 ))
                             ) : (
                                 <EmptyState

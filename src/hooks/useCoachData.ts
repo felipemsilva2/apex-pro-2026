@@ -20,7 +20,7 @@ export function useCoachClients() {
             if (!tenantId) return [];
 
             const repo = new ClientRepository(tenantId);
-            return await repo.getActiveClients();
+            return await repo.getAllClients();
         },
         enabled: !!(profile?.tenant_id || tenant?.id),
     });

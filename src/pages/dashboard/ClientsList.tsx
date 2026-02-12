@@ -81,9 +81,15 @@ const ClientsList = () => {
             </div>
             <div className={cn(
               "text-[9px] font-black uppercase italic px-2 py-0.5 -skew-x-12",
-              client.status === "active" ? "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(212,255,0,0.3)]" : "bg-white/10 text-white/40"
+              client.status === "active" ? "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(212,255,0,0.3)]" :
+                client.status === "suspended" ? "bg-amber-400 text-black shadow-[0_0_15px_rgba(251,191,36,0.3)]" :
+                  client.status === "cancelled" ? "bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)]" :
+                    "bg-white/10 text-white/40"
             )}>
-              {client.status === "active" ? "ATIVO" : client.status.toUpperCase()}
+              {client.status === "active" ? "ATIVO" :
+                client.status === "suspended" ? "SUSPENSO" :
+                  client.status === "cancelled" ? "CANCELADO" :
+                    client.status.toUpperCase()}
             </div>
           </div>
 
@@ -142,8 +148,20 @@ const ClientsList = () => {
           </div>
         </div>
         <div className="col-span-2">
-          <Badge variant="outline" className="rounded-none border-white/10 text-[9px] font-black uppercase italic tracking-widest text-white/40">
-            {client.status}
+          <Badge
+            variant="outline"
+            className={cn(
+              "rounded-none border-white/10 text-[9px] font-black uppercase italic tracking-widest px-2 py-0.5",
+              client.status === "active" ? "bg-primary/10 text-primary border-primary/30" :
+                client.status === "suspended" ? "bg-amber-400/10 text-amber-400 border-amber-400/30" :
+                  client.status === "cancelled" ? "bg-red-400/10 text-red-400 border-red-400/30" :
+                    "text-white/40"
+            )}
+          >
+            {client.status === "active" ? "ATIVO" :
+              client.status === "suspended" ? "SUSPENSO" :
+                client.status === "cancelled" ? "CANCELADO" :
+                  client.status.toUpperCase()}
           </Badge>
         </div>
         <div className="col-span-3 px-4">
@@ -209,6 +227,8 @@ const ClientsList = () => {
             <SelectContent className="bg-surface border-white/10 text-white rounded-none">
               <SelectItem value="all" className="uppercase font-display font-bold italic text-[10px]">TODOS STATUS</SelectItem>
               <SelectItem value="active" className="uppercase font-display font-bold italic text-[10px]">ATIVO</SelectItem>
+              <SelectItem value="suspended" className="uppercase font-display font-bold italic text-[10px]">SUSPENSO</SelectItem>
+              <SelectItem value="cancelled" className="uppercase font-display font-bold italic text-[10px]">CANCELADO</SelectItem>
               <SelectItem value="inactive" className="uppercase font-display font-bold italic text-[10px]">INATIVO</SelectItem>
             </SelectContent>
           </Select>

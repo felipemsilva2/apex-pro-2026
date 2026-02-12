@@ -13,11 +13,14 @@ import * as DocumentPicker from 'expo-document-picker';
 import { supabase } from '@/lib/supabase';
 import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
+import * as Haptics from 'expo-haptics';
+import { getVisibleColor } from '@/lib/whitelabel';
 
 export default function NewCheckinScreen() {
     const { profile, tenant, brandColors } = useAuth();
     const router = useRouter();
     const queryClient = useQueryClient();
+    const visiblePrimary = getVisibleColor(brandColors.primary);
 
     const [weight, setWeight] = useState(profile?.current_weight?.toString() || '');
     const [notes, setNotes] = useState('');
@@ -46,6 +49,7 @@ export default function NewCheckinScreen() {
         });
 
         if (!result.canceled) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             setPhotos(prev => ({ ...prev, [type]: result.assets[0].uri }));
         }
     };
@@ -60,6 +64,7 @@ export default function NewCheckinScreen() {
             });
 
             if (!result.canceled) {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setDocuments(prev => [...prev, ...result.assets]);
             }
         } catch (err) {
@@ -168,6 +173,7 @@ export default function NewCheckinScreen() {
             await queryClient.invalidateQueries({ queryKey: ['athlete-profile'] });
             await queryClient.invalidateQueries({ queryKey: ['client-documents'] });
 
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             Alert.alert("Sucesso", "Check-in e documentos enviados com sucesso! Aguarde o feedback do seu treinador.", [
                 { text: "OK", onPress: () => router.back() }
             ]);
@@ -201,11 +207,12 @@ export default function NewCheckinScreen() {
     );
 
     return (
-        <Container variant="page">
+        <Container variant="page" seamless>
             <Header
-                title="NOVO CHECK-IN"
-                subtitle="AVALIAÇÃO FÍSICA"
+                title="ATUALIZAR SHAPE"
+                subtitle="REPORTE DE EVOLUÇÃO"
                 onBack={() => router.back()}
+                variant="hero"
             />
 
             <KeyboardAvoidingView
@@ -303,11 +310,11 @@ export default function NewCheckinScreen() {
                         disabled={uploading}
                     >
                         {uploading ? (
-                            <ActivityIndicator color="#000" />
+                            <ActivityIndicator color={brandColors.secondary} />
                         ) : (
                             <>
-                                <Upload size={20} color="#000" />
-                                <Text style={styles.submitText}>ENVIAR RELATÓRIO</Text>
+                                <Upload size={20} color={brandColors.secondary} />
+                                <Text style={[styles.submitText, { color: brandColors.secondary }]}>ENVIAR RELATÓRIO</Text>
                             </>
                         )}
                     </TouchableOpacity>
@@ -319,44 +326,47 @@ export default function NewCheckinScreen() {
 
 const styles = StyleSheet.create({
     content: {
-        padding: 24,
+        padding: 20,
+        paddingBottom: 40,
     },
     section: {
         marginBottom: 32,
     },
     label: {
-        color: '#fff',
-        fontFamily: 'Inter_900Black',
+        color: 'rgba(255,255,255,0.4)',
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         fontSize: 12,
-        marginBottom: 8,
+        marginBottom: 12,
         letterSpacing: 1,
         textTransform: 'uppercase',
     },
     sublabel: {
-        color: 'rgba(255,255,255,0.5)',
-        fontFamily: 'Inter_500Medium',
+        color: 'rgba(255,255,255,0.3)',
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Medium' : 'Outfit_500Medium',
         fontSize: 12,
         marginBottom: 16,
     },
     input: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: 'rgba(255,255,255,0.03)',
         borderWidth: 1,
-        borderRadius: 4,
-        padding: 16,
+        borderColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 20,
+        padding: 20,
         color: '#fff',
-        fontFamily: 'Inter_700Bold',
-        fontSize: 18,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
+        fontSize: 24,
     },
     textArea: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: 'rgba(255,255,255,0.03)',
         borderWidth: 1,
-        borderRadius: 4,
-        padding: 16,
+        borderColor: 'rgba(255,255,255,0.05)',
+        borderRadius: 20,
+        padding: 20,
         color: '#fff',
-        fontFamily: 'Inter_500Medium',
-        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Medium' : 'Outfit_500Medium',
+        fontSize: 16,
         textAlignVertical: 'top',
-        minHeight: 100,
+        minHeight: 120,
     },
     photosGrid: {
         flexDirection: 'row',
@@ -369,7 +379,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255,255,255,0.02)',
         borderWidth: 1,
         borderStyle: 'dashed',
-        borderRadius: 8,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         overflow: 'hidden',
@@ -379,9 +389,9 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     photoLabel: {
-        color: 'rgba(255,255,255,0.4)',
+        color: 'rgba(255,255,255,0.3)',
         fontSize: 10,
-        fontFamily: 'Inter_700Bold',
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         textTransform: 'uppercase',
     },
     photoPreview: {
@@ -403,54 +413,57 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 12,
-        padding: 20,
-        borderRadius: 4,
-        transform: [{ skewX: '-6deg' }]
+        height: 64,
+        borderRadius: 24,
     },
     disabledButton: {
         opacity: 0.5,
     },
     submitText: {
-        fontSize: 14,
-        fontFamily: 'Inter_900Black',
-        color: '#000',
+        fontSize: 16,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         textTransform: 'uppercase',
         letterSpacing: 1,
-        transform: [{ skewX: '6deg' }]
     },
     sectionHeaderLine: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 12,
     },
     addDocButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
+        gap: 6,
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
     },
     addDocText: {
-        fontSize: 10,
-        fontFamily: 'Inter_900Black',
+        fontSize: 11,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
         letterSpacing: 0.5,
     },
     docsList: {
-        gap: 8,
+        gap: 10,
     },
     docItem: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.03)',
-        padding: 12,
-        borderRadius: 8,
+        padding: 16,
+        borderRadius: 16,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
     },
     docName: {
         flex: 1,
         color: '#fff',
-        fontSize: 12,
-        fontFamily: 'Inter_500Medium',
+        fontSize: 13,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Medium' : 'Outfit_500Medium',
         marginLeft: 12,
     },
     removeDoc: {
@@ -461,16 +474,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 12,
-        padding: 20,
+        padding: 24,
         backgroundColor: 'rgba(255,255,255,0.01)',
-        borderRadius: 8,
+        borderRadius: 16,
         borderWidth: 1,
         borderStyle: 'dashed',
         borderColor: 'rgba(255,255,255,0.05)',
     },
     docPlaceholderText: {
-        color: 'rgba(255,255,255,0.3)',
-        fontSize: 12,
-        fontFamily: 'Inter_500Medium',
+        color: 'rgba(255,255,255,0.2)',
+        fontSize: 13,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Medium' : 'Outfit_500Medium',
     }
 });

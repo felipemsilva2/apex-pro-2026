@@ -9,12 +9,29 @@ export function useChat() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [blockedUsers, setBlockedUsers] = useState<string[]>([]);
+
+    // Fetch blocked users
+    const fetchBlockedUsers = async () => {
+        if (!profile?.user_id) return;
+
+        const { data, error } = await supabase
+            .from('blocked_users')
+            .select('blocked_id')
+            .eq('blocker_id', profile.user_id);
+
+        if (!error && data) {
+            setBlockedUsers(data.map(b => b.blocked_id));
+        }
+    };
 
     // Fetch initial messages
     const fetchMessages = async () => {
         if (!profile?.user_id || !tenant?.id) return;
 
         try {
+            await fetchBlockedUsers(); // Ensure we have blocked list
+
             const { data, error } = await supabase
                 .from('chat_messages')
                 .select(`
@@ -57,10 +74,10 @@ export function useChat() {
                     if (newMessage.sender_id !== profile.user_id && newMessage.receiver_id !== profile.user_id) {
                         return;
                     }
-                    // If we sent it, we already have it optimistically (optional) or we just refetch
-                    // Ideally we append. We need to fetch sender info if it's not us.
-                    // For simplicity, let's just refetch or append safely.
-                    // Since payload.new doesn't have the relation 'sender', we might want to fetch it or just use partial data.
+
+                    // Optimistic check for blocked
+                    // (Note: blockedUsers state might be stale in this closure, 
+                    // but we refresh on significant actions. Ideally use ref or dependency)
 
                     setMessages(prev => {
                         if (prev.find(m => m.id === newMessage.id)) return prev;
@@ -91,39 +108,6 @@ export function useChat() {
 
         setSending(true);
         try {
-            // Find the coach ID. Usually the coach is the owner of the tenant or we can find a receiver.
-            // For now, let's assume messaging the coach. We need to know WHO the coach is.
-            // In a single coach tenant, we might need to look up the coach user ID.
-            // However, chat usually goes to a specific person.
-            // Let's assume the 'receiver_id' should be the coach.
-            // We can get the coach ID from the client's profile or tenant owner?
-            // Checking the web code: useCoachClients uses profile.id as coach id.
-            // BUT for the athlete app, we are the client. We need to send TO the coach.
-            // We need to fetch the coach ID associated with this client.
-
-            // Let's try to find the coach from the client record or tenant.
-            // The client record usually has a 'coach_id' or similar?
-            // Let's check the 'clients' table structure or 'tenants' table.
-            // In many systems the tenant owner is the coach.
-
-            // Allow looking up the coach if we don't know who to send to.
-            // For MVP, lets try to find a message FROM the coach to reply to, or fetch the tenant owner.
-
-            // Quick fix: Fetch the most recent message received to find the coach ID, 
-            // OR use a specific logic if we have the coach's ID stored.
-
-            // Better approach: The client is linked to a tenant. The tenant usually implies the coach context.
-            // Let's look if we have a 'coach_id' in the 'clients' table in `useAthleteData`.
-            // Inspecting `useAthleteData` or `AuthContext` might reveal this.
-
-            // If we cant find it, we can query the `members` or `users` of the tenant.
-            // Let's assume for now we reply to the last person who messaged us, or if new, we need a target.
-
-            // HACK: For now, I will try to fetch the coach ID from the tenant owner logic 
-            // or we might need to ask the user. 
-            // Wait, in `client` table there is usually no coach_id if it's single tenant.
-            // Let's check `AuthContext` profile again.
-
             // 1. Prioritize assigned coach from the client profile
             let coachId = profile.assigned_coach_id;
 
@@ -173,10 +157,46 @@ export function useChat() {
         }
     };
 
+    const reportMessage = async (messageId: string, reportedId: string, reason: string) => {
+        if (!profile?.user_id) return;
+
+        const { error } = await supabase.from('reports').insert({
+            reporter_id: profile.user_id,
+            reported_id: reportedId,
+            message_id: messageId,
+            reason: reason,
+            status: 'pending'
+        });
+
+        if (error) throw error;
+    };
+
+    const blockUser = async (blockedId: string) => {
+        if (!profile?.user_id) return;
+
+        const { error } = await supabase.from('blocked_users').insert({
+            blocker_id: profile.user_id,
+            blocked_id: blockedId
+        });
+
+        if (error) {
+            // Ignore unique constraint violation (already blocked)
+            if (error.code !== '23505') throw error;
+        }
+
+        await fetchBlockedUsers(); // Refresh blocked list
+        await fetchMessages(); // Refresh messages to filter out blocked
+    };
+
+    // Filter messages based on blocked users
+    const filteredMessages = messages.filter(msg => !blockedUsers.includes(msg.sender_id));
+
     return {
-        messages,
+        messages: filteredMessages,
         loading,
         sendMessage,
-        sending
+        sending,
+        reportMessage,
+        blockUser
     };
 }

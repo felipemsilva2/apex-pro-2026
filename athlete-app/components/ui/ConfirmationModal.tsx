@@ -38,7 +38,11 @@ export const ConfirmationModal = ({
             animationType="fade"
             onRequestClose={onCancel}
         >
-            <View style={styles.overlay}>
+            <View
+                style={styles.overlay}
+                accessibilityRole="alert"
+                accessibilityLabel={`${title}. ${message}`}
+            >
                 <View style={[styles.container, { borderColor: `${brandColors.primary}30` }, containerStyle]}>
                     {/* Decorative Corner */}
                     <View style={[styles.corner, { backgroundColor: brandColors.primary }]} />
@@ -53,13 +57,13 @@ export const ConfirmationModal = ({
 
                     {children}
 
-
-
                     {showFooter && (
                         <View style={styles.footer}>
                             <TouchableOpacity
                                 style={styles.cancelButton}
                                 onPress={onCancel}
+                                accessibilityLabel={cancelText}
+                                accessibilityRole="button"
                             >
                                 <Text style={styles.cancelText}>{cancelText}</Text>
                             </TouchableOpacity>
@@ -70,6 +74,8 @@ export const ConfirmationModal = ({
                                     { backgroundColor: brandColors.primary }
                                 ]}
                                 onPress={onConfirm}
+                                accessibilityLabel={confirmText}
+                                accessibilityRole="button"
                             >
                                 <Text style={[styles.confirmText, { color: brandColors.secondary }]}>
                                     {confirmText}

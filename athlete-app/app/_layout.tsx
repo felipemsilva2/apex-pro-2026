@@ -3,14 +3,13 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
-import 'react-native-reanimated';
+import { CrashScreen } from '../components/CrashScreen';
 
 import { View, Text } from 'react-native';
 import { useColorScheme } from '@/components/useColorScheme';
-import "../global.css";
 import {
   Syne_400Regular,
   Syne_700Bold,
@@ -37,7 +36,11 @@ export const unstable_settings = {
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+try {
+  SplashScreen.preventAutoHideAsync();
+} catch (e) {
+  console.warn('[Layout] SplashScreen.preventAutoHideAsync() failed:', e);
+}
 
 const queryClient = new QueryClient();
 
@@ -55,47 +58,88 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
+  // Log font loading errors instead of throwing (which causes SIGABRT crash)
+  const [fontError, setFontError] = useState<Error | null>(null);
+
   useEffect(() => {
-    if (error) throw error;
+    if (error) {
+      console.error('[Layout] Font loading error:', error.message, error);
+      setFontError(error);
+      // Still hide splash so the user sees something
+      try { SplashScreen.hideAsync(); } catch (e) { /* ignore */ }
+    }
   }, [error]);
 
   useEffect(() => {
     if (loaded) {
-      SplashScreen.hideAsync();
+      try { SplashScreen.hideAsync(); } catch (e) {
+        console.warn('[Layout] SplashScreen.hideAsync() failed:', e);
+      }
     }
   }, [loaded]);
+
+  // Show a fallback error screen instead of crashing
+  if (fontError) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0A0A0B', alignItems: 'center', justifyContent: 'center', padding: 30 }}>
+        <Text style={{ color: '#FF3B30', fontWeight: '900', fontSize: 18, marginBottom: 10 }}>ERRO DE INICIALIZAÇÃO</Text>
+        <Text style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', fontSize: 13, lineHeight: 20 }}>
+          {fontError.message || 'Erro ao carregar recursos do app.'}
+        </Text>
+        <Text style={{ color: 'rgba(255,255,255,0.3)', marginTop: 20, fontSize: 11 }}>Tente reinstalar o app.</Text>
+      </View>
+    );
+  }
 
   if (!loaded) {
     return null;
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RootLayoutNav />
-      </AuthProvider>
-    </QueryClientProvider>
+    <CrashScreen>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <RootLayoutNav />
+        </AuthProvider>
+      </QueryClientProvider>
+    </CrashScreen>
   );
 }
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { user, loading } = useAuth();
+  const { user, loading, profile } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
+    console.log('[RootLayout] Auth State Update:', {
+      hasUser: !!user,
+      loading,
+      status: profile?.status,
+      segments: segments
+    });
+
     if (loading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const segments_array = Array.isArray(segments) ? segments : [];
+    const inAuthGroup = segments_array[0] === '(auth)';
+    const inBlockedPage = segments_array[0] === 'blocked';
+    const isSuspended = profile?.status === 'suspended' || profile?.status === 'cancelled';
+
+    console.log('[RootLayout] Routing Decision:', { inAuthGroup, inBlockedPage, isSuspended });
 
     if (!user && !inAuthGroup) {
+      console.log('[RootLayout] Redirecting to Login');
       router.replace('/(auth)/login');
-    } else if (user && inAuthGroup) {
+    } else if (user && isSuspended && !inBlockedPage) {
+      console.log('[RootLayout] Redirecting to Blocked');
+      router.replace('/blocked');
+    } else if (user && !isSuspended && (inAuthGroup || inBlockedPage)) {
+      console.log('[RootLayout] Redirecting to Tabs');
       router.replace('/(tabs)');
     }
-  }, [user, segments, loading]);
+  }, [user, profile?.status, segments, loading]);
 
   if (loading) {
     return (

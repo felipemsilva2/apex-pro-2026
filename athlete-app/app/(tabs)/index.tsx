@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity, TextInput, RefreshControl, Platform } from 'react-native';
-import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
+
 import { useRouter } from 'expo-router';
 import { Container, Header, StatCard, LoadingSpinner, ConfirmationModal } from '../../components/ui';
 import { useAuth } from '../../contexts/AuthContext';
@@ -145,8 +145,7 @@ export default function HomeScreen() {
           )}
 
           {/* Bento Stats Grid */}
-          <Animated.View
-            entering={FadeInDown.delay(100).duration(600).springify()}
+          <View
             style={styles.bentoGrid}
           >
             <View style={styles.bentoCol}>
@@ -167,11 +166,10 @@ export default function HomeScreen() {
                 trend="neutral"
               />
             </View>
-          </Animated.View>
+          </View>
 
           {/* Bento Quick Action - Interactive Weight */}
-          <Animated.View
-            entering={FadeInDown.delay(200).duration(600).springify()}
+          <View
             style={styles.bentoSection}
           >
             <View style={styles.sectionHeader}>
@@ -195,11 +193,10 @@ export default function HomeScreen() {
                 <Text style={styles.saveButtonText}>{isUpdating ? '...' : 'SALVAR'}</Text>
               </TouchableOpacity>
             </View>
-          </Animated.View>
+          </View>
 
           {/* Main Grid Actions */}
-          <Animated.View
-            entering={FadeInDown.delay(300).duration(600).springify()}
+          <View
             style={styles.mainGrid}
           >
             <TouchableOpacity
@@ -227,10 +224,9 @@ export default function HomeScreen() {
               <Text style={styles.gridSubtitle}>{diet?.meals?.length || 0} REFEIÇÕES</Text>
               <ExternalLink size={12} color="rgba(255,255,255,0.2)" style={styles.gridCornerIcon} />
             </TouchableOpacity>
-          </Animated.View>
+          </View>
 
-          <Animated.View
-            entering={FadeInDown.delay(400).duration(600).springify()}
+          <View
             style={styles.mainGrid}
           >
             <TouchableOpacity
@@ -256,7 +252,7 @@ export default function HomeScreen() {
               <Text style={styles.gridTitle}>AGENDA</Text>
               <Text style={styles.gridSubtitle}>CONSULTAS</Text>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
         </View>
 
         <View style={{ height: 100 }} />

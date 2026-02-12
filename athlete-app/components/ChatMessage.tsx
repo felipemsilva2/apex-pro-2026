@@ -8,24 +8,54 @@ import { format } from 'date-fns';
 type Props = {
     message: ChatMessageType;
     isMe: boolean;
+    onReport: (messageId: string, reportedId: string) => void;
+    onBlock: (blockedId: string) => void;
 };
 
-export const ChatMessage = ({ message, isMe }: Props) => {
+export const ChatMessage = ({ message, isMe, onReport, onBlock }: Props) => {
     const { brandColors } = useAuth();
 
     const handleLongPress = () => {
         if (isMe) return;
 
         Alert.alert(
-            "Moderação de Conteúdo",
-            "Deseja denunciar esta mensagem por conteúdo inadequado?",
+            "Opções da Mensagem",
+            "O que deseja fazer com este conteúdo?",
             [
                 { text: "Cancelar", style: "cancel" },
                 {
-                    text: "Denunciar",
+                    text: "Denunciar Mensagem",
                     style: "destructive",
                     onPress: () => {
-                        Alert.alert("Sucesso", "A mensagem foi denunciada e será revisada em até 24 horas.");
+                        Alert.alert(
+                            "Confirmar Denúncia",
+                            "Tem certeza que deseja denunciar esta mensagem por conteúdo inadequado? Nossa equipe irá analisar.",
+                            [
+                                { text: "Voltar", style: "cancel" },
+                                {
+                                    text: "Sim, Denunciar",
+                                    style: "destructive",
+                                    onPress: () => onReport(message.id, message.sender_id)
+                                }
+                            ]
+                        );
+                    }
+                },
+                {
+                    text: "Bloquear Usuário",
+                    style: "default",
+                    onPress: () => {
+                        Alert.alert(
+                            "Bloquear Usuário",
+                            "Você deixará de receber mensagens deste usuário. Deseja continuar?",
+                            [
+                                { text: "Cancelar", style: 'cancel' },
+                                {
+                                    text: "Sim, Bloquear",
+                                    onPress: () => onBlock(message.sender_id)
+                                }
+                            ]
+                        );
                     }
                 }
             ]

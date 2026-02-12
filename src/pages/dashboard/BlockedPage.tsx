@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
 const BlockedPage = () => {
-    const { signOut } = useAuth();
+    const { signOut, profile } = useAuth();
     const navigate = useNavigate();
 
     return (
@@ -29,7 +29,7 @@ const BlockedPage = () => {
                         <span className="text-red-500">BLOQUEADO</span>
                     </h1>
                     <p className="text-zinc-400 font-bold uppercase tracking-[0.2em] text-[10px] max-w-xs mx-auto leading-relaxed">
-                        Sua licença Apex Pro encontra-se suspensa por pendências financeiras.
+                        Sua licença profissional encontra-se suspensa por pendências financeiras.
                     </p>
                 </div>
 
@@ -69,7 +69,7 @@ const BlockedPage = () => {
                 </div>
 
                 <p className="text-[9px] font-bold text-white/10 uppercase tracking-[0.3em]">
-                    APEX PRO ECOSYSTEM // LICENSING SYSTEM
+                    LICENSING SYSTEM // {profile?.full_name?.toUpperCase() || 'MANAGEMENT'}
                 </p>
             </div>
         </div>

@@ -68,18 +68,18 @@ const PricingSection = () => {
               <div className="flex items-baseline justify-center gap-2 mb-2">
                 <span className="text-xl font-black text-primary italic uppercase tracking-tighter">R$</span>
                 <span className="text-6xl lg:text-8xl font-display font-black text-white italic uppercase leading-none tracking-tighter">
-                  {selectedCycle === 'MENSAL' ? '39,90' : '31,90'}
+                  {selectedCycle === 'MENSAL' ? '49,99' : '39,99'}
                 </span>
                 <span className="text-xs font-bold text-white/30 uppercase tracking-widest">/mês</span>
               </div>
               <p className="text-primary/60 font-display font-black italic uppercase text-[9px] tracking-[0.2em]">
-                {selectedCycle === 'MENSAL' ? '(MENOS QUE 2 CAFÉS POR SEMANA)' : '(ECONOMIA DE R$ 96 NO ANO)'}
+                {selectedCycle === 'MENSAL' ? '(MENOS QUE 2 CAFÉS POR SEMANA)' : '(ECONOMIA DE R$ 120 NO ANO)'}
               </p>
             </div>
 
             <div className="bg-white/5 p-6 border-y border-white/10 mb-10 -mx-8 lg:-mx-12">
               <p className="font-display font-black italic uppercase text-xs text-center text-white">
-                {selectedCycle === 'MENSAL' ? 'MIGRE PARA O ANUAL POR R$ 31,90/mês' : 'VALOR TOTAL: R$ 382,80/ano'}
+                {selectedCycle === 'MENSAL' ? 'MIGRE PARA O ANUAL POR R$ 39,99/mês' : 'VALOR TOTAL: R$ 479,88/ano'}
               </p>
             </div>
 
@@ -113,7 +113,7 @@ const PricingSection = () => {
 
               <div className="text-center space-y-2">
                 <p className="font-display font-bold uppercase italic text-[9px] tracking-widest text-white/30">
-                  Após 30 dias: cobrança automática de {selectedCycle === 'MENSAL' ? 'R$ 39,90' : 'R$ 382,80'}
+                  Após 30 dias: cobrança automática de {selectedCycle === 'MENSAL' ? 'R$ 49,99' : 'R$ 479,88'}
                 </p>
                 <p className="font-display font-black italic uppercase text-[9px] tracking-[0.2em] text-primary/60">
                   Cancele quando quiser. Sem multas. Sem pegadinhas.

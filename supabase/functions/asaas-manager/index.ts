@@ -68,7 +68,8 @@ serve(async (req) => {
                     email,
                     cpfCnpj,
                     mobilePhone: phone,
-                    externalReference: tenantId
+                    externalReference: tenantId,
+                    notificationDisabled: true // Disable default notifications to prevent invalid emails
                 })
             })
 
@@ -81,7 +82,41 @@ serve(async (req) => {
                 asaas_id: asaasData.id
             })
 
-            // Update tenant billing email
+            // Fetch and Configure Notifications (WhatsApp ON, Email OFF)
+            try {
+                const notificationsResponse = await fetch(`${ASAAS_API_URL}/notifications`, {
+                    method: 'GET',
+                    headers: { 'access_token': ASAAS_API_KEY }
+                })
+                const notificationsData = await notificationsResponse.json()
+
+                if (notificationsResponse.ok && notificationsData.data) {
+                    // Update all notifications for this customer to use WhatsApp
+                    for (const notification of notificationsData.data) {
+                        await fetch(`${ASAAS_API_URL}/notifications/${notification.id}`, {
+                            method: 'POST',
+                            headers: {
+                                'access_token': ASAAS_API_KEY,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                customer: asaasData.id,
+                                enabled: true,
+                                emailEnabledForProvider: false,
+                                emailEnabledForCustomer: false,
+                                smsEnabledForProvider: false,
+                                smsEnabledForCustomer: false,
+                                whatsappEnabledForCustomer: true
+                            })
+                        })
+                    }
+                }
+            } catch (notifError) {
+                console.error('Error configuring Asaas notifications:', notifError)
+                // We don't throw here to not break the onboarding, but we log it
+            }
+
+            // Update tenant billing email (needed by Asaas but now disabled in system)
             await supabaseAdmin.from('tenants').update({ billing_email: email }).eq('id', tenantId)
 
             return new Response(JSON.stringify({ asaasId: asaasData.id }), {

@@ -15,6 +15,14 @@ export class ClientRepository extends BaseRepository<Client> {
         return data || [];
     }
 
+    async getAllClients(): Promise<Client[]> {
+        const { data, error } = await this.query()
+            .order('full_name', { ascending: true });
+
+        if (error) return this.handleError(error, 'getAllClients');
+        return data || [];
+    }
+
     async getStats(): Promise<{ activeCount: number }> {
         const { count, error } = await this.table()
             .select('*', { count: 'exact', head: true })

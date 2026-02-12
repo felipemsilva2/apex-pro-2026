@@ -191,7 +191,7 @@ export default function SettingsScreen() {
                         <SettingItem
                             icon={Info}
                             label="Sobre o Aplicativo"
-                            subLabel="Versão Beta 1.2.0"
+                            subLabel="Versão 1.2.0"
                             onPress={() => { }}
                             isLast
                         />

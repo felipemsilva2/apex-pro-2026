@@ -123,8 +123,12 @@ export default function CoachProfileScreen() {
 
                     <View style={styles.masterHeader}>
                         <View style={[styles.avatarContainer, { borderColor: brandColors.primary }]}>
-                            {coach?.avatar_url ? (
-                                <Image source={{ uri: coach.avatar_url }} style={styles.avatar} />
+                            {coach?.avatar_url || tenant?.logo_url ? (
+                                <Image
+                                    source={{ uri: coach?.avatar_url || tenant?.logo_url }}
+                                    style={styles.avatar}
+                                    resizeMode={coach?.avatar_url ? "cover" : "contain"}
+                                />
                             ) : (
                                 <View style={[styles.avatarPlaceholder, { backgroundColor: `${brandColors.primary}20` }]}>
                                     <Award size={40} color={brandColors.primary} />

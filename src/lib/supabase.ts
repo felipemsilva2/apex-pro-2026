@@ -65,6 +65,7 @@ export type Profile = {
     education: string | null;
     instagram: string | null;
     website: string | null;
+    has_seen_tour: boolean;
     created_at: string;
     updated_at: string;
 };
@@ -231,5 +232,22 @@ export type ClientDocument = {
     file_url: string;
     file_type: 'pdf' | 'image' | 'text' | 'other';
     category: string | null;
+    created_at: string;
+};
+
+export type Report = {
+    id: string;
+    reporter_id: string;
+    reported_id: string;
+    message_id?: string;
+    reason: string;
+    status: 'pending' | 'reviewed' | 'dismissed';
+    created_at: string;
+};
+
+export type BlockedUser = {
+    id: string;
+    blocker_id: string;
+    blocked_id: string;
     created_at: string;
 };

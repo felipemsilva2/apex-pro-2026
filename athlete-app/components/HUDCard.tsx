@@ -4,11 +4,10 @@ interface HUDCardProps extends ViewProps {
     title?: string;
     subtitle?: string;
     label?: string;
-    className?: string; // Keep for NativeWind compatibility
     children?: React.ReactNode;
 }
 
-export function HUDCard({ title, subtitle, label, className, children, style, ...props }: HUDCardProps) {
+export function HUDCard({ title, subtitle, label, children, style, ...props }: HUDCardProps) {
     return (
         <View
             style={[styles.card, style] as any}

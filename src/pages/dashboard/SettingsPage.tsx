@@ -12,6 +12,7 @@ import { useTenant } from "@/contexts/TenantContext";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { InviteCoachDialog } from "@/components/dashboard/InviteCoachDialog";
+import { SubscriptionManager } from "@/components/dashboard/SubscriptionManager";
 
 const SettingsPage = () => {
   const { profile, refetchProfile } = useAuth();
@@ -136,7 +137,7 @@ const SettingsPage = () => {
 
       // Update title immediately for instant feedback
       if (brandSettings.business_name) {
-        document.title = `${brandSettings.business_name} | APEX PRO`;
+        document.title = `${brandSettings.business_name} | DASHBOARD`;
       }
 
       refetchGlobalTenant();
@@ -219,13 +220,18 @@ const SettingsPage = () => {
         .from('avatars')
         .getPublicUrl(filePath);
 
+      console.log("Updating profile avatar_url with:", publicUrl, "for profile ID:", profile.id);
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
         .eq('id', profile.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error updating profiles table:", updateError);
+        throw updateError;
+      }
 
+      console.log("Profile updated successfully in database");
       toast.success("Foto de perfil atualizada com sucesso!");
       refetchProfile(profile.id);
     } catch (error: any) {
@@ -260,7 +266,7 @@ const SettingsPage = () => {
           <div className="w-1 h-12 bg-primary" />
           <div>
             <h1 className="font-display font-black italic uppercase text-5xl tracking-tighter leading-none">
-              CONFIGURAÇÕES <span className="text-primary text-glow-primary">PRO</span>
+              CONFIGURAÇÕES <span className="text-primary text-glow-primary">{tenant?.business_name || 'PERSONAL'}</span>
             </h1>
             <p className="text-xs text-white/40 font-bold uppercase tracking-[0.3em] font-display">
               GESTÃO DO SISTEMA E CONTA
@@ -756,44 +762,7 @@ const SettingsPage = () => {
 
         {/* --- ASSINATURA --- */}
         <TabsContent value="assinatura" className="mt-0 outline-none">
-          <div className="max-w-2xl bg-white/5 border border-white/10 p-8 space-y-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 -mr-32 -mt-32 rounded-full blur-[100px]" />
-
-            <div className="space-y-6 relative z-10">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-primary text-black flex items-center justify-center -skew-x-12">
-                  <Crown size={32} />
-                </div>
-                <div>
-                  <h3 className="font-display font-black italic uppercase text-3xl tracking-tighter">PLAN <span className="text-primary text-glow-primary">TITAN</span></h3>
-                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">ASSINATURA ATIVA ATÉ 12/2026</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: 'ATLETAS ILIMITADOS', active: true },
-                  { label: 'EQUIPE ILIMITADA', active: true },
-                  { label: 'DOMAIN PERSONALIZADO', active: true },
-                  { label: 'SUPORTE PRIORITÁRIO', active: true },
-                ].map((feature) => (
-                  <div key={feature.label} className="flex items-center gap-2 text-[10px] font-display font-bold italic uppercase text-white/60">
-                    <CheckCircle2 size={12} className="text-primary" /> {feature.label}
-                  </div>
-                ))}
-              </div>
-
-              <div className="p-6 bg-black/50 border border-white/10 space-y-4">
-                <div className="flex justify-between items-center text-white/60">
-                  <span className="text-[10px] font-bold uppercase tracking-widest">MÉTODO DE PAGAMENTO</span>
-                  <span className="text-[10px] font-black italic uppercase text-white">VISA •••• 4242</span>
-                </div>
-                <Button className="w-full bg-white/5 border border-white/10 hover:bg-white/10 rounded-none font-display font-black italic uppercase text-[10px] tracking-widest h-12 flex items-center gap-2">
-                  GERENCIAR NO <span className="text-primary">STRIPE</span> <ExternalLink size={14} />
-                </Button>
-              </div>
-            </div>
-          </div>
+          <SubscriptionManager compact />
         </TabsContent>
 
         {/* --- ALERTAS (Placeholder) --- */}

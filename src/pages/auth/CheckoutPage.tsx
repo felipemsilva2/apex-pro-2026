@@ -466,7 +466,7 @@ const CheckoutPage = () => {
                                         <div className="space-y-1">
                                             <p className="text-[9px] font-black text-primary italic uppercase tracking-widest">30 DIAS DE TESTE ATIVADOS</p>
                                             <p className="text-[10px] font-black text-white/40 italic uppercase tracking-tighter leading-tight">
-                                                APÓS O TESTE: <span className="text-white">R$ {selectedCycle === 'MENSAL' ? '39,90 / MÊS' : '382,80 / ANO'}</span>
+                                                APÓS O TESTE: <span className="text-white">R$ {selectedCycle === 'MENSAL' ? '49,99 / MÊS' : '479,88 / ANO'}</span>
                                             </p>
                                         </div>
                                     ) : (
@@ -482,7 +482,7 @@ const CheckoutPage = () => {
                                     <div className="flex items-baseline justify-end gap-1">
                                         <span className="text-xl font-display font-black italic text-primary">R$</span>
                                         <span className="text-5xl lg:text-6xl font-display font-black italic text-white leading-none tracking-tighter">
-                                            {paymentMethod === 'CREDIT_CARD' ? '0,00' : (selectedCycle === 'MENSAL' ? '39,90' : '382,80')}
+                                            {paymentMethod === 'CREDIT_CARD' ? '0,00' : (selectedCycle === 'MENSAL' ? '49,99' : '479,88')}
                                         </span>
                                     </div>
                                     {paymentMethod === 'CREDIT_CARD' && (

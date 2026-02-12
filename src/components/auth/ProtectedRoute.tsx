@@ -37,6 +37,15 @@ export function ProtectedRoute({ children, allowedRoles }: { children: React.Rea
 
         // 1. Subscription Guard (The Paywall) - Prioritizied
         const allowedStatuses = ['active', 'trialing'];
+        // Wait for tenant if we know we are a coach but tenant is missing/loading
+        if (!tenant && !isBilling) {
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-black">
+                    <Loader2 className="animate-spin text-primary" size={48} />
+                </div>
+            );
+        }
+
         const currentStatus = tenant?.subscription_status || 'pending';
 
         if (!allowedStatuses.includes(currentStatus) && !isBilling) {

@@ -31,7 +31,7 @@ import {
     ChevronDown,
     Camera
 } from 'lucide-react-native';
-import { TextInputMask } from 'react-native-masked-text';
+
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
@@ -144,6 +144,18 @@ export default function ProfileEditScreen() {
         }
     };
 
+    const formatPhone = (text: string) => {
+        const cleaned = text.replace(/\D/g, '');
+        const match = cleaned.match(/^(\d{0,2})(\d{0,5})(\d{0,4})$/);
+        if (!match) return cleaned;
+        if (!match[2]) return match[1];
+        return `(${match[1]}) ${match[2]}${match[3] ? '-' + match[3] : ''}`;
+    };
+
+    const formatDecimal = (text: string) => {
+        return text.replace(/[^0-9,.]/g, '').replace(/\./g, ',');
+    };
+
     const renderInput = (
         label: string,
         value: string,
@@ -159,28 +171,22 @@ export default function ProfileEditScreen() {
                 <Text style={styles.label}>{label}</Text>
             </View>
             <View style={styles.inputWrapper}>
-                {maskType ? (
-                    <TextInputMask
-                        type={maskType}
-                        options={maskType === 'datetime' ? { format: 'DD/MM/YYYY' } : { maskType: 'BRL', withDDD: true, dddMask: '(99) ' }}
-                        style={styles.input}
-                        value={value}
-                        includeRawValueInChangeText={true}
-                        onChangeText={onChange}
-                        placeholder={placeholder}
-                        placeholderTextColor="rgba(255,255,255,0.2)"
-                        keyboardType={keyboardType}
-                    />
-                ) : (
-                    <TextInput
-                        style={styles.input}
-                        value={value}
-                        onChangeText={onChange}
-                        placeholder={placeholder}
-                        placeholderTextColor="rgba(255,255,255,0.2)"
-                        keyboardType={keyboardType}
-                    />
-                )}
+                <TextInput
+                    style={styles.input}
+                    value={value}
+                    onChangeText={(text) => {
+                        let formatted = text;
+                        if (maskType === 'cel-phone') {
+                            formatted = formatPhone(text);
+                        } else if (keyboardType === 'decimal-pad') {
+                            formatted = formatDecimal(text);
+                        }
+                        onChange(formatted);
+                    }}
+                    placeholder={placeholder}
+                    placeholderTextColor="rgba(255,255,255,0.2)"
+                    keyboardType={keyboardType}
+                />
             </View>
         </View>
     );

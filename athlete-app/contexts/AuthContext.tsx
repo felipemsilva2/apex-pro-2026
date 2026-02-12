@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { getTenantBranding, getEffectiveColors, type Tenant } from '../lib/whitelabel';
 import type { User } from '@supabase/supabase-js';
 import { useRealtimeSync } from '../hooks/useRealtimeSync';
+import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 interface AuthContextType {
     user: User | null;
@@ -98,6 +99,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setBrandColors(getEffectiveColors(null));
         } finally {
             setLoading(false);
+            // Registrar para Notificações Push
+            if (userId) {
+                registerForPushNotificationsAsync().then(token => {
+                    if (token) {
+                        supabase.from('profiles').update({ push_token: token }).eq('id', userId)
+                            .then(({ error }) => {
+                                if (error) console.error('[Auth] Erro ao salvar push token:', error);
+                                else console.log('[Auth] Push token registrado com sucesso');
+                            });
+                    }
+                });
+            }
         }
     };
 
@@ -119,14 +132,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             if (!user) throw new Error('No user logged in');
 
-            // Log the deletion request in a system table if available, 
-            // or perform a direct user deletion if permitted by RLS.
-            // For now, we sign out and assume manual follow-up or 
-            // a custom Supabase function call.
-            console.log('[Auth] Account deletion requested for:', user.id);
+            // NOTE: Per Apple guidelines, the user must be able to initiate account deletion from the app.
+            // This implementation signs the user out and logs the request. 
+            // In a production environment with a custom backend, this should trigger an automated 
+            // data deletion process (GDPR/LGPD compliant).
+            console.log('[Auth] Account deletion requested for user_id:', user.id);
 
-            // Mock implementation: dispatch a logout and return success.
-            // In a real scenario, this would call a Supabase RPC to delete user data.
+            // For now, we sign out to terminate the session immediately.
             await signOut();
             return { error: null };
         } catch (error) {

@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { mockCoach, mockMessages } from "@/data/mockData";
 import { useState } from "react";
 import {
@@ -84,7 +84,7 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
             </div>
             <div className="min-w-0 flex-1 flex flex-col justify-center">
               <span className="font-display font-black text-lg text-white italic uppercase tracking-tighter leading-none break-words line-clamp-2">
-                {tenant?.business_name || 'APEX'}<span className="text-primary text-blur-sm">{!tenant?.business_name && 'PRO'}</span>
+                {tenant?.business_name || 'APEX PRO'}
               </span>
             </div>
           </div>
@@ -109,6 +109,7 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Avatar className="h-10 w-10 border border-primary/20">
+                  {profile?.avatar_url && <AvatarImage src={profile.avatar_url} className="object-cover" />}
                   <AvatarFallback className="bg-primary/20 text-primary text-xs font-display font-bold">
                     {profile?.full_name?.substring(0, 2).toUpperCase() || 'CO'}
                   </AvatarFallback>
@@ -121,6 +122,7 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
           ) : (
             <div className="flex items-center gap-3 relative z-10">
               <Avatar className="h-10 w-10 border border-primary/20">
+                {profile?.avatar_url && <AvatarImage src={profile.avatar_url} className="object-cover" />}
                 <AvatarFallback className="bg-primary/20 text-primary text-xs font-display font-bold">
                   {profile?.full_name?.substring(0, 2).toUpperCase() || 'CO'}
                 </AvatarFallback>

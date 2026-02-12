@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import Joyride, { CallBackProps, STATUS, Step } from "react-joyride";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 
 
@@ -9,21 +10,24 @@ export const ProductTour = () => {
     const [run, setRun] = useState(false);
 
     useEffect(() => {
-        const hasSeenTour = localStorage.getItem(`tour_completed_${profile?.id}`);
         // Run tour if user hasn't seen it and the profile is loaded
-        if (!hasSeenTour && profile?.id) {
+        if (profile && !profile.has_seen_tour) {
             setRun(true);
         }
-    }, [profile?.id]);
+    }, [profile?.id, profile?.has_seen_tour]);
 
-    const handleJoyrideCallback = (data: CallBackProps) => {
+    const handleJoyrideCallback = async (data: CallBackProps) => {
         const { status } = data;
         const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
         if (finishedStatuses.includes(status)) {
             setRun(false);
             if (profile?.id) {
-                localStorage.setItem(`tour_completed_${profile?.id}`, 'true');
+                // Update database
+                await supabase
+                    .from('profiles')
+                    .update({ has_seen_tour: true })
+                    .eq('id', profile.id);
             }
         }
     };
@@ -39,10 +43,9 @@ export const ProductTour = () => {
                     </div>
                     <div>
                         <h2 className="font-display font-black italic uppercase text-xl mb-2">
-                            Bem-vindo ao APEX PRO
+                            Acesso Liberado 🚀
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            Vamos configurar seu ambiente de alta performance.
                             Este é seu centro de comando para gerenciar alunos, treinos e dietas.
                         </p>
                     </div>

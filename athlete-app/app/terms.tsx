@@ -45,7 +45,7 @@ export default function TermsScreen() {
             <Header
                 title="Termos"
                 subtitle="CONTRATO DE USO"
-                variant="default"
+                variant="hero"
                 onBack={() => router.back()}
             />
 

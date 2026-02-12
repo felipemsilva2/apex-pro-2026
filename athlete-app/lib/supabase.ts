@@ -17,19 +17,31 @@ const supabaseAnonKey =
     '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Missing Supabase credentials!');
-    console.log('URL:', supabaseUrl ? 'Found' : 'Missing');
-    console.log('Key:', supabaseAnonKey ? 'Found' : 'Missing');
+    console.error('[Supabase] Missing credentials!');
+    console.log('[Supabase] URL:', supabaseUrl ? 'Found' : 'Missing');
+    console.log('[Supabase] Key:', supabaseAnonKey ? 'Found' : 'Missing');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-        storage: AsyncStorage,
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: false,
-    },
-});
+let supabaseInstance: ReturnType<typeof createClient>;
+try {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+            storage: AsyncStorage,
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: false,
+        },
+    });
+} catch (e) {
+    console.error('[Supabase] createClient() failed:', e);
+    // Create a minimal fallback client so the app doesn't crash
+    supabaseInstance = createClient(
+        'https://placeholder.supabase.co',
+        'placeholder-key',
+        { auth: { storage: AsyncStorage, persistSession: false, detectSessionInUrl: false } }
+    );
+}
+export const supabase = supabaseInstance;
 
 export type Workout = {
     id: string;

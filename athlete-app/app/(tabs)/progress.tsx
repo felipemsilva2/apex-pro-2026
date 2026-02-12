@@ -80,7 +80,7 @@ export default function ProgressScreen() {
                         <EmptyState
                             icon={<TrendingUp size={40} color={brandColors.primary} />}
                             title="Sem Dados de Evolução"
-                            description="Realize avaliações físicas com seu profissional para acompanhar seu progresso aqui."
+                            description="Realize reportes de evolução para acompanhar seu progresso aqui."
                         />
                     ) : (
                         <>
@@ -178,7 +178,7 @@ export default function ProgressScreen() {
                                             <AlertCircle size={32} color="rgba(255,255,255,0.15)" />
                                             <Text style={styles.insufficientDataText}>
                                                 Histórico completo disponível na aba {'\n'}"HISTÓRICO".
-                                                Gráficos requerem pelo menos 2 check-ins.
+                                                Gráficos requerem pelo menos 2 reportes de shape.
                                             </Text>
                                         </View>
                                     )}
@@ -186,7 +186,7 @@ export default function ProgressScreen() {
                             ) : (
                                 <View style={styles.section}>
                                     <View style={styles.sectionHeaderRow}>
-                                        <Text style={styles.sectionLabel}>CHECK-INS REALIZADOS</Text>
+                                        <Text style={styles.sectionLabel}>HISTÓRICO DE EVOLUÇÃO</Text>
                                         <View style={[styles.countBadge, { backgroundColor: `${brandColors.primary}15` }]}>
                                             <Text style={[styles.countText, { color: brandColors.primary }]}>{assessments?.length}</Text>
                                         </View>
