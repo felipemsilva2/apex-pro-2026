@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Activity, Dumbbell, CalendarCheck, Zap } from "lucide-react";
+import { Activity, Dumbbell, CalendarCheck, Zap, MessageSquare } from "lucide-react";
 import { useRetentionMetrics } from "@/hooks/useCoachData";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -42,7 +42,15 @@ const RecentActivityFeed = () => {
                     activities.map((activity: any, i: number) => (
                         <div
                             key={activity.id}
-                            className="group/item flex gap-4 p-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors relative"
+                            onClick={() => {
+                                if (activity.type === 'message' && activity.client_id) {
+                                    navigate(`/dashboard/messages?clientId=${activity.client_id}`);
+                                }
+                            }}
+                            className={cn(
+                                "group/item flex gap-4 p-3 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors relative",
+                                activity.type === 'message' && activity.client_id && "cursor-pointer"
+                            )}
                             style={{ animationDelay: `${i * 0.05}s` }}
                         >
                             <div className="relative mt-1">
@@ -54,7 +62,11 @@ const RecentActivityFeed = () => {
                                     )}
                                 </div>
                                 <div className="absolute -bottom-1 -right-1 bg-primary text-black rounded-full p-0.5 border border-black">
-                                    <Zap size={8} fill="currentColor" />
+                                    {activity.type === 'message' ? (
+                                        <MessageSquare size={8} fill="currentColor" />
+                                    ) : (
+                                        <Zap size={8} fill="currentColor" />
+                                    )}
                                 </div>
                             </div>
 
@@ -68,7 +80,11 @@ const RecentActivityFeed = () => {
                                     </span>
                                 </div>
                                 <p className="text-sm font-bold text-white leading-tight mt-0.5">
-                                    Completou: <span className="italic text-white/80">{activity.name}</span>
+                                    {activity.type === 'message' ? (
+                                        <span>Enviou: <span className="italic text-white/80">{activity.content || 'Mensagem direta'}</span></span>
+                                    ) : (
+                                        <span>Completou: <span className="italic text-white/80">{activity.name}</span></span>
+                                    )}
                                 </p>
                             </div>
                         </div>

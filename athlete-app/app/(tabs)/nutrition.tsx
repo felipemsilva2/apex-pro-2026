@@ -9,16 +9,27 @@ import * as Haptics from 'expo-haptics';
 
 export default function NutritionScreen() {
     const { brandColors } = useAuth();
-    const { data: diet, isLoading, refetch, isRefetching } = useAthleteDiet();
+    const { data: dietPlans, isLoading, refetch, isRefetching } = useAthleteDiet() as any;
     const [selectedMeal, setSelectedMeal] = React.useState<any>(null);
+
+    // Carb Cycling State
+    const [activeDietId, setActiveDietId] = React.useState<string | null>(null);
 
     // State for active day tab (0-6)
     const [activeDay, setActiveDay] = React.useState<number>(new Date().getDay());
+
+    // Effect to set initial diet
+    React.useEffect(() => {
+        if (dietPlans && dietPlans.length > 0 && !activeDietId) {
+            setActiveDietId(dietPlans[0].id);
+        }
+    }, [dietPlans]);
 
     if (isLoading) {
         return <LoadingSpinner message="Carregando dieta..." />;
     }
 
+    const diet = dietPlans?.find((d: any) => d.id === activeDietId) || dietPlans?.[0];
     const meals = diet?.meals || [];
 
     // Check if we have any specific day meals to decide if we show tabs
@@ -113,7 +124,16 @@ export default function NutritionScreen() {
                                     </View>
                                 </View>
 
-                                <Text style={styles.planName}>{diet.title}</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                                    <Text style={[styles.planName, { marginBottom: 0 }]}>{diet.name || diet.title}</Text>
+                                    {diet.day_label && (
+                                        <View style={{ backgroundColor: `${brandColors.primary}20`, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, borderColor: `${brandColors.primary}40`, borderWidth: 1 }}>
+                                            <Text style={{ color: brandColors.primary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>
+                                                {diet.day_label.replace('_', ' ')}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </View>
 
                                 <View style={styles.readoutContainer}>
                                     <View style={styles.mainReadout}>
@@ -144,6 +164,41 @@ export default function NutritionScreen() {
                                     </View>
                                 </View>
                             </View>
+
+                            {/* Carb Cycling Diet Selection Tabs */}
+                            {dietPlans && dietPlans.length > 1 && (
+                                <View style={styles.navWrapper}>
+                                    <View style={styles.sectionHeaderRow}>
+                                        <Text style={styles.sectionLabel}>ESTRATÉGIA DO DIA</Text>
+                                    </View>
+                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContainer}>
+                                        {dietPlans.map((plan: any) => (
+                                            <TouchableOpacity
+                                                key={plan.id}
+                                                onPress={() => {
+                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                                    setActiveDietId(plan.id);
+                                                }}
+                                                style={[
+                                                    styles.dayTab,
+                                                    { width: 'auto', paddingHorizontal: 16 },
+                                                    activeDietId === plan.id && { backgroundColor: 'rgba(255,255,255,0.06)' }
+                                                ]}
+                                            >
+                                                <Text style={[
+                                                    styles.dayTabText,
+                                                    activeDietId === plan.id ? { color: brandColors.primary } : { color: 'rgba(255,255,255,0.3)' }
+                                                ]}>
+                                                    {plan.day_label ? plan.day_label.replace('_', ' ').toUpperCase() : plan.name?.toUpperCase()}
+                                                </Text>
+                                                {activeDietId === plan.id && (
+                                                    <View style={[styles.activeIndicator, { backgroundColor: brandColors.primary }]} />
+                                                )}
+                                            </TouchableOpacity>
+                                        ))}
+                                    </ScrollView>
+                                </View>
+                            )}
 
                             {/* Weekly Tabs (Bento Style) */}
                             {hasSpecificDays && (

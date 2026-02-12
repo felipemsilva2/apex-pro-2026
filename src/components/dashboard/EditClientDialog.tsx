@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Phone, Scale, Target, Loader2, Save, Calendar } from "lucide-react";
+import { User, Phone, Scale, Target, Loader2, Save, Calendar, Lock } from "lucide-react";
 import { useUpdateClient } from "@/hooks/useCoachData";
 import { clientEditSchema, type ClientEditInput } from "@/api/validators/client.schema";
 import { type Client } from "@/lib/supabase";
+import { TenantService } from "@/api/services/tenantService";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -52,13 +53,28 @@ export function EditClientDialog({ client, trigger }: EditClientDialogProps) {
 
     const onSubmit = async (data: ClientEditInput) => {
         try {
+            // 1. Update database record (Clients table)
             await updateMutation.mutateAsync({
                 id: client.id,
                 ...data
             });
+
+            // 2. Sync credentials if password provided
+            if (data.password && data.password.length >= 6) {
+                const service = new TenantService(client.tenant_id);
+                await service.manageAthlete({
+                    fullName: data.full_name,
+                    username: "", // Email takes precedence in our updated Edge Function
+                    email: client.email || "",
+                    password: data.password,
+                    tenantId: client.tenant_id
+                });
+                toast.success("Credenciais sincronizadas com sucesso!");
+            }
+
             setOpen(false);
-        } catch (error) {
-            // Error handled by hook
+        } catch (error: any) {
+            toast.error("Erro ao atualizar: " + (error.message || "Tente novamente"));
         }
     };
 
@@ -254,6 +270,26 @@ export function EditClientDialog({ client, trigger }: EditClientDialogProps) {
                                 />
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 font-display font-black italic text-xs">KG</div>
                             </div>
+                        </div>
+
+                        {/* Password - High priority request */}
+                        <div className="space-y-2 col-span-2">
+                            <Label htmlFor="password" title="Defina uma nova senha para o aluno aqui" className="font-display font-bold text-[11px] uppercase tracking-[0.2em] text-primary/60 flex items-center gap-2 mb-2 cursor-help">
+                                <Lock size={10} className="text-primary" /> ALTERAR SENHA DO ALUNO
+                            </Label>
+                            <div className="relative group">
+                                <Input
+                                    id="password"
+                                    type="text"
+                                    {...register("password")}
+                                    placeholder="DEFINIR NOVA SENHA..."
+                                    className="bg-white/[0.05] border-primary/20 rounded-none font-display font-black italic text-sm tracking-widest focus:border-primary focus:ring-0 transition-all h-14 pl-4 placeholder:text-white/10"
+                                />
+                                <div className="absolute bottom-0 left-0 w-0 h-[1px] bg-primary group-focus-within:w-full transition-all duration-500" />
+                            </div>
+                            <p className="text-[9px] font-bold text-white/30 uppercase italic tracking-widest mt-1">
+                                DEIXE EM BRANCO PARA MANTER A SENHA ATUAL. MÍNIMO 6 CARACTERES.
+                            </p>
                         </div>
                     </div>
 

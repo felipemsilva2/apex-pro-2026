@@ -26,7 +26,7 @@ const features = [
   {
     icon: Zap,
     title: "PROTOCOLOS AVANÇADOS",
-    description: "Gerencie protocolos hormonais e de suplementação com segurança e clareza.",
+    description: "Gerencie protocolos de suplementação com segurança e clareza.",
   },
   {
     icon: Shield,
@@ -84,7 +84,7 @@ const FeaturesSection = () => {
           {[
             { icon: Zap, title: "Personalização Total", desc: "Seu logo, suas cores, sua identidade visual completa." },
             { icon: Utensils, title: "Gestão Alimentar", desc: "Planos de dieta integrados ao acompanhamento de treino." },
-            { icon: Shield, title: "Protocolos Claros", desc: "Organização impecável de rotinas hormonais e suplementação." },
+            { icon: Shield, title: "Protocolos Claros", desc: "Organização impecável de protocolos e suplementação." },
             { icon: Zap, title: "Check-in Inteligente", desc: "Acompanhamento diário da rotina e evolução do aluno." },
             { icon: Shield, title: "Privacidade e Foco", desc: "Ambiente profissional para sua consultoria prosperar." },
             { icon: Target, title: "Resultados Reais", desc: "A junção de treino e dieta em um app que gera engajamento." }

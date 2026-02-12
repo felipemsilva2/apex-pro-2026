@@ -149,6 +149,7 @@ export type MealPlan = {
     target_carbs_g: number | null;
     target_fats_g: number | null;
     status: 'active' | 'inactive' | 'completed';
+    day_label: string | null;
     created_at: string;
     updated_at: string;
 };

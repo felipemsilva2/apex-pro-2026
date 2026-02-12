@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { type Client } from "@/lib/supabase";
 import { InviteStudentDialog } from "@/components/dashboard/InviteStudentDialog";
+import { CSVImportDialog } from "@/components/dashboard/CSVImportDialog";
 import { useCoachClients } from "@/hooks/useCoachData";
 import { Loader2 } from "lucide-react";
 
@@ -202,7 +203,10 @@ const ClientsList = () => {
             GERENCIAMENTO DA CARTEIRA DE ATLETAS
           </p>
         </div>
-        <InviteStudentDialog />
+        <div className="flex flex-wrap gap-4">
+          <CSVImportDialog />
+          <InviteStudentDialog />
+        </div>
       </div>
 
       {/* Filters */}

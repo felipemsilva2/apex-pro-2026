@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAthleteAssessments } from '../../hooks/useAthleteData';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Share2, ArrowLeft, TrendingUp, TrendingDown, Minus, Camera, Trophy, User, MessageSquareText, Info } from 'lucide-react-native';
+import { Share2, ArrowLeft, TrendingUp, TrendingDown, Minus, Camera, Trophy, User, MessageSquareText, Info, Clock } from 'lucide-react-native';
 import * as Sharing from 'expo-sharing';
 
 import { captureRef } from 'react-native-view-shot';
@@ -22,9 +22,10 @@ export default function AssessmentDetailScreen() {
     const cardRef = useRef(null);
 
     // Find key data
-    const currentAssessmentIndex = assessments?.findIndex(a => a.id === id);
-    const assessment = assessments?.[currentAssessmentIndex ?? -1];
-    const previousAssessment = assessments?.[(currentAssessmentIndex ?? -1) + 1];
+    const assessmentsData = assessments as any[];
+    const currentAssessmentIndex = assessmentsData?.findIndex(a => a.id === id);
+    const assessment = assessmentsData?.[currentAssessmentIndex ?? -1];
+    const previousAssessment = assessmentsData?.[(currentAssessmentIndex ?? -1) + 1];
 
     const handleShare = async () => {
         try {
@@ -57,7 +58,7 @@ export default function AssessmentDetailScreen() {
                 <View style={styles.centerContent}>
                     <Text style={styles.errorText}>Avaliação não encontrada.</Text>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Text style={styles.backButtonText}>Voltar</Text>
+                        <Text style={styles.backButtonText}>Vololtar</Text>
                     </TouchableOpacity>
                 </View>
             </Container>
@@ -87,6 +88,67 @@ export default function AssessmentDetailScreen() {
 
     const successColor = '#10B981';
     const warningColor = '#94A3B8'; // More neutral for "Improvement" state
+
+    // Messaging based on results and coach evaluation
+    const getStatusContent = () => {
+        // State 1: Awaiting review
+        if (assessment.status === 'pending') {
+            return {
+                title: "AGUARDANDO AVALIAÇÃO",
+                subtitle: "O seu personal está analisando seus dados.",
+                icon: Clock,
+                color: '#94A3B8'
+            };
+        }
+
+        // State 2: Categorized review
+        if (assessment.coach_category === 'needs_improvement') {
+            return {
+                title: "FOCO NO PLANO",
+                subtitle: "Ajustando a rota com o seu treinador para chegar lá.",
+                icon: Info,
+                color: '#EF4444'
+            };
+        }
+
+        if (assessment.coach_category === 'good_progress') {
+            return {
+                title: "EVOLUÇÃO CONSTANTE",
+                subtitle: "Você está indo muito bem! Mantenha a constância.",
+                icon: Trophy,
+                color: '#3B82F6'
+            };
+        }
+
+        if (assessment.coach_category === 'excellent') {
+            return {
+                title: "EXCELENTE / NO PLANO",
+                subtitle: "Resultado incrível! Você está voando.",
+                icon: Trophy,
+                color: '#10B981'
+            };
+        }
+
+        // Fallback: Automatic detection (for legacy assessments without category)
+        if (isSuccess) {
+            return {
+                title: "EVOLUÇÃO CONSTANTE",
+                subtitle: "Cada passo conta na sua jornada de sucesso!",
+                icon: Trophy,
+                color: successColor
+            };
+        }
+
+        return {
+            title: "FOCO NA CONSTÂNCIA",
+            subtitle: "Ajustando a rota com o seu treinador para chegar lá.",
+            icon: Info,
+            color: warningColor
+        };
+    };
+
+    const status = getStatusContent();
+    const StatusIcon = status.icon;
 
     const formattedDate = format(new Date(assessment.assessment_date), "d 'de' MMMM, yyyy", { locale: ptBR });
 
@@ -133,7 +195,7 @@ export default function AssessmentDetailScreen() {
                         {/* Header Strip */}
                         <View style={[styles.cardHeader, { backgroundColor: brandColors.primary }]}>
                             <Text style={[styles.cardHeaderTitle, { color: brandColors.secondary }]}>
-                                CHECK-IN • CONFIRMADO
+                                CHECK-IN {assessment.status === 'reviewed' ? 'VALIDADO' : 'EM ANÁLISE'}
                             </Text>
                         </View>
 
@@ -163,21 +225,15 @@ export default function AssessmentDetailScreen() {
                             <View style={styles.heroStatContainer}>
                                 <Text style={styles.heroStatLabel}>SUA JORNADA</Text>
                                 <View style={styles.heroStatValueContainer}>
-                                    <View style={[styles.heroIconCircle, { backgroundColor: isSuccess ? `${successColor}20` : `${warningColor}20` }]}>
-                                        {isSuccess ? (
-                                            <Trophy size={32} color={successColor} />
-                                        ) : (
-                                            <Info size={32} color={warningColor} />
-                                        )}
+                                    <View style={[styles.heroIconCircle, { backgroundColor: `${status.color}20` }]}>
+                                        <StatusIcon size={32} color={status.color} />
                                     </View>
                                     <View style={{ flex: 1 }}>
-                                        <Text style={[styles.heroStatValue, { color: isSuccess ? successColor : '#FFF', fontSize: 24, lineHeight: 28 }]}>
-                                            {isSuccess ? "VOCÊ ESTÁ EVOLUINDO" : "VOCÊ PRECISA MELHORAR"}
+                                        <Text style={[styles.heroStatValue, { color: isSuccess ? status.color : '#FFF', fontSize: 22, lineHeight: 26 }]}>
+                                            {status.title}
                                         </Text>
                                         <Text style={[styles.heroStatContext, { marginTop: 4 }]}>
-                                            {isSuccess
-                                                ? "Cada passo conta no seu progresso!"
-                                                : "Leia as notas do seu personal para ajustar a rota."}
+                                            {status.subtitle}
                                         </Text>
                                     </View>
                                 </View>
@@ -212,15 +268,17 @@ export default function AssessmentDetailScreen() {
                                 )}
                             </View>
 
-                            {/* Verified Badge */}
-                            <View style={styles.verifiedBadge}>
-                                <View style={[styles.verifiedIcon, { backgroundColor: brandColors.primary }]}>
-                                    <User size={12} color={brandColors.secondary} />
+                            {/* Verified Badge (Conditional) */}
+                            {assessment.status === 'reviewed' && (
+                                <View style={styles.verifiedBadge}>
+                                    <View style={[styles.verifiedIcon, { backgroundColor: brandColors.primary }]}>
+                                        <User size={12} color={brandColors.secondary} />
+                                    </View>
+                                    <Text style={[styles.verifiedText, { color: brandColors.primary }]}>
+                                        VALIDADO PELO TREINADOR
+                                    </Text>
                                 </View>
-                                <Text style={[styles.verifiedText, { color: brandColors.primary }]}>
-                                    VALIDADO PELO TREINADOR
-                                </Text>
-                            </View>
+                            )}
 
                             {/* Branding Footer */}
                             <View style={styles.cardFooter}>
@@ -230,9 +288,8 @@ export default function AssessmentDetailScreen() {
                                         {tenant?.business_name || 'PERSONAL TRAINER'}
                                     </Text>
                                 </View>
-                                {/* Brand Mark */}
-                                <View style={[styles.brandMark, { borderColor: brandColors.primary }]}>
-                                    <ActivityIcon color={brandColors.primary} size={16} />
+                                <View style={styles.brandBadge}>
+                                    <Text style={[styles.brandBadgeText, { color: brandColors.primary }]}>APEX PRO</Text>
                                 </View>
                             </View>
                         </View>
@@ -512,14 +569,18 @@ const styles = StyleSheet.create({
         fontWeight: '900',
         fontStyle: 'italic',
     },
-    brandMark: {
-        width: 32,
-        height: 32,
+    brandBadge: {
+        paddingVertical: 4,
+        paddingHorizontal: 8,
         borderWidth: 1,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-        opacity: 0.5,
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 4,
+    },
+    brandBadgeText: {
+        fontSize: 10,
+        fontWeight: '900',
+        fontStyle: 'italic',
+        letterSpacing: 2,
     },
     cornerTL: {
         position: 'absolute',

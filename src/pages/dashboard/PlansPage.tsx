@@ -8,6 +8,7 @@ import { useTrainingTemplates, useMealTemplates, useDeleteProtocol } from "@/hoo
 import { Workout } from "@/lib/supabase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreateTemplateDialog } from "@/components/dashboard/CreateTemplateDialog";
+import { FeatureExplainer } from "@/components/dashboard/FeatureExplainer";
 
 const PlansPage = () => {
   const navigate = useNavigate();
@@ -36,6 +37,12 @@ const PlansPage = () => {
         <div className="space-y-1">
           <h1 className="text-5xl lg:text-7xl font-display font-black italic uppercase leading-none tracking-tighter text-white">
             TREINOS <span className="text-primary">& DIETAS</span>
+            <FeatureExplainer
+              title="Biblioteca de Modelos"
+              description="Aqui você cria a base teórica da sua consultoria. Crie modelos de treinos e planos alimentares que podem ser replicados ou adaptados para qualquer aluno em segundos."
+              tip="Modelos economizam tempo: em vez de digitar tudo do zero para cada aluno, você importa um modelo e faz apenas os ajustes finos."
+              className="inline-flex ml-4 mb-2 align-middle"
+            />
           </h1>
           <p className="font-display font-bold uppercase italic text-[10px] tracking-[0.4em] text-primary/80">
             GERENCIAMENTO DE TREINOS E DIETAS
@@ -51,7 +58,7 @@ const PlansPage = () => {
         />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 border-y border-white/5 py-6">
+      <div className="flex flex-col md:flex-row gap-4 border-y border-white/5 py-6 items-center">
         <div className="relative flex-1 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors" size={20} />
           <Input
@@ -61,6 +68,11 @@ const PlansPage = () => {
             className="pl-12 h-16 bg-white/[0.03] border-white/10 rounded-none font-display font-bold italic text-xs tracking-widest focus:border-primary/50 focus:bg-white/[0.05] transition-all"
           />
         </div>
+        <FeatureExplainer
+          title="Como usar os modelos?"
+          description="Você pode buscar modelos prontos aqui. Ao entrar no perfil de um aluno, você terá a opção de 'Importar da Biblioteca'. Isso puxará toda a estrutura deste modelo para o aluno específico."
+          tip="Mantenha seus modelos genéricos o suficiente para serem úteis para vários alunos, fazendo as individualidades apenas após a importação."
+        />
       </div>
 
       <Tabs defaultValue="treino" className="space-y-8">

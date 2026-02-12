@@ -38,14 +38,21 @@ export function ProtocolCard({ protocol, type, onDelete, onEdit, onClick }: Prot
                         <h4 className="font-display font-black italic uppercase text-sm tracking-tight group-hover:text-primary transition-colors">
                             {protocol.name}
                         </h4>
-                        <div className="flex items-center gap-1.5 text-white/40 text-[10px] font-bold uppercase tracking-widest leading-none">
-                            <Calendar size={10} className="text-primary/60" />
-                            <span>INÍCIO: {format(new Date(isWorkout ? workout.created_at : meal.start_date || meal.created_at), "dd/MM/yyyy")}</span>
-                            {!isWorkout && meal.end_date && (
-                                <>
-                                    <span className="mx-1">•</span>
-                                    <span>FIM: {format(new Date(meal.end_date), "dd/MM/yyyy")}</span>
-                                </>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            <div className="flex items-center gap-1.5 text-white/40 text-[10px] font-bold uppercase tracking-widest leading-none">
+                                <Calendar size={10} className="text-primary/60" />
+                                <span>INÍCIO: {format(new Date(isWorkout ? workout.created_at : meal.start_date || meal.created_at), "dd/MM/yyyy")}</span>
+                                {!isWorkout && meal.end_date && (
+                                    <>
+                                        <span className="mx-1">•</span>
+                                        <span>FIM: {format(new Date(meal.end_date), "dd/MM/yyyy")}</span>
+                                    </>
+                                )}
+                            </div>
+                            {!isWorkout && meal.day_label && (
+                                <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 text-primary text-[8px] font-black italic uppercase tracking-widest">
+                                    {meal.day_label.replace('_', ' ')}
+                                </span>
                             )}
                         </div>
                     </div>

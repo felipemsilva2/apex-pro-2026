@@ -112,7 +112,7 @@ export function EditHormonalProtocolDialog({ protocol, open, onOpenChange }: Edi
                 <DialogHeader className="p-8 pb-6 bg-gradient-to-b from-white/[0.02] to-transparent relative">
                     <div className="absolute top-8 right-8 w-24 h-24 bg-primary/5 -skew-x-12 blur-2xl rounded-full -z-10" />
                     <DialogTitle className="font-display font-black italic uppercase text-3xl lg:text-4xl tracking-tighter flex flex-col leading-none">
-                        <span className="text-white/40 text-[10px] tracking-[0.4em] mb-2 not-italic font-bold">PLANO HORMONAL</span>
+                        <span className="text-white/40 text-[10px] tracking-[0.4em] mb-2 not-italic font-bold">PROTOCOLO</span>
                         <span className="flex items-center gap-3">
                             EDITAR <span className="text-primary">PLANO</span>
                         </span>

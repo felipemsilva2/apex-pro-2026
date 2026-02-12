@@ -107,12 +107,25 @@ export function useDashboardStats() {
             const totalCount = totalClientsRes.count || 0;
             const adherence = totalCount > 0 ? Math.round((activeCount / totalCount) * 100) : 0;
 
+            // Calculate top performers (80%+ adheresion/active)
+            // For now, let's say active clients with at least one workout this week
+            const { data: thisWeekWorkouts } = await supabase
+                .from('workouts')
+                .select('client_id')
+                .eq('tenant_id', tenantId)
+                .eq('status', 'completed')
+                .gte('completed_at', weekAgo.toISOString());
+
+            const uniqueActiveThisWeek = new Set(thisWeekWorkouts?.map(w => w.client_id));
+            const topPerformersCount = uniqueActiveThisWeek.size;
+
             return {
                 totalActiveClients: activeCount,
                 totalClients: totalCount,
                 avgAdherence: adherence,
                 completedWorkoutsThisWeek: completedWorkoutsRes.count || 0,
                 todayAppointments: todayAppsRes.data || [],
+                topPerformers: topPerformersCount
             };
         },
         enabled: !!(profile?.tenant_id || tenant?.id),
@@ -195,7 +208,7 @@ export function useCoachMessages() {
 
             const { data, error } = await supabase
                 .from('chat_messages')
-                .select('*, sender:profiles!chat_messages_sender_id_fkey(full_name, avatar_url)')
+                .select('*, sender:profiles!chat_messages_sender_id_fkey(id, full_name, avatar_url)')
                 .eq('tenant_id', tenantId)
                 .order('created_at', { ascending: false })
                 .limit(20);
@@ -223,7 +236,7 @@ export function useRetentionMetrics() {
             // Fetch all active clients
             const { data: clients, error: clientsError } = await supabase
                 .from('clients')
-                .select('id, full_name, avatar_url, current_weight, status')
+                .select('id, user_id, full_name, avatar_url, current_weight, status')
                 .eq('tenant_id', tenantId)
                 .eq('status', 'active');
 
@@ -244,12 +257,40 @@ export function useRetentionMetrics() {
 
             if (workoutsError) throw workoutsError;
 
+            // Fetch last messages from clients
+            const { data: messages, error: messagesError } = await supabase
+                .from('chat_messages')
+                .select('sender_id, created_at, content')
+                .eq('tenant_id', tenantId)
+                .gte('created_at', thirtyDaysAgo.toISOString())
+                .order('created_at', { ascending: false });
+
+            if (messagesError) throw messagesError;
+
             // Process data
             const clientActivityMap = new Map();
 
+            // Populate from workouts
             workouts?.forEach(w => {
                 if (!clientActivityMap.has(w.client_id)) {
-                    clientActivityMap.set(w.client_id, w);
+                    clientActivityMap.set(w.client_id, {
+                        date: new Date(w.completed_at),
+                        type: 'workout',
+                        name: w.name
+                    });
+                }
+            });
+
+            // Augment with messages (if message is newer than workout)
+            messages?.forEach(m => {
+                const msgDate = new Date(m.created_at);
+                const existing = clientActivityMap.get(m.sender_id);
+                if (!existing || msgDate > existing.date) {
+                    clientActivityMap.set(m.sender_id, {
+                        date: msgDate,
+                        type: 'message',
+                        name: 'Enviou mensagem'
+                    });
                 }
             });
 
@@ -258,18 +299,18 @@ export function useRetentionMetrics() {
             const onTrack: any[] = [];
 
             clients?.forEach(client => {
-                const lastWorkout = clientActivityMap.get(client.id);
-                const lastActivityDate = lastWorkout ? new Date(lastWorkout.completed_at) : null;
+                const activity = clientActivityMap.get(client.id);
+                const lastActivityDate = activity ? activity.date : null;
 
                 const daysInactive = lastActivityDate
                     ? Math.floor((now.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24))
-                    : 30; // If no workout in last 30 days, treat as 30+
+                    : 30;
 
                 const clientData = {
                     ...client,
                     lastActivity: lastActivityDate,
                     daysInactive,
-                    lastWorkoutName: lastWorkout?.name
+                    lastWorkoutName: activity?.type === 'workout' ? activity.name : (activity?.name || 'Sem atividade')
                 };
 
                 if (daysInactive > 7) {
@@ -279,13 +320,32 @@ export function useRetentionMetrics() {
                 }
             });
 
+            // Synthesize recent activity from both sources
+            const allActivities = [
+                ...(workouts?.map(w => ({
+                    id: w.id,
+                    client_id: w.client_id,
+                    name: w.name,
+                    completed_at: w.completed_at,
+                    type: 'workout'
+                })) || []),
+                ...(messages?.map((m: any, i) => ({
+                    id: `msg-${i}`,
+                    client_id: m.sender_id,
+                    name: 'Enviou uma mensagem',
+                    content: m.content,
+                    completed_at: m.created_at,
+                    type: 'message'
+                })) || [])
+            ].sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
+
             return {
                 atRisk: atRisk.sort((a, b) => b.daysInactive - a.daysInactive),
                 onTrack: onTrack.sort((a, b) => a.daysInactive - b.daysInactive),
-                recentActivity: workouts?.slice(0, 10).map(w => {
-                    const client = clients?.find(c => c.id === w.client_id);
-                    return { ...w, clientName: client?.full_name, clientAvatar: client?.avatar_url };
-                }) || []
+                recentActivity: allActivities.slice(0, 10).map(act => {
+                    const client = clients?.find(c => c.id === act.client_id || c.user_id === act.client_id);
+                    return { ...act, clientName: client?.full_name, clientAvatar: client?.avatar_url };
+                })
             };
         },
         enabled: !!(profile?.tenant_id || tenant?.id),
@@ -1082,7 +1142,7 @@ export function useCreateHormonalProtocol() {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['client-hormonal-protocols', data.client_id] });
-            toast.success("Protocolo hormonal criado com sucesso!");
+            toast.success("Protocolo criado com sucesso!");
         },
         onError: (error: any) => {
             toast.error("Erro ao criar protocolo: " + error.message);
@@ -1138,7 +1198,7 @@ export function useUpdateHormonalProtocol() {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ['client-hormonal-protocols', data.client_id] });
-            toast.success("Protocolo hormonal atualizado!");
+            toast.success("Protocolo atualizado!");
         },
         onError: (error: any) => {
             toast.error("Erro ao atualizar protocolo: " + error.message);

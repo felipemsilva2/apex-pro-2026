@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Send, Search, MoreVertical, Phone, Video, Paperclip, Smile, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,12 +24,22 @@ const MessagesPage = () => {
     selectedClientRef.current = selectedClient;
   }, [selectedClient]);
 
-  // Auto-select first client
+  const [searchParams, setSearchParams] = useSearchParams();
+  const clientIdFromUrl = searchParams.get('clientId');
+
+  // Auto-select client from URL or first available
   useEffect(() => {
-    if (clients && clients.length > 0 && !selectedClient) {
-      setSelectedClient(clients[0]);
+    if (clients && clients.length > 0) {
+      if (clientIdFromUrl) {
+        const client = clients.find(c => c.user_id === clientIdFromUrl);
+        if (client && (!selectedClient || selectedClient.user_id !== clientIdFromUrl)) {
+          setSelectedClient(client);
+        }
+      } else if (!selectedClient) {
+        setSelectedClient(clients[0]);
+      }
     }
-  }, [clients, selectedClient]);
+  }, [clients, clientIdFromUrl, selectedClient]);
 
   // Scroll to bottom on new messages
   useEffect(() => {

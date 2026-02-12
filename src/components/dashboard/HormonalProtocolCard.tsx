@@ -129,7 +129,7 @@ export function HormonalProtocolCard({ protocol }: HormonalProtocolCardProps) {
 
                     {protocol.compounds && protocol.compounds.length > 0 ? (
                         <div className="space-y-3">
-                            <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest border-b border-white/5 pb-1">Compostos do Ciclo</h4>
+                            <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest border-b border-white/5 pb-1">Compostos do Protocolo</h4>
                             <div className="space-y-2">
                                 {protocol.compounds.map((compound) => (
                                     <div key={compound.id} className="grid grid-cols-12 gap-2 bg-zinc-950/50 p-3 rounded-none border border-white/5 text-sm hover:border-primary/20 transition-colors group">

@@ -6,7 +6,7 @@ import RetentionRiskWidget from "@/components/dashboard/RetentionRiskWidget";
 import RecentActivityFeed from "@/components/dashboard/RecentActivityFeed";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Activity, Plus, TrendingUp } from "lucide-react";
+import { Activity, Plus, Zap, MessageSquare, Dumbbell, CalendarCheck } from "lucide-react";
 import { useDashboardStats, useCoachClients, useCoachMessages } from "@/hooks/useCoachData";
 import { useTenant } from "@/contexts/TenantContext";
 
@@ -20,8 +20,7 @@ const DashboardHome = () => {
 
   const activeClients = stats?.totalActiveClients || 0;
   const todayApps = stats?.todayAppointments || [];
-  const avgAdherence = stats?.avgAdherence || 0;
-  const topPerformers = stats?.totalActiveClients || 0; // Simplified for HUD
+
 
   return (
     <div className="space-y-12 animate-fade-in pb-12 relative z-10 overflow-hidden lg:overflow-visible min-h-screen">
@@ -56,7 +55,7 @@ const DashboardHome = () => {
         <div className="flex flex-col items-end gap-3">
           <div className="flex items-center gap-4 text-[9px] font-black text-white/40 mb-2">
             <span className="flex items-center gap-1"><Activity size={10} className="text-primary" /> SISTEMA: OK</span>
-            <span className="flex items-center gap-1"><TrendingUp size={10} className="text-primary" /> CONEXÃO: ESTÁVEL</span>
+            <span className="flex items-center gap-1"><Zap size={10} className="text-primary" /> CONEXÃO: ESTÁVEL</span>
           </div>
           <button
             data-tour="quick-actions"
@@ -76,10 +75,10 @@ const DashboardHome = () => {
         <div className="lg:-mt-4 lg:ml-12">
           <DashboardMetrics
             totalClients={activeClients}
-            todayAppointments={todayApps.length}
+            todayAppointments={stats?.todayAppointments?.length || 0}
             weekAppointments={stats?.completedWorkoutsThisWeek || 0}
-            avgAdherence={avgAdherence}
-            topPerformers={topPerformers}
+            avgAdherence={stats?.avgAdherence || 0}
+            topPerformers={stats?.topPerformers || 0}
             isLoading={statsLoading}
           />
         </div>

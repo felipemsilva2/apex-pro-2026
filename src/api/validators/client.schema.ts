@@ -9,6 +9,7 @@ export const clientEditSchema = z.object({
     gender: z.enum(['male', 'female', 'other']).optional().nullable(),
     birth_date: z.string().optional().nullable(),
     notes: z.string().optional().nullable(),
+    password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres").optional().or(z.literal("")),
 });
 
 export type ClientEditInput = z.infer<typeof clientEditSchema>;

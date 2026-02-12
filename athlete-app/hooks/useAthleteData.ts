@@ -85,7 +85,7 @@ export function useWorkoutDetail(workoutId: string) {
 }
 
 /**
- * Fetch active meal plan for the current athlete
+ * Fetch active meal plans for the current athlete
  */
 export function useAthleteDiet() {
     const { profile } = useAuth();
@@ -93,7 +93,7 @@ export function useAthleteDiet() {
     return useQuery({
         queryKey: ['athlete-diet', profile?.id],
         queryFn: async () => {
-            if (!profile?.id) return null;
+            if (!profile?.id) return [];
 
             const { data, error } = await supabase
                 .from('meal_plans')
@@ -103,11 +103,10 @@ export function useAthleteDiet() {
         `)
                 .eq('client_id', profile.id)
                 .eq('status', 'active')
-                .order('created_at', { ascending: false })
-                .maybeSingle();
+                .order('created_at', { ascending: false });
 
             if (error) throw error;
-            return data;
+            return data || [];
         },
         enabled: !!profile?.id,
     });

@@ -28,24 +28,34 @@ type AssessmentsTabProps = {
 
 function FeedbackSection({ assessment, onSave, isUpdating }: { assessment: any; onSave: (val: string, extraData?: any) => void; isUpdating: boolean }) {
     const [feedback, setFeedback] = useState(assessment.coach_feedback || '');
+    const [category, setCategory] = useState(assessment.coach_category || '');
     const [bodyFat, setBodyFat] = useState(assessment.body_fat_percentage?.toString() || '');
     const [arm, setArm] = useState(assessment.arm_cm?.toString() || '');
     const [waist, setWaist] = useState(assessment.waist_cm?.toString() || '');
 
+    const categories = [
+        { id: 'needs_improvement', label: 'Precisa Melhorar', emoji: '📉', color: 'hover:border-red-500/50 hover:bg-red-500/10 active:bg-red-500/20 shadow-red-500/10' },
+        { id: 'good_progress', label: 'Indo Muito Bem', emoji: '🚀', color: 'hover:border-blue-500/50 hover:bg-blue-500/10 active:bg-blue-500/20 shadow-blue-500/10' },
+        { id: 'excellent', label: 'Excelente / No Plano', emoji: '💎', color: 'hover:border-green-500/50 hover:bg-green-500/10 active:bg-green-500/20 shadow-green-500/10' }
+    ];
+
     const hasChanged = feedback !== (assessment.coach_feedback || '') ||
+        category !== (assessment.coach_category || '') ||
         bodyFat !== (assessment.body_fat_percentage?.toString() || '') ||
         arm !== (assessment.arm_cm?.toString() || '') ||
         waist !== (assessment.waist_cm?.toString() || '');
 
     useEffect(() => {
         setFeedback(assessment.coach_feedback || '');
+        setCategory(assessment.coach_category || '');
         setBodyFat(assessment.body_fat_percentage?.toString() || '');
         setArm(assessment.arm_cm?.toString() || '');
         setWaist(assessment.waist_cm?.toString() || '');
-    }, [assessment.coach_feedback, assessment.body_fat_percentage, assessment.arm_cm, assessment.waist_cm]);
+    }, [assessment.coach_feedback, assessment.coach_category, assessment.body_fat_percentage, assessment.arm_cm, assessment.waist_cm]);
 
     const handleSave = () => {
         onSave(feedback, {
+            coach_category: category,
             body_fat_percentage: bodyFat ? parseFloat(bodyFat.replace(',', '.')) : null,
             arm_cm: arm ? parseFloat(arm.replace(',', '.')) : null,
             waist_cm: waist ? parseFloat(waist.replace(',', '.')) : null,
@@ -53,7 +63,7 @@ function FeedbackSection({ assessment, onSave, isUpdating }: { assessment: any; 
     };
 
     return (
-        <div className="mt-6 pt-4 border-t border-white/5 space-y-4">
+        <div className="mt-6 pt-4 border-t border-white/5 space-y-6">
             <div className="flex items-center justify-between">
                 <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Análise do Profissional</p>
                 {assessment.status === 'reviewed' && !hasChanged && (
@@ -62,6 +72,34 @@ function FeedbackSection({ assessment, onSave, isUpdating }: { assessment: any; 
                 {hasChanged && (
                     <span className="text-[9px] font-bold text-primary uppercase italic animate-pulse">Alterações não salvas</span>
                 )}
+            </div>
+
+            {/* Success Categorization Buttons */}
+            <div className="space-y-3">
+                <label className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Resultado do Check-in</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    {categories.map((cat) => (
+                        <button
+                            key={cat.id}
+                            onClick={() => setCategory(cat.id)}
+                            className={`flex items-center justify-between px-3 py-3 border transition-all duration-300 group relative overflow-hidden ${category === cat.id
+                                ? 'border-primary bg-primary/10 shadow-[0_0_20px_rgba(212,255,0,0.1)]'
+                                : `border-white/5 bg-white/[0.02] ${cat.color}`
+                                }`}
+                        >
+                            <span className={`text-[10px] font-black italic uppercase tracking-tighter transition-colors ${category === cat.id ? 'text-primary' : 'text-white/60 group-hover:text-white'
+                                }`}>
+                                {cat.label}
+                            </span>
+                            <span className="text-sm scale-100 group-hover:scale-125 transition-transform duration-300">
+                                {cat.emoji}
+                            </span>
+                            {category === cat.id && (
+                                <div className="absolute top-0 right-0 w-1 h-full bg-primary" />
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Professional Data Entry */}
@@ -97,24 +135,26 @@ function FeedbackSection({ assessment, onSave, isUpdating }: { assessment: any; 
                     placeholder="Sua análise técnica, ajustes e orientações para este check-in..."
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    className="min-h-[100px] bg-black/40 border-white/5 focus:border-primary/50 text-xs text-white/80 resize-none transition-all placeholder:text-white/20 pb-10"
+                    className="min-h-[100px] bg-black/40 border-white/5 focus:border-primary/50 text-xs text-white/80 resize-none transition-all placeholder:text-white/20 pb-12 ring-0 focus:ring-1 focus:ring-primary/20"
                 />
                 <div className="absolute bottom-2 right-2 flex items-center gap-2">
-                    {hasChanged && (
-                        <Button
-                            size="sm"
-                            onClick={handleSave}
-                            disabled={isUpdating}
-                            className="h-7 px-3 bg-primary text-black text-[10px] font-black italic uppercase rounded-none hover:bg-primary/80 shadow-lg shadow-primary/20"
-                        >
-                            {isUpdating ? 'Gravando...' : 'Salvar Análise'}
-                        </Button>
-                    )}
+                    <Button
+                        size="sm"
+                        onClick={handleSave}
+                        disabled={isUpdating || !hasChanged}
+                        className={`h-7 px-4 text-[10px] font-black italic uppercase rounded-none transition-all duration-300 ${hasChanged
+                            ? 'bg-primary text-black hover:bg-primary/80 shadow-lg shadow-primary/20'
+                            : 'bg-white/5 text-white/20 cursor-not-allowed border border-white/5'
+                            }`}
+                    >
+                        {isUpdating ? 'Gravando...' : 'Salvar Análise'}
+                    </Button>
                 </div>
             </div>
         </div>
     );
 }
+
 
 function TextInput({ value, onChange, placeholder }: { value: string; onChange: (val: string) => void; placeholder: string }) {
     return (

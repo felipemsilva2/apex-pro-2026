@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Toaster, toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FeatureExplainer } from "@/components/dashboard/FeatureExplainer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -217,6 +218,12 @@ export default function ProtocolEditorPage() {
 
                     <h1 className="text-4xl lg:text-6xl font-display font-black italic uppercase leading-none tracking-tighter text-white">
                         EDITOR <span className="text-primary">DE TREINOS</span>
+                        <FeatureExplainer
+                            title="Protocolos de Treino"
+                            description="Um protocolo é um plano de treinamento completo. Você pode criar modelos genéricos na Biblioteca ou protocolos personalizados para alunos específicos."
+                            tip="Protocolos personalizados salvos aqui são vinculados diretamente ao perfil do aluno."
+                            className="inline-flex ml-4 mb-2 align-middle"
+                        />
                     </h1>
                     <p className="font-display font-bold uppercase italic text-[10px] tracking-[0.4em] text-primary/80">
                         CONFIGURAÇÃO DE PROTOCOLO
@@ -276,6 +283,11 @@ export default function ProtocolEditorPage() {
                                     <h3 className="font-display font-black text-xl italic uppercase text-white tracking-tight">
                                         {day.label}
                                     </h3>
+                                    <FeatureExplainer
+                                        title="Foco do Dia"
+                                        description="O texto que você colocar aqui (ex: Peito e Tríceps) será exibido como o título principal deste treino no app do aluno."
+                                        tip="Isso ajuda o aluno a identificar rapidamente qual a estratégia da sessão de hoje."
+                                    />
                                     <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] italic">
                                         {currentExercises.length} EXERCÍCIOS
                                     </span>

@@ -46,6 +46,7 @@ const RecentMessages = ({ messages, isLoading }: RecentMessagesProps) => {
             return (
               <div
                 key={msg.id}
+                onClick={() => navigate(`/dashboard/messages?clientId=${sender?.id || msg.sender_id}`)}
                 className={cn(
                   "group flex items-start gap-4 p-4 border border-white/5 bg-white/5 hover:border-primary/40 transition-all duration-300 relative overflow-hidden cursor-pointer",
                   "animate-fade-in"

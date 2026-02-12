@@ -3,14 +3,16 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
     ArrowLeft, Plus, Save, Trash2, Utensils,
     Target, Search, Calculator, ChevronRight,
-    AlertTriangle, MoreVertical, Edit2, Copy
+    AlertTriangle, MoreVertical, Edit2, Copy, Tag
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase, MealPlan, Meal } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Toaster, toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FeatureExplainer } from "@/components/dashboard/FeatureExplainer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,8 +22,18 @@ export default function MealPlanEditorPage() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
+    // Constants
+    const UNIT_OPTIONS = ['g', 'ml', 'unidade', 'colher de sopa', 'colher de chá', 'xícara', 'fatia', 'scoop'];
+    const DAY_LABEL_OPTIONS = [
+        { value: 'carbo_alto', label: 'CARBO ALTO' },
+        { value: 'carbo_medio', label: 'CARBO MÉDIO' },
+        { value: 'carbo_baixo', label: 'CARBO BAIXO' },
+        { value: 'zero_carbo', label: 'ZERO CARBO' },
+    ];
+
     // UI State
     const [protocolName, setProtocolName] = useState("");
+    const [dayLabel, setDayLabel] = useState<string | null>(null);
     const [isAddMealOpen, setIsAddMealOpen] = useState(false);
     const [newMealName, setNewMealName] = useState("");
     const [isSearchingFood, setIsSearchingFood] = useState(false);
@@ -47,6 +59,7 @@ export default function MealPlanEditorPage() {
     useEffect(() => {
         if (plan) {
             setProtocolName(plan.name);
+            setDayLabel(plan.day_label || null);
         }
     }, [plan]);
 
@@ -66,14 +79,15 @@ export default function MealPlanEditorPage() {
     }, [plan?.meals]);
 
     // Mutations
-    const updatePlanNameMutation = useMutation({
-        mutationFn: async (name: string) => {
-            const { error } = await supabase.from('meal_plans').update({ name }).eq('id', id);
+    const updatePlanMetaMutation = useMutation({
+        mutationFn: async ({ name, day_label }: { name: string; day_label: string | null }) => {
+            const { error } = await supabase.from('meal_plans').update({ name, day_label }).eq('id', id);
             if (error) throw error;
         },
         onSuccess: () => {
-            toast.success("Nome da dieta atualizado!");
+            toast.success("Dieta atualizada!");
             queryClient.invalidateQueries({ queryKey: ['meal-plan', id] });
+            queryClient.invalidateQueries({ queryKey: ['client-meal-plans'] });
         }
     });
 
@@ -162,12 +176,15 @@ export default function MealPlanEditorPage() {
             return;
         }
 
+        const servingSize = Number(food.serving_size) || 100;
+        const servingUnit = food.serving_unit || 'g';
+
         const currentFoods = meal.foods || [];
         const newFoodEntry = {
             id: food.id,
             name: food.name,
-            qty: "100",
-            unit: "g",
+            qty: String(servingSize),
+            unit: servingUnit,
             kcal: food.kcal,
             protein: food.protein_g,
             carbs: food.carbs_g,
@@ -175,7 +192,9 @@ export default function MealPlanEditorPage() {
             base_kcal: food.kcal,
             base_protein: food.protein_g,
             base_carbs: food.carbs_g,
-            base_fats: food.fats_g
+            base_fats: food.fats_g,
+            base_serving_size: servingSize,
+            base_serving_unit: servingUnit
         };
 
         updateMealFoodsMutation.mutate({
@@ -191,7 +210,8 @@ export default function MealPlanEditorPage() {
         const foods = [...(meal.foods || [])];
         const food = (foods[foodIndex] as any);
         const qtyNum = parseFloat(newQty.replace(',', '.')) || 0;
-        const ratio = qtyNum / 100;
+        const baseServing = food.base_serving_size || 100;
+        const ratio = qtyNum / baseServing;
 
         food.qty = newQty;
         food.kcal = (food.base_kcal * ratio).toFixed(1);
@@ -199,6 +219,13 @@ export default function MealPlanEditorPage() {
         food.carbs = (food.base_carbs * ratio).toFixed(1);
         food.fats = (food.base_fats * ratio).toFixed(1);
 
+        updateMealFoodsMutation.mutate({ mealId: meal.id, foods });
+    };
+
+    const handleUpdateFoodUnit = (meal: Meal, foodIndex: number, newUnit: string) => {
+        const foods = [...(meal.foods || [])];
+        const food = (foods[foodIndex] as any);
+        food.unit = newUnit;
         updateMealFoodsMutation.mutate({ mealId: meal.id, foods });
     };
 
@@ -241,11 +268,37 @@ export default function MealPlanEditorPage() {
                             <Input
                                 value={protocolName}
                                 onChange={(e) => setProtocolName(e.target.value)}
-                                onBlur={() => updatePlanNameMutation.mutate(protocolName)}
+                                onBlur={() => updatePlanMetaMutation.mutate({ name: protocolName, day_label: dayLabel })}
                                 className="bg-transparent border-none text-2xl font-bold text-primary placeholder:text-primary/30 focus-visible:ring-0 px-0 h-auto w-fit min-w-[300px]"
                                 placeholder="NOME DA DIETA"
                             />
                             <Edit2 size={16} className="text-primary/30 group-hover:text-primary transition-colors" />
+                        </div>
+                        {/* Day Label Selector - Carb Cycling */}
+                        <div className="flex items-center gap-3 flex-wrap pt-2">
+                            <Tag size={14} className="text-white/30" />
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-white/30">TIPO:</span>
+                            <FeatureExplainer
+                                title="Ciclagem de Carboidratos"
+                                description="Ao selecionar um rótulo (ex: Carbo Alto), você categoriza esta dieta. Se o aluno tiver múltiplas dietas ativas com rótulos diferentes, o app mobile criará automaticamente abas de seleção para ele alternar entre as estratégias."
+                                tip="Mantenha apenas as dietas da estratégia atual como 'Ativas' para que as abas apareçam corretamente para o aluno."
+                            />
+                            {DAY_LABEL_OPTIONS.map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => {
+                                        const newLabel = dayLabel === opt.value ? null : opt.value;
+                                        setDayLabel(newLabel);
+                                        updatePlanMetaMutation.mutate({ name: protocolName, day_label: newLabel });
+                                    }}
+                                    className={`px-3 py-1.5 text-[10px] font-display font-black italic uppercase tracking-widest border transition-all ${dayLabel === opt.value
+                                        ? 'bg-primary text-black border-primary'
+                                        : 'bg-white/5 text-white/50 border-white/10 hover:border-primary/40 hover:text-white'
+                                        }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
@@ -336,15 +389,33 @@ export default function MealPlanEditorPage() {
                                                 <span className="text-[10px] text-white/40 uppercase">Kcal: <span className="text-primary/70">{food.kcal}</span></span>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-3 flex-wrap">
                                             <div className="flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1">
                                                 <Input
                                                     value={food.qty}
                                                     onChange={(e) => handleUpdateFoodQty(meal, idx, e.target.value)}
                                                     className="w-16 h-8 bg-transparent border-none text-right font-display font-bold text-primary px-0 focus-visible:ring-0"
                                                 />
-                                                <span className="text-[10px] font-bold text-white/30 uppercase">{food.unit}</span>
                                             </div>
+                                            <Select
+                                                value={food.unit || 'g'}
+                                                onValueChange={(val) => handleUpdateFoodUnit(meal, idx, val)}
+                                            >
+                                                <SelectTrigger className="w-auto min-w-[100px] h-8 bg-black/40 border-white/10 rounded-none text-[10px] font-bold uppercase tracking-widest text-white/60 focus:ring-0 focus:border-primary/40">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent className="bg-[#0A0A0B] border-white/10 rounded-none">
+                                                    {UNIT_OPTIONS.map((u) => (
+                                                        <SelectItem
+                                                            key={u}
+                                                            value={u}
+                                                            className="text-[10px] font-bold uppercase tracking-widest text-white/60 focus:bg-primary/20 focus:text-white rounded-none"
+                                                        >
+                                                            {u}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"

@@ -87,7 +87,7 @@ const PricingSection = () => {
               {[
                 { label: "App nativo nas lojas (Seu Nome)", green: "INCLUSO" },
                 { label: "Módulo de Dieta e Macronutrientes", green: "LIBERADO" },
-                { label: "Gestão de Protocolos Hormonais", green: "LIBERADO" },
+                { label: "Gestão de Protocolos", green: "LIBERADO" },
                 { label: "Alunos Ilimitados", green: "CHECK" },
                 { label: "Treinos com vídeos e GIFs", green: "CHECK" },
                 { label: "Dashboard de Resultados", green: "CHECK" }

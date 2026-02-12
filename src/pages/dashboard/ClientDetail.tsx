@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { FeatureExplainer } from "@/components/dashboard/FeatureExplainer";
 import {
   ArrowLeft,
   Dumbbell,
@@ -64,6 +65,32 @@ const ClientDetail = () => {
   const { data: client, isLoading } = useCoachClientDetail(id);
   const { data: workouts } = useClientWorkouts(id);
   const { data: mealPlans } = useClientMealPlans(id);
+
+  // Group meal plans by day label for carb cycling support
+  const groupedMealPlans = useMemo(() => {
+    if (!mealPlans) return {};
+    return mealPlans.reduce((acc, plan) => {
+      const label = plan.day_label || "Geral";
+      if (!acc[label]) acc[label] = [];
+      acc[label].push(plan);
+      return acc;
+    }, {} as Record<string, typeof mealPlans>);
+  }, [mealPlans]);
+
+  const dayLabels = useMemo(() => {
+    const labels = Object.keys(groupedMealPlans);
+    // Sort so 'Geral' is usually at the end or start, but maybe keep alphabetical or based on specific order
+    const priority = { 'carbo_alto': 1, 'carbo_medio': 2, 'carbo_baixo': 3, 'zero_carbo': 4, 'Geral': 5 };
+    return labels.sort((a, b) => (priority[a] || 9) - (priority[b] || 9));
+  }, [groupedMealPlans]);
+
+  const [activeDietLabel, setActiveDietLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (dayLabels.length > 0 && !activeDietLabel) {
+      setActiveDietLabel(dayLabels[0]);
+    }
+  }, [dayLabels, activeDietLabel]);
   const { data: hormonalProtocols } = useClientHormonalProtocols(id);
   const deleteProtocolMutation = useDeleteProtocol();
   const deleteClientMutation = useDeleteClient();
@@ -265,7 +292,7 @@ const ClientDetail = () => {
             PERFIL BIOMÉTRICO
           </TabsTrigger>
           <TabsTrigger value="hormonal" className="bg-transparent border-none rounded-none p-0 pb-4 data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary font-display font-bold uppercase italic text-[10px] tracking-widest transition-all text-white/40">
-            PLANO HORMONAL
+            PROTOCOLOS
           </TabsTrigger>
           <TabsTrigger value="treino" className="bg-transparent border-none rounded-none p-0 pb-4 data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary font-display font-bold uppercase italic text-[10px] tracking-widest transition-all text-white/40">
             TREINOS
@@ -352,6 +379,14 @@ const ClientDetail = () => {
         </TabsContent>
 
         <TabsContent value="treino" className="mt-8">
+          <div className="flex items-center gap-3 mb-4">
+            <FeatureExplainer
+              title="Protocolos de Treino"
+              description="Os treinos ativos do aluno são listados aqui. Cada card representa um protocolo completo (ex: ABC, Full Body) que ele visualiza no app mobile."
+              tip="Você pode atribuir múltiplos protocolos, mas recomendo manter apenas o atual como 'Ativo' para não confundir o aluno."
+            />
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-white/30 italic">Protocolos Ativos</h3>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {workouts?.map(workout => (
               <Link key={workout.id} to={`/dashboard/plans/${workout.id}`}>
@@ -379,29 +414,60 @@ const ClientDetail = () => {
         </TabsContent>
 
         <TabsContent value="alimentacao" className="mt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {mealPlans?.map((plan) => (
-              <Link key={plan.id} to={`/dashboard/meal-plans/${plan.id}`}>
-                <ProtocolCard
-                  protocol={plan}
-                  type="meal"
-                  onDelete={(id) => deleteProtocolMutation.mutate({ id, type: 'meal' })}
-                  onEdit={(id) => navigate(`/dashboard/meal-plans/${id}`)}
+          <div className="space-y-8">
+            {dayLabels.length > 1 && (
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                <FeatureExplainer
+                  title="Estratégias de Dieta"
+                  description="As dietas ativas do aluno são agrupadas automaticamente por rótulo (TIPO). Isso permite que o aluno escolha entre diferentes planos (ex: Dia Alto Carbo vs Dia Baixo) diretamente no app mobile."
+                  tip="O agrupamento só aparece se você definir os rótulos no Editor de Dieta."
                 />
-              </Link>
-            ))}
-            <AssignProtocolDialog clientId={id!} defaultType="meal" />
-            <CreateTemplateDialog
-              key="direct-meal"
-              clientId={id!}
-              defaultType="meal"
-              trigger={
-                <button className="flex flex-col items-center justify-center p-8 border border-dashed border-white/10 hover:border-primary/50 hover:bg-white/5 transition-all group min-h-[160px]">
-                  <Plus size={24} className="text-white/20 group-hover:text-primary mb-2" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 group-hover:text-white">CRIAR PERSONALIZADO</span>
-                </button>
-              }
-            />
+                <div className="flex items-center gap-2">
+                  {dayLabels.map((label) => (
+                    <button
+                      key={label}
+                      onClick={() => setActiveDietLabel(label)}
+                      className={`px-4 py-2 text-[10px] font-display font-black italic uppercase tracking-widest transition-all whitespace-nowrap border ${activeDietLabel === label
+                        ? "bg-primary text-black border-primary"
+                        : "bg-white/5 text-white/40 border-white/5 hover:border-primary/20 hover:text-white"
+                        }`}
+                    >
+                      {label === "Geral" ? "Geral" : label.replace('_', ' ')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(activeDietLabel ? groupedMealPlans[activeDietLabel] : mealPlans)?.map((plan) => (
+                <Link key={plan.id} to={`/dashboard/meal-plans/${plan.id}`}>
+                  <ProtocolCard
+                    protocol={plan}
+                    type="meal"
+                    onDelete={(id) => deleteProtocolMutation.mutate({ id, type: 'meal' })}
+                    onEdit={(id) => navigate(`/dashboard/meal-plans/${id}`)}
+                  />
+                </Link>
+              ))}
+
+              <div className="col-span-1 md:col-span-2 mt-4 pt-4 border-t border-white/5">
+                <div className="flex flex-wrap gap-4">
+                  <AssignProtocolDialog clientId={id!} defaultType="meal" />
+                  <CreateTemplateDialog
+                    key="direct-meal"
+                    clientId={id!}
+                    defaultType="meal"
+                    trigger={
+                      <button className="flex flex-col items-center justify-center p-8 border border-dashed border-white/10 hover:border-primary/50 hover:bg-white/5 transition-all group min-h-[160px] flex-1">
+                        <Plus size={24} className="text-white/20 group-hover:text-primary mb-2" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 group-hover:text-white">CRIAR PERSONALIZADO</span>
+                      </button>
+                    }
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </TabsContent>
 

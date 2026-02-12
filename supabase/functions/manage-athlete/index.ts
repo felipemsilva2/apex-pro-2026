@@ -47,43 +47,61 @@ serve(async (req) => {
         }
         // --------------------------------------------
 
-        const { fullName, username, password, tenantId, role = 'client' } = await req.json()
+        const { fullName, username, password, tenantId, role = 'client', email: directEmail } = await req.json()
 
-        if (!fullName || !username || !password || !tenantId) {
+        if (!fullName || (!username && !directEmail) || !password || !tenantId) {
             throw new Error('Campos obrigatórios ausentes.')
         }
 
-        // 1. Construct Phantom Email
-        const phantomEmail = `${username.toLowerCase()}@acesso.apexpro.fit`
+        // 1. Identify Target Email
+        const targetEmail = directEmail || `${username.toLowerCase()}@acesso.apexpro.fit`
 
-        // 2. Check if username/email already exists
-        const { data: existingUser } = await supabaseAdmin
-            .from('profiles')
-            .select('id')
-            .eq('email', phantomEmail)
-            .maybeSingle()
+        // 2. Check if user already exists
+        const { data: listData, error: listError } = await supabaseAdmin.auth.admin.listUsers()
+        if (listError) throw listError
+
+        const existingUser = listData.users.find((u: any) => u.email?.toLowerCase() === targetEmail.toLowerCase())
 
         if (existingUser) {
-            return new Response(JSON.stringify({ error: 'Este nome de usuário já está em uso.' }), {
-                status: 400,
+            // UPDATE EXISTING USER
+            const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+                password: password,
+                user_metadata: {
+                    full_name: fullName,
+                    managed: true,
+                    role: role,
+                    tenant_id: tenantId
+                }
+            })
+
+            if (updateError) throw updateError
+
+            // Update profile as well to be sure
+            await supabaseAdmin
+                .from('profiles')
+                .update({ full_name: fullName })
+                .eq('id', existingUser.id)
+
+            return new Response(JSON.stringify({ success: true, userId: existingUser.id, updated: true }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200,
             })
         }
 
         // 3. Create User in auth.users
-        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-            email: phantomEmail,
+        const { data: authUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+            email: targetEmail,
             password: password,
             email_confirm: true,
             user_metadata: {
                 full_name: fullName,
                 managed: true,
                 role: role,
-                tenant_id: tenantId // Fix: Pass tenant_id to trigger logic
+                tenant_id: tenantId
             }
         })
 
-        if (authError) throw authError
+        if (createError) throw createError
 
         const userId = authUser.user.id
 
