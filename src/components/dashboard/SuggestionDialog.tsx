@@ -36,9 +36,8 @@ const SuggestionDialog = ({ open, onOpenChange }: SuggestionDialogProps) => {
         setIsSubmitting(true);
 
         try {
-            // The user needs to deploy a Google Apps Script as a Web App
-            // This is a placeholder URL that the user will replace or I will guide them to set up.
-            const GOOGLE_SCRIPT_URL = "REPLACE_WITH_YOUR_APPS_SCRIPT_URL";
+            // The live Google Apps Script Web App URL provided by the user
+            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzCdXdbAeDl008Hv1GJRsedNLiJZDoORy81MVxVNdjE3_CDWBTTQ0xfFYzgQhyusvUs/exec";
 
             const data = {
                 date: new Date().toLocaleString('pt-BR'),
