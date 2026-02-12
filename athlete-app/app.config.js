@@ -29,7 +29,8 @@ module.exports = {
             },
             package: "com.apexpro.app",
             edgeToEdgeEnabled: true,
-            predictiveBackGestureEnabled: false
+            predictiveBackGestureEnabled: false,
+            softwareKeyboardLayoutMode: "resize"
         },
         web: {
             bundler: "metro",
