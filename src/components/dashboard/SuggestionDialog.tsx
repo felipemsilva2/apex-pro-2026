@@ -47,17 +47,6 @@ const SuggestionDialog = ({ open, onOpenChange }: SuggestionDialogProps) => {
                 description: description,
             };
 
-            // If URL is not set, we'll simulate success for now and show instructions
-            if (GOOGLE_SCRIPT_URL === "REPLACE_WITH_YOUR_APPS_SCRIPT_URL") {
-                console.warn("Google Script URL not configured. Simulating submission.");
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                toast.success("Sugestão recebida! (Modo Simulação)");
-                onOpenChange(false);
-                setTitle('');
-                setDescription('');
-                return;
-            }
-
             const response = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors', // Common for Apps Script
