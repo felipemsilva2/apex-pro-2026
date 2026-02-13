@@ -25,6 +25,7 @@ const Footer = () => {
     { label: "PATCH NOTES", href: "/changelog" },
     { label: "TERMOS DE USO", href: "/terms" },
     { label: "PRIVACIDADE", href: "/privacy" },
+    { label: "ACESSIBILIDADE", href: "/acessibilidade" },
   ];
 
   return (

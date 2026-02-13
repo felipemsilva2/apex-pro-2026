@@ -9,6 +9,7 @@ import ContactPage from "./pages/ContactPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import PatchNotesPage from "./pages/PatchNotesPage";
+import AccessibilityPage from "./pages/AccessibilityPage";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import DashboardHome from "./pages/dashboard/DashboardHome";
 import ClientsList from "./pages/dashboard/ClientsList";
@@ -59,6 +60,7 @@ const App = () => (
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/changelog" element={<PatchNotesPage />} />
+              <Route path="/acessibilidade" element={<AccessibilityPage />} />
 
               {/* Client Redirect Route - Pointing to Native App Download */}
               <Route path="/app" element={
