@@ -24,15 +24,26 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         try {
             console.log('[TenantContext] Detecting tenant...');
 
+            // Guard: If no user/profile during the start, we might still want domain detection
+            // but if they just logged out, we should stop.
+
             // 1. First priority: Tenant linked to the authenticated user
             if (profile?.tenant_id) {
                 console.log('[TenantContext] Fetching user tenant:', profile.tenant_id);
-                // We need to fetch the tenant by ID
                 const { data: userTenant, error } = await supabase
                     .from('tenants')
                     .select('*')
                     .eq('id', profile.tenant_id)
                     .single();
+
+                // CRITICAL GUARD: Check if user logged out while we were fetching
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    console.log('[TenantContext] Auth lost during fetch. Aborting branding injection.');
+                    setTenant(null);
+                    resetBranding();
+                    return;
+                }
 
                 if (userTenant) {
                     setTenant(userTenant);
@@ -43,23 +54,26 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             }
 
             // 2. Second priority: Domain/Subdomain detection
-            console.log('[TenantContext] No user tenant linked. Falling back to domain detection.');
             const config = await detectTenant();
-            console.log('[TenantContext] Domain detected config:', config?.business_name || 'None');
+
+            // Post-detection guard
+            const { data: { session: postSession } } = await supabase.auth.getSession();
+            if (!postSession && profile?.tenant_id) {
+                // If we WERE fetching a user tenant but session is gone, reset
+                resetBranding();
+                return;
+            }
 
             if (config) {
-                console.log('[TenantContext] Applying detected tenant branding.');
                 setTenant(config);
                 injectBranding(config);
             } else {
-                console.log('[TenantContext] No tenant found. Resetting to default branding.');
                 setTenant(null);
                 resetBranding();
             }
         } catch (err) {
             console.error('[TenantContext] Failed to initialize tenant:', err);
             setError(err instanceof Error ? err : new Error('Unknown error'));
-            setLoading(false); // Immediate stop on error
         } finally {
             setLoading(false);
         }

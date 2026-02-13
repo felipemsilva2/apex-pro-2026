@@ -39,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 loadProfile(session.user.id);
             } else {
                 console.log('[AuthContext] No session. Resetting state and branding.');
+                setUser(null);
                 setProfile(null);
                 resetBranding();
                 setLoading(false);
