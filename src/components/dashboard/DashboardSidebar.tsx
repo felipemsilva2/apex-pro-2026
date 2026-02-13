@@ -84,7 +84,7 @@ const DashboardSidebar = ({ collapsed, onCollapse }: DashboardSidebarProps) => {
               )}
             </div>
             <div className="min-w-0 flex-1 flex flex-col justify-center">
-              <span className="font-display font-black text-lg text-white italic uppercase tracking-tighter leading-none break-words line-clamp-2">
+              <span className="font-display font-black text-lg text-white italic uppercase tracking-tighter leading-none break-words line-clamp-2 pr-2">
                 {tenant?.business_name || 'APEX PRO'}
               </span>
             </div>

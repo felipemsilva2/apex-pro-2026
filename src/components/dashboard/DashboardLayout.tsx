@@ -53,7 +53,7 @@ const DashboardLayout = () => {
             <div className="w-8 h-8 rounded-sm bg-primary flex items-center justify-center -skew-x-12">
               <span className="text-primary-foreground font-display font-black text-xl italic">{tenant?.business_name?.charAt(0) || 'N'}</span>
             </div>
-            <span className="font-display font-black text-lg italic uppercase tracking-tighter">
+            <span className="font-display font-black text-lg italic uppercase tracking-tighter pr-1">
               {tenant?.business_name || 'APEX PRO'}
             </span>
           </div>
