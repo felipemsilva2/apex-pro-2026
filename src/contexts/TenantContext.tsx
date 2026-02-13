@@ -34,8 +34,8 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             // but if they just logged out, we should stop.
 
             // 1. First priority: Tenant linked to the authenticated user
-            if (profile?.tenant_id) {
-                console.log(`[TenantContext #${requestId}] Fetching user tenant:`, profile.tenant_id);
+            if (user && profile?.tenant_id) {
+                console.log(`[TenantContext #${requestId}] Fetching user tenant for user ${user.id}:`, profile.tenant_id);
                 const { data: userTenant, error } = await supabase
                     .from('tenants')
                     .select('*')

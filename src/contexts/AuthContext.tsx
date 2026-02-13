@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import type { Profile } from '@/lib/supabase';
@@ -20,10 +20,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
+    const isLoggingOut = useRef(false);
 
     useEffect(() => {
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
+            if (isLoggingOut.current) return;
             setUser(session?.user ?? null);
             if (session?.user) {
                 loadProfile(session.user.id);
@@ -34,6 +36,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (isLoggingOut.current) return;
+
             setUser(session?.user ?? null);
             if (session?.user) {
                 loadProfile(session.user.id);
@@ -51,6 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
     const loadProfile = async (userId?: string) => {
+        if (isLoggingOut.current) return;
+
         const targetId = userId || user?.id;
         if (!targetId) return;
 
@@ -64,19 +70,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             if (error) throw error;
 
+            if (isLoggingOut.current) return;
+
             // If profile doesn't exist, that's okay - user just doesn't have a coach profile yet
             setProfile(data);
         } catch (error) {
             console.error('Error loading profile:', error);
             setProfile(null);
         } finally {
-            setLoading(false);
+            if (!isLoggingOut.current) {
+                setLoading(false);
+            }
         }
     };
 
     const signOut = async () => {
         try {
             console.log('[AuthContext] Starting deep sign out...');
+            isLoggingOut.current = true; // Block any further state updates
             resetBranding();
 
             // 1. Clear caches
@@ -89,25 +100,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null);
             setProfile(null);
 
-            // 3. Clear storage
-            sessionStorage.clear();
-            localStorage.removeItem('supabase.auth.token'); // Legacy
-            // Supabase auth key is usually sb-[project-id]-auth-token
-            Object.keys(localStorage).forEach(key => {
-                if (key.includes('auth-token')) {
-                    localStorage.removeItem(key);
-                }
-            });
-
-            // 4. Supabase Sign Out
+            // 3. Supabase Sign Out
             await supabase.auth.signOut();
             console.log('[AuthContext] Supabase sign out complete.');
 
+            // 4. Manual Storage Clear (Nuclear Option)
+            sessionStorage.clear();
+
+            // Clear all possible Supabase keys from localStorage
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('supabase') || key.includes('auth-token') || key.startsWith('sb-'))) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            console.log('[AuthContext] Storage cleared.');
+
             // 5. Force reload to ensure a primitive state
-            window.location.href = '/login';
+            // Add a small delay to ensure storage write completes
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 100);
+
         } catch (error) {
             console.error('[AuthContext] Error during sign out:', error);
-            // Fallback reload
             window.location.href = '/login';
         }
     };
