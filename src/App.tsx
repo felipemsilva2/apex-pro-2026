@@ -42,7 +42,7 @@ import UsersListAdmin from "./pages/admin/UsersList";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminMetrics from "./pages/admin/AdminMetrics";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

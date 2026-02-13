@@ -57,16 +57,24 @@ export function TenantProvider({ children }: { children: ReactNode }) {
                 resetBranding();
             }
         } catch (err) {
-            console.error('Failed to initialize tenant:', err);
+            console.error('[TenantContext] Failed to initialize tenant:', err);
             setError(err instanceof Error ? err : new Error('Unknown error'));
+            setLoading(false); // Immediate stop on error
         } finally {
             setLoading(false);
         }
     }, [profile?.tenant_id, user?.id]); // Re-run if profile tenant or user ID changes
 
     useEffect(() => {
+        if (!user && !profile) {
+            console.log('[TenantContext] No active session. Resetting tenant state.');
+            setTenant(null);
+            resetBranding();
+            setLoading(false); // Stop loading if no session
+            return;
+        }
         fetchTenant();
-    }, [fetchTenant]);
+    }, [fetchTenant, user, profile]);
 
     const refetchTenant = useCallback(async () => {
         await fetchTenant();

@@ -11,8 +11,8 @@ interface AuthContextType {
     refetchProfile: (userId?: string) => Promise<void>;
 }
 
-import { ProfileRepository } from '@/api/repositories/ProfileRepository';
 import { resetBranding } from '@/lib/whitelabel';
+import { queryClient } from '@/App';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -74,12 +74,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const signOut = async () => {
-        resetBranding();
-        setUser(null);
-        setProfile(null);
-        sessionStorage.clear();
-        localStorage.removeItem('supabase.auth.token'); // Clean sweep
-        await supabase.auth.signOut();
+        try {
+            console.log('[AuthContext] Starting deep sign out...');
+            resetBranding();
+
+            // 1. Clear caches
+            if (queryClient) {
+                queryClient.clear();
+                console.log('[AuthContext] Query cache cleared.');
+            }
+
+            // 2. Reset state
+            setUser(null);
+            setProfile(null);
+
+            // 3. Clear storage
+            sessionStorage.clear();
+            localStorage.removeItem('supabase.auth.token'); // Legacy
+            // Supabase auth key is usually sb-[project-id]-auth-token
+            Object.keys(localStorage).forEach(key => {
+                if (key.includes('auth-token')) {
+                    localStorage.removeItem(key);
+                }
+            });
+
+            // 4. Supabase Sign Out
+            await supabase.auth.signOut();
+            console.log('[AuthContext] Supabase sign out complete.');
+
+            // 5. Force reload to ensure a primitive state
+            window.location.href = '/login';
+        } catch (error) {
+            console.error('[AuthContext] Error during sign out:', error);
+            // Fallback reload
+            window.location.href = '/login';
+        }
     };
 
     return (

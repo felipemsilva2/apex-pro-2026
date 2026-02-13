@@ -106,16 +106,20 @@ export function resetBranding() {
     console.log('[Whitelabel] Resetting branding to default');
 
     // Force reset to default Apex Protocol Green (Neon)
-    // Instead of removing, we set explicit values to guarantee the look
-    const defaultHsl = '67 100% 50%'; // Neon Green
+    const defaultHsl = '67 100% 50%';
 
     root.style.setProperty('--primary', defaultHsl);
     root.style.setProperty('--ring', defaultHsl);
     root.style.setProperty('--accent', defaultHsl);
     root.style.removeProperty('--tenant-logo');
+    root.style.removeProperty('--primary-foreground');
 
     // Reset Title
     document.title = 'APEX PRO';
+
+    // Reset favicon to default if possible
+    const defaultFavicon = '/favicon.ico';
+    updateFavicon(defaultFavicon);
 }
 
 function updateFavicon(url: string) {
