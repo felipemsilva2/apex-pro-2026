@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { type Tenant, supabase } from '@/lib/supabase';
 import { detectTenant, injectBranding, resetBranding } from '@/lib/whitelabel';
 import { useAuth } from './AuthContext';
@@ -20,47 +20,48 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
     const { user, profile } = useAuth(); // We need auth context to check for user's tenant
 
+    const lastRequestId = useRef(0);
+
     const fetchTenant = useCallback(async () => {
+        const requestId = ++lastRequestId.current;
+        setLoading(true);
+        setError(null);
+
         try {
-            console.log('[TenantContext] Detecting tenant...');
+            console.log(`[TenantContext] Detecting tenant (Request #${requestId})...`);
 
             // Guard: If no user/profile during the start, we might still want domain detection
             // but if they just logged out, we should stop.
 
             // 1. First priority: Tenant linked to the authenticated user
             if (profile?.tenant_id) {
-                console.log('[TenantContext] Fetching user tenant:', profile.tenant_id);
+                console.log(`[TenantContext #${requestId}] Fetching user tenant:`, profile.tenant_id);
                 const { data: userTenant, error } = await supabase
                     .from('tenants')
                     .select('*')
                     .eq('id', profile.tenant_id)
                     .single();
 
-                // CRITICAL GUARD: Check if user logged out while we were fetching
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) {
-                    console.log('[TenantContext] Auth lost during fetch. Aborting branding injection.');
-                    setTenant(null);
-                    resetBranding();
+                // Check version
+                if (requestId !== lastRequestId.current) {
+                    console.log(`[TenantContext #${requestId}] Stale request (user tenant). Ignoring.`);
                     return;
                 }
 
                 if (userTenant) {
                     setTenant(userTenant);
                     injectBranding(userTenant);
-                    setLoading(false);
                     return;
                 }
             }
 
             // 2. Second priority: Domain/Subdomain detection
+            console.log(`[TenantContext #${requestId}] Falling back to domain detection.`);
             const config = await detectTenant();
 
-            // Post-detection guard
-            const { data: { session: postSession } } = await supabase.auth.getSession();
-            if (!postSession && profile?.tenant_id) {
-                // If we WERE fetching a user tenant but session is gone, reset
-                resetBranding();
+            // Check version again after async call
+            if (requestId !== lastRequestId.current) {
+                console.log(`[TenantContext #${requestId}] Stale request (domain). Ignoring.`);
                 return;
             }
 
@@ -72,10 +73,16 @@ export function TenantProvider({ children }: { children: ReactNode }) {
                 resetBranding();
             }
         } catch (err) {
-            console.error('[TenantContext] Failed to initialize tenant:', err);
-            setError(err instanceof Error ? err : new Error('Unknown error'));
+            console.error(`[TenantContext #${requestId}] Failed to initialize tenant:`, err);
+            // Only set error if it's the latest request
+            if (requestId === lastRequestId.current) {
+                setError(err instanceof Error ? err : new Error('Unknown error'));
+            }
         } finally {
-            setLoading(false);
+            // Only set loading false if it's the latest request
+            if (requestId === lastRequestId.current) {
+                setLoading(false);
+            }
         }
     }, [profile?.tenant_id, user?.id]); // Re-run if profile tenant or user ID changes
 
