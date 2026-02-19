@@ -7,13 +7,18 @@ import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 interface AuthContextType {
     user: User | null;
-    profile: any | null; // Using any for profile/client data for now
+    profile: {
+        id: string;
+        terms_accepted_at?: string | null;
+        [key: string]: any;
+    } | null; // Using any for profile/client data for now, but explicit for terms
     tenant: Tenant | null; // Tenant branding info
     brandColors: { primary: string; secondary: string }; // Effective colors
     loading: boolean;
     signIn: (email: string, password: string) => Promise<{ error: any }>;
     signOut: () => Promise<void>;
     deleteAccount: () => Promise<{ error: any }>;
+    refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             const currentUser = session?.user ?? null;
             setUser(currentUser);
             if (currentUser) {
@@ -79,16 +84,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .maybeSingle();
 
             if (error) throw error;
-            setProfile(data);
+
+            // Cast to any to avoid TS errors with inferred types
+            const clientData = data as any;
+
+            setProfile(clientData);
 
             // Load tenant branding if available
-            if (data?.tenant) {
-                setTenant(data.tenant);
-                setBrandColors(getEffectiveColors(data.tenant));
-                console.log('[Auth] Loaded tenant branding:', data.tenant.business_name);
-            } else if (data?.tenant_id) {
+            if (clientData?.tenant) {
+                setTenant(clientData.tenant);
+                setBrandColors(getEffectiveColors(clientData.tenant));
+            } else if (clientData?.tenant_id) {
                 // Fallback: load tenant separately if not included in query
-                const tenantData = await getTenantBranding(data.tenant_id);
+                const tenantData = await getTenantBranding(clientData.tenant_id);
                 setTenant(tenantData);
                 setBrandColors(getEffectiveColors(tenantData));
             }
@@ -103,10 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (userId) {
                 registerForPushNotificationsAsync().then(token => {
                     if (token) {
-                        supabase.from('profiles').update({ push_token: token }).eq('id', userId)
-                            .then(({ error }) => {
+                        (supabase.from('profiles') as any).update({ push_token: token }).eq('id', userId)
+                            .then(({ error }: any) => {
                                 if (error) console.error('[Auth] Erro ao salvar push token:', error);
-                                else console.log('[Auth] Push token registrado com sucesso');
                             });
                     }
                 });
@@ -133,13 +140,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!user) throw new Error('No user logged in');
 
             // NOTE: Per Apple guidelines, the user must be able to initiate account deletion from the app.
-            // This implementation signs the user out and logs the request. 
-            // In a production environment with a custom backend, this should trigger an automated 
-            // data deletion process (GDPR/LGPD compliant).
+            // We mark the account as cancelled so the admin/backend can process the data removal.
             console.log('[Auth] Account deletion requested for user_id:', user.id);
 
-            // For now, we sign out to terminate the session immediately.
-            await signOut();
+            const { error } = await (supabase
+                .from('clients') as any)
+                .update({ status: 'cancelled' })
+                .eq('user_id', user.id);
+
+            if (error) {
+                console.error('[Auth] Error marking account as cancelled:', error);
+                throw error;
+            }
+
+            // Sign out to terminate the session immediately.
+            // await signOut(); // REMOVED: Managed by UI to show alert first
             return { error: null };
         } catch (error) {
             console.error('Error in deleteAccount:', error);
@@ -148,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, profile, tenant, brandColors, loading, signIn, signOut, deleteAccount }}>
+        <AuthContext.Provider value={{ user, profile, tenant, brandColors, loading, signIn, signOut, deleteAccount, refreshProfile: () => user ? loadAthleteData(user.id) : Promise.resolve() }}>
             {user && <RealtimeManager />}
             {children}
         </AuthContext.Provider>

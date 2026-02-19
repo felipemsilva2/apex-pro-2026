@@ -21,7 +21,7 @@ export function useChat() {
             .eq('blocker_id', profile.user_id);
 
         if (!error && data) {
-            setBlockedUsers(data.map(b => b.blocked_id));
+            setBlockedUsers((data as any[]).map(b => b.blocked_id));
         }
     };
 
@@ -121,7 +121,7 @@ export function useChat() {
                     .limit(1)
                     .single();
 
-                coachId = coachProfile?.id;
+                coachId = (coachProfile as any)?.id;
             }
 
             // 3. Final fallback: find any non-client
@@ -134,7 +134,7 @@ export function useChat() {
                     .neq('id', profile.user_id)
                     .limit(1)
                     .single();
-                coachId = anyCoach?.id;
+                coachId = (anyCoach as any)?.id;
             }
 
             if (!coachId) throw new Error("Treinador não encontrado para este tenant");
@@ -144,7 +144,7 @@ export function useChat() {
                 sender_id: profile.user_id,
                 receiver_id: coachId,
                 content: content
-            });
+            } as any);
 
             if (error) throw error;
             // Optimistic update handled by realtime subscription or fetch
@@ -166,7 +166,7 @@ export function useChat() {
             message_id: messageId,
             reason: reason,
             status: 'pending'
-        });
+        } as any);
 
         if (error) throw error;
     };
@@ -177,7 +177,7 @@ export function useChat() {
         const { error } = await supabase.from('blocked_users').insert({
             blocker_id: profile.user_id,
             blocked_id: blockedId
-        });
+        } as any);
 
         if (error) {
             // Ignore unique constraint violation (already blocked)

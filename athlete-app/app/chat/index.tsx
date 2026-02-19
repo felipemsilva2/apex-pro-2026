@@ -46,7 +46,7 @@ export default function ChatScreen() {
                     content_type: 'chat_conversation',
                     content_snapshot: `Denúncia de conversa no chat. Aluno: ${profile?.full_name}. Coach/Tenant: ${tenant?.business_name}`,
                     status: 'pending'
-                });
+                } as any);
 
             if (error) throw error;
 
@@ -55,7 +55,6 @@ export default function ChatScreen() {
                 setSuccessModalVisible(true);
             }, 500);
         } catch (error) {
-            console.error('Error sending report:', error);
             Alert.alert('Erro', 'Não foi possível enviar a denúncia. Tente novamente mais tarde.');
         }
     };

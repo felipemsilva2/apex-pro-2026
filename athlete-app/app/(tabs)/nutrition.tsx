@@ -7,8 +7,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAthleteDiet } from '../../hooks/useAthleteData';
 import * as Haptics from 'expo-haptics';
 
+import { getVisibleColor, getTerminology } from '../../lib/whitelabel';
+
 export default function NutritionScreen() {
-    const { brandColors } = useAuth();
+    const { brandColors, tenant } = useAuth();
     const { data: dietPlans, isLoading, refetch, isRefetching } = useAthleteDiet() as any;
     const [selectedMeal, setSelectedMeal] = React.useState<any>(null);
 
@@ -18,10 +20,49 @@ export default function NutritionScreen() {
     // State for active day tab (0-6)
     const [activeDay, setActiveDay] = React.useState<number>(new Date().getDay());
 
-    // Effect to set initial diet
+    // Sorted strategies by day of week (Monday first)
+    const sortedDietPlans = React.useMemo(() => {
+        if (!dietPlans) return [];
+
+        const dayWeights: Record<number, number> = {
+            1: 1, // SEG
+            2: 2, // TER
+            3: 3, // QUA
+            4: 4, // QUI
+            5: 5, // SEX
+            6: 6, // SAB
+            0: 7  // DOM
+        };
+
+        return [...dietPlans].sort((a: any, b: any) => {
+            const aDays = a.days_of_week || [];
+            const bDays = b.days_of_week || [];
+
+            if (aDays.length === 0 && bDays.length === 0) return 0;
+            if (aDays.length === 0) return 1;
+            if (bDays.length === 0) return -1;
+
+            const aMinWeight = Math.min(...aDays.map((d: number) => dayWeights[d] || 99));
+            const bMinWeight = Math.min(...bDays.map((d: number) => dayWeights[d] || 99));
+
+            return aMinWeight - bMinWeight;
+        });
+    }, [dietPlans]);
+
+    // Effect to set initial diet based on scheduling
     React.useEffect(() => {
         if (dietPlans && dietPlans.length > 0 && !activeDietId) {
-            setActiveDietId(dietPlans[0].id);
+            const today = new Date().getDay();
+            // Try to find a diet assigned to today
+            const dietForToday = dietPlans.find((d: any) =>
+                d.days_of_week && d.days_of_week.includes(today)
+            );
+
+            if (dietForToday) {
+                setActiveDietId(dietForToday.id);
+            } else if (sortedDietPlans.length > 0) {
+                setActiveDietId(sortedDietPlans[0].id);
+            }
         }
     }, [dietPlans]);
 
@@ -29,7 +70,7 @@ export default function NutritionScreen() {
         return <LoadingSpinner message="Carregando dieta..." />;
     }
 
-    const diet = dietPlans?.find((d: any) => d.id === activeDietId) || dietPlans?.[0];
+    const diet = sortedDietPlans?.find((d: any) => d.id === activeDietId) || sortedDietPlans?.[0];
     const meals = diet?.meals || [];
 
     // Check if we have any specific day meals to decide if we show tabs
@@ -39,14 +80,14 @@ export default function NutritionScreen() {
     const displayedMeals = React.useMemo(() => {
         if (!hasSpecificDays) {
             // If no specific days, show all meals (Daily plan)
-            return [...meals].sort((a: any, b: any) => (a.time || '').localeCompare(b.time || ''));
+            return [...meals].sort((a: any, b: any) => (a.time_of_day || '').localeCompare(b.time_of_day || ''));
         }
 
         return meals.filter((meal: any) => {
             const isDaily = meal.day_of_week === null || meal.day_of_week === undefined;
             const isToday = meal.day_of_week === activeDay;
             return isDaily || isToday;
-        }).sort((a: any, b: any) => (a.time || '').localeCompare(b.time || ''));
+        }).sort((a: any, b: any) => (a.time_of_day || '').localeCompare(b.time_of_day || ''));
     }, [meals, hasSpecificDays, activeDay]);
 
     // Calculate totals for displayed meals
@@ -88,7 +129,7 @@ export default function NutritionScreen() {
     // Reorder based on starting day (Monday first)
     const sortedWeekDays = [
         ...weekDays.filter(d => d.id !== 0),
-        weekDays.find(d => d.id === 0)!
+        weekDays.find(d => d.id === 0) || weekDays[0]
     ];
 
     const visiblePrimary = diet ? brandColors.primary : 'rgba(255,255,255,0.4)';
@@ -96,7 +137,7 @@ export default function NutritionScreen() {
     return (
         <Container variant="page" seamless>
             <Header
-                title="Nutrição"
+                title={getTerminology(tenant, 'nutrition', 'Nutrição')}
                 subtitle="PLANO ALIMENTAR"
                 variant="hero"
             />
@@ -114,90 +155,93 @@ export default function NutritionScreen() {
                 >
                     {diet ? (
                         <>
-                            {/* Reacticx Summary Module */}
-                            <View
-                                style={styles.summaryModule}
-                            >
-                                <View style={styles.summaryHeader}>
-                                    <View style={[styles.statusBadge, { backgroundColor: brandColors.primary }]}>
-                                        <Text style={[styles.statusLabel, { color: brandColors.secondary }]}>PLANO ATIVO</Text>
+                            {/* Simplified Summary Module */}
+                            <View style={styles.summaryModule}>
+                                <View style={styles.summaryMainRow}>
+                                    <View style={{ flex: 1 }}>
+                                        <View style={[styles.statusBadge, { backgroundColor: brandColors.primary }]}>
+                                            <Text style={[styles.statusLabel, { color: brandColors.secondary }]}>PLANO ATIVO</Text>
+                                        </View>
+                                        <Text style={styles.planName} numberOfLines={1}>
+                                            {diet.day_label ? diet.day_label.replace('_', ' ').toUpperCase() : (diet.name || diet.title).toUpperCase()}
+                                        </Text>
+                                    </View>
+
+                                    <View style={styles.kcalBadge}>
+                                        <Flame size={14} color={brandColors.primary} fill={brandColors.primary} />
+                                        <Text style={styles.kcalValue}>
+                                            {Math.round(dailyTotals.kcal) || diet.daily_calories || '--'}
+                                        </Text>
+                                        <Text style={styles.kcalLabel}>KCAL</Text>
                                     </View>
                                 </View>
 
-                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                                    <Text style={[styles.planName, { marginBottom: 0 }]}>{diet.name || diet.title}</Text>
-                                    {diet.day_label && (
-                                        <View style={{ backgroundColor: `${brandColors.primary}20`, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, borderColor: `${brandColors.primary}40`, borderWidth: 1 }}>
-                                            <Text style={{ color: brandColors.primary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' }}>
-                                                {diet.day_label.replace('_', ' ')}
-                                            </Text>
-                                        </View>
-                                    )}
-                                </View>
-
-                                <View style={styles.readoutContainer}>
-                                    <View style={styles.mainReadout}>
-                                        <View style={styles.kcalContainer}>
-                                            <Flame size={20} color={brandColors.primary} />
-                                            <View>
-                                                <Text style={styles.kcalValue}>
-                                                    {Math.round(dailyTotals.kcal) || diet.daily_calories || '--'}
-                                                </Text>
-                                                <Text style={styles.kcalLabel}>KCAL / DIA</Text>
-                                            </View>
-                                        </View>
+                                <View style={styles.macroRowSimplified}>
+                                    <View style={styles.macroItemSmall}>
+                                        <Text style={styles.macroTag}>P</Text>
+                                        <Text style={styles.macroVal}>{Math.round(dailyTotals.protein)}g</Text>
                                     </View>
-
-                                    <View style={styles.macroGrid}>
-                                        <View style={styles.macroBox}>
-                                            <Text style={styles.macroLabel}>PROT</Text>
-                                            <Text style={styles.macroValueSmall}>{Math.round(dailyTotals.protein)}g</Text>
-                                        </View>
-                                        <View style={styles.macroBox}>
-                                            <Text style={styles.macroLabel}>CARB</Text>
-                                            <Text style={styles.macroValueSmall}>{Math.round(dailyTotals.carbs)}g</Text>
-                                        </View>
-                                        <View style={styles.macroBox}>
-                                            <Text style={styles.macroLabel}>GORD</Text>
-                                            <Text style={styles.macroValueSmall}>{Math.round(dailyTotals.fats)}g</Text>
-                                        </View>
+                                    <View style={styles.macroItemSmall}>
+                                        <Text style={styles.macroTag}>C</Text>
+                                        <Text style={styles.macroVal}>{Math.round(dailyTotals.carbs)}g</Text>
+                                    </View>
+                                    <View style={styles.macroItemSmall}>
+                                        <Text style={styles.macroTag}>G</Text>
+                                        <Text style={styles.macroVal}>{Math.round(dailyTotals.fats)}g</Text>
                                     </View>
                                 </View>
+
+                                {diet.description && (
+                                    <View style={styles.minimalInstructions}>
+                                        <Text style={styles.instructionsText} numberOfLines={2}>{diet.description}</Text>
+                                    </View>
+                                )}
                             </View>
 
-                            {/* Carb Cycling Diet Selection Tabs */}
-                            {dietPlans && dietPlans.length > 1 && (
-                                <View style={styles.navWrapper}>
-                                    <View style={styles.sectionHeaderRow}>
-                                        <Text style={styles.sectionLabel}>ESTRATÉGIA DO DIA</Text>
-                                    </View>
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContainer}>
-                                        {dietPlans.map((plan: any) => (
-                                            <TouchableOpacity
-                                                key={plan.id}
-                                                onPress={() => {
-                                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                                    setActiveDietId(plan.id);
-                                                }}
-                                                style={[
-                                                    styles.dayTab,
-                                                    { width: 'auto', paddingHorizontal: 16 },
-                                                    activeDietId === plan.id && { backgroundColor: 'rgba(255,255,255,0.06)' }
-                                                ]}
-                                            >
-                                                <Text style={[
-                                                    styles.dayTabText,
-                                                    activeDietId === plan.id ? { color: brandColors.primary } : { color: 'rgba(255,255,255,0.3)' }
-                                                ]}>
-                                                    {plan.day_label ? plan.day_label.replace('_', ' ').toUpperCase() : plan.name?.toUpperCase()}
-                                                </Text>
-                                                {activeDietId === plan.id && (
-                                                    <View style={[styles.activeIndicator, { backgroundColor: brandColors.primary }]} />
-                                                )}
-                                            </TouchableOpacity>
-                                        ))}
-                                    </ScrollView>
-                                </View>
+                            {/* Strategy Selection */}
+                            {sortedDietPlans && sortedDietPlans.length > 1 && (
+                                <ScrollView
+                                    horizontal
+                                    showsHorizontalScrollIndicator={false}
+                                    style={{ marginBottom: 20 }}
+                                    contentContainerStyle={{ gap: 8 }}
+                                >
+                                    {sortedDietPlans.map((plan: any) => (
+                                        <TouchableOpacity
+                                            key={plan.id}
+                                            onPress={() => {
+                                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                                setActiveDietId(plan.id);
+                                            }}
+                                            style={[
+                                                styles.strategyTab,
+                                                activeDietId === plan.id && { backgroundColor: brandColors.primary }
+                                            ]}
+                                        >
+                                            <Text style={[
+                                                styles.strategyTabText,
+                                                activeDietId === plan.id ? { color: brandColors.secondary } : { color: 'rgba(255,255,255,0.4)' }
+                                            ]}>
+                                                {plan.day_label ? plan.day_label.replace('_', ' ').toUpperCase() : getTerminology(tenant, 'nutrition', 'Dieta').toUpperCase()}
+                                            </Text>
+                                            {plan.days_of_week && plan.days_of_week.length > 0 && (
+                                                <View style={styles.dotIndicatorRow}>
+                                                    {plan.days_of_week.map((dayNum: number, i: number) => (
+                                                        <Text
+                                                            key={i}
+                                                            style={[
+                                                                styles.dayInitialText,
+                                                                { color: activeDietId === plan.id ? brandColors.secondary : brandColors.primary }
+                                                            ]}
+                                                        >
+                                                            {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'][dayNum]}
+                                                        </Text>
+                                                    ))}
+                                                </View>
+                                            )}
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
                             )}
 
                             {/* Weekly Tabs (Bento Style) */}
@@ -232,7 +276,7 @@ export default function NutritionScreen() {
                                 <Text style={styles.sectionLabel}>
                                     {hasSpecificDays
                                         ? `PLANILHA DE ${weekDays.find(d => d.id === activeDay)?.label}`
-                                        : `REFEIÇÕES DIÁRIAS`
+                                        : "REFEICOES DIARIAS"
                                     }
                                 </Text>
                                 <View style={[styles.mealCount, { backgroundColor: `${brandColors.primary}15` }]}>
@@ -241,50 +285,42 @@ export default function NutritionScreen() {
                             </View>
 
                             {displayedMeals.length > 0 ? (
-                                displayedMeals.map((meal: any, index: number) => (
-                                    <View
-                                        key={meal.id}
-                                    >
-                                        <TouchableOpacity
-                                            style={styles.mealCard}
-                                            onPress={() => setSelectedMeal(meal)}
-                                            activeOpacity={0.7}
+                                displayedMeals.map((meal: any, index: number) => {
+                                    return (
+                                        <View
+                                            key={meal.id}
                                         >
-                                            <View style={styles.mealHeader}>
-                                                <View style={[styles.timeBadge, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
-                                                    <Clock size={12} color="rgba(255,255,255,0.4)" />
-                                                    <Text style={styles.timeText}>
-                                                        {meal.time ? meal.time.slice(0, 5) : `Ref ${index + 1}`}
-                                                    </Text>
-                                                </View>
-                                                <View style={{ flex: 1 }}>
-                                                    <Text style={styles.mealTitle} numberOfLines={1}>{meal.name}</Text>
-                                                    {meal.description && (
-                                                        <Text style={styles.mealDescription} numberOfLines={1}>
-                                                            {meal.description}
+                                            <TouchableOpacity
+                                                style={styles.mealCardSimplified}
+                                                onPress={() => setSelectedMeal(meal)}
+                                                activeOpacity={0.7}
+                                            >
+                                                <View style={styles.mealRow}>
+                                                    <View style={styles.mealTimeContainer}>
+                                                        <Text style={[styles.mealTimeText, { color: brandColors.primary }]}>
+                                                            {meal.time_of_day ? meal.time_of_day.slice(0, 5) : '--:--'}
                                                         </Text>
-                                                    )}
+                                                    </View>
+                                                    <View style={{ flex: 1, marginLeft: 16 }}>
+                                                        <Text style={styles.mealNameText} numberOfLines={1}>{meal.name}</Text>
+                                                        {meal.foods && (
+                                                            <Text style={styles.mealFoodsText} numberOfLines={1}>
+                                                                {meal.foods.slice(0, 3).map((f: any) => f.name).join(', ')}
+                                                                {meal.foods.length > 3 ? '...' : ''}
+                                                            </Text>
+                                                        )}
+                                                    </View>
+                                                    <ChevronRight size={16} color="rgba(255,255,255,0.2)" />
                                                 </View>
-                                                <View style={styles.actionIcon}>
-                                                    <ChevronRight size={18} color="rgba(255,255,255,0.2)" />
-                                                </View>
-                                            </View>
-
-                                            {meal.foods && meal.foods.length > 0 && (
-                                                <View style={styles.foodsPreview}>
-                                                    <Text style={styles.previewText} numberOfLines={1}>
-                                                        {meal.foods.map((f: any) => f.name).join(', ')}
-                                                    </Text>
-                                                </View>
-                                            )}
-                                        </TouchableOpacity>
-                                    </View>
-                                ))
+                                            </TouchableOpacity>
+                                        </View>
+                                    );
+                                })
                             ) : (
                                 <EmptyState
                                     icon={<Apple size={40} color={brandColors.primary} />}
-                                    title="Nenhuma refeição"
-                                    description="Nenhuma refeição específica para este dia."
+                                    title="Nenhuma refeicao"
+                                    description="Nenhuma refeicao especifica para este dia."
                                 />
                             )}
                         </>
@@ -292,7 +328,7 @@ export default function NutritionScreen() {
                         <EmptyState
                             icon={<Target size={40} color={brandColors.primary} />}
                             title="Nenhuma Dieta Ativa"
-                            description="Seu plano alimentar estratégico aparecerá aqui em breve."
+                            description="Seu plano alimentar estrategico aparecera aqui em breve."
                         />
                     )}
                     <View style={{ height: 120 }} />
@@ -317,7 +353,7 @@ export default function NutritionScreen() {
                                 <View style={styles.modalMetaRow}>
                                     <Clock size={12} color="rgba(255,255,255,0.4)" />
                                     <Text style={styles.modalMetaText}>
-                                        {selectedMeal?.time ? selectedMeal.time.slice(0, 5) : 'Horário sugerido'}
+                                        {selectedMeal?.time_of_day ? selectedMeal.time_of_day.slice(0, 5) : 'Horario sugerido'}
                                     </Text>
                                 </View>
                             </View>
@@ -329,12 +365,12 @@ export default function NutritionScreen() {
                         <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
                             {selectedMeal?.description && (
                                 <View style={styles.instructionBox}>
-                                    <Text style={styles.boxLabel}>OBSERVAÇÕES</Text>
+                                    <Text style={styles.boxLabel}>OBSERVACOES</Text>
                                     <Text style={styles.boxText}>{selectedMeal.description}</Text>
                                 </View>
                             )}
 
-                            <Text style={styles.foodsTitleLabel}>COMPOSIÇÃO DA REFEIÇÃO</Text>
+                            <Text style={styles.foodsTitleLabel}>COMPOSICAO DA REFEICAO</Text>
                             {selectedMeal?.foods?.map((food: any, i: number) => (
                                 <View key={i} style={styles.foodItem}>
                                     <View style={styles.foodInfo}>
@@ -344,7 +380,7 @@ export default function NutritionScreen() {
                                     <View style={styles.foodMacros}>
                                         <Text style={styles.foodKcal}>{Math.round(food.kcal)} KCAL</Text>
                                         <Text style={styles.foodMacroDetail}>
-                                            P:{Math.round(food.protein)}g • C:{Math.round(food.carbs)}g • G:{Math.round(food.fats)}g
+                                            P:{Math.round(food.protein)}g | C:{Math.round(food.carbs)}g | G:{Math.round(food.fats)}g
                                         </Text>
                                     </View>
                                 </View>
@@ -364,146 +400,162 @@ export default function NutritionScreen() {
                     </View>
                 </View>
             </Modal>
-        </Container>
-    );
+        </Container>);
 }
 
 const styles = StyleSheet.create({
+    // Simplified Nutrition Styles
+    summaryModule: {
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.06)',
+    },
+    summaryMainRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 16,
+    },
+    statusBadge: {
+        alignSelf: 'flex-start',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+        marginBottom: 8,
+    },
+    statusLabel: {
+        fontSize: 8,
+        fontWeight: '900',
+        letterSpacing: 0.5,
+    },
+    planName: {
+        fontSize: 18,
+        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
+        color: '#FFF',
+    },
+    kcalBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.04)',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
+        gap: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.05)',
+    },
+    kcalValue: {
+        fontSize: 14,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
+        color: '#FFF',
+    },
+    kcalLabel: {
+        fontSize: 8,
+        fontWeight: '800',
+        color: 'rgba(255,255,255,0.3)',
+    },
+    macroRowSimplified: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    macroItemSmall: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    macroTag: {
+        fontSize: 9,
+        fontWeight: '900',
+        color: 'rgba(255,255,255,0.2)',
+    },
+    macroVal: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#FFF',
+    },
+    minimalInstructions: {
+        marginTop: 16,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255,255,255,0.03)',
+    },
+    strategyTab: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 14,
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.06)',
+        alignItems: 'center',
+        minWidth: 100,
+    },
+    strategyTabText: {
+        fontSize: 10,
+        fontWeight: '900',
+        letterSpacing: 0.5,
+    },
+    dotIndicatorRow: {
+        flexDirection: 'row',
+        gap: 4,
+        marginTop: 6,
+    },
+    dayInitialText: {
+        fontSize: 9,
+        fontWeight: '900',
+    },
+    mealCardSimplified: {
+        backgroundColor: 'rgba(255,255,255,0.03)',
+        borderRadius: 18,
+        padding: 16,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.06)',
+    },
+    mealRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    mealTimeContainer: {
+        width: 50,
+        alignItems: 'center',
+        borderRightWidth: 1,
+        borderRightColor: 'rgba(255,255,255,0.05)',
+        paddingRight: 10,
+    },
+    mealTimeText: {
+        fontSize: 12,
+        fontWeight: '900',
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
+    },
+    mealNameText: {
+        fontSize: 15,
+        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
+        color: '#FFF',
+    },
+    mealFoodsText: {
+        fontSize: 11,
+        color: 'rgba(255,255,255,0.3)',
+        marginTop: 2,
+    },
     scrollContent: {
         paddingHorizontal: 20,
         paddingTop: 12,
         flex: 1,
     },
-    // Redesigned Summary Module (Reacticx)
-    summaryModule: {
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        borderRadius: 24,
-        padding: 24,
-        marginBottom: 24,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.06)',
-    },
-    summaryHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    statusBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 6,
-    },
-    statusLabel: {
-        fontSize: 9,
-        fontWeight: '900',
-        letterSpacing: 0.5,
-    },
-    planName: {
-        fontSize: 20,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
-        color: '#FFF',
-        marginBottom: 20,
-    },
-    readoutContainer: {
-        flexDirection: 'row',
-        gap: 16,
-    },
-    mainReadout: {
-        flex: 1,
-        backgroundColor: 'rgba(255,255,255,0.02)',
-        padding: 16,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
-        justifyContent: 'center',
-    },
-    kcalContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    kcalValue: {
-        fontSize: 24,
-        fontFamily: Platform.OS === 'ios' ? 'Syne-Bold' : 'Syne_700Bold',
-        color: '#FFF',
-    },
-    kcalLabel: {
-        fontSize: 9,
-        fontWeight: '700',
-        color: 'rgba(255,255,255,0.4)',
-        letterSpacing: 0.5,
-    },
-    macroGrid: {
-        flexDirection: 'column',
-        gap: 6,
-        flex: 1,
-        maxWidth: 120,
-    },
-    macroBox: {
-        backgroundColor: 'rgba(255,255,255,0.02)',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 10,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.03)',
-    },
-    macroLabel: {
-        fontSize: 8,
-        fontWeight: '900',
-        color: 'rgba(255,255,255,0.3)',
-    },
-    macroValueSmall: {
-        fontSize: 11,
-        fontWeight: '700',
-        color: '#FFF',
-    },
-
-    // Redesigned Nav Tabs (Bento Style)
-    navWrapper: {
-        marginBottom: 24,
-    },
-    tabsContainer: {
-        gap: 8,
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        borderRadius: 20,
-        padding: 4,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.06)',
-    },
-    dayTab: {
-        width: 50,
-        height: 44,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    dayTabText: {
-        fontSize: 12,
-        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
-    },
-    activeIndicator: {
-        position: 'absolute',
-        bottom: 6,
-        width: 10,
-        height: 2,
-        borderRadius: 1,
-    },
-
-    // Section Styling
     sectionHeaderRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: 12,
+        marginTop: 10,
         justifyContent: 'space-between',
     },
     sectionLabel: {
-        fontSize: 13,
+        fontSize: 12,
         fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
-        color: 'rgba(255,255,255,0.5)',
+        color: 'rgba(255,255,255,0.4)',
         letterSpacing: 1,
     },
     mealCount: {
@@ -515,66 +567,6 @@ const styles = StyleSheet.create({
         fontSize: 10,
         fontWeight: '900',
     },
-
-    // Cards (Reacticx)
-    mealCard: {
-        backgroundColor: 'rgba(255,255,255,0.03)',
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.06)',
-    },
-    mealHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-    },
-    timeBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 12,
-        gap: 6,
-    },
-    timeText: {
-        fontSize: 11,
-        fontWeight: '800',
-        color: '#FFF',
-    },
-    mealTitle: {
-        fontSize: 17,
-        fontFamily: Platform.OS === 'ios' ? 'Outfit-Bold' : 'Outfit_700Bold',
-        color: '#FFF',
-        marginBottom: 2,
-    },
-    mealDescription: {
-        fontSize: 13,
-        fontFamily: Platform.OS === 'ios' ? 'Outfit-Regular' : 'Outfit_400Regular',
-        color: 'rgba(255,255,255,0.4)',
-    },
-    actionIcon: {
-        width: 32,
-        height: 32,
-        borderRadius: 10,
-        backgroundColor: 'rgba(255,255,255,0.02)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    foodsPreview: {
-        marginTop: 12,
-        paddingTop: 12,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.03)',
-    },
-    previewText: {
-        fontSize: 11,
-        color: 'rgba(255,255,255,0.3)',
-        fontWeight: '500',
-    },
-
-    // Modal Styles (Reacticx)
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.85)',
@@ -691,5 +683,34 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         textAlign: 'center',
         marginVertical: 32,
+    },
+    navWrapper: {
+        marginBottom: 20,
+    },
+    tabsContainer: {
+        gap: 8,
+    },
+    activeIndicator: {
+        position: 'absolute',
+        bottom: 0,
+        width: 12,
+        height: 2,
+        borderRadius: 1,
+    },
+    dayTab: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    dayTabText: {
+        fontSize: 12,
+        fontWeight: '800',
+    },
+    instructionsText: {
+        fontSize: 13,
+        lineHeight: 18,
+        color: '#FFF',
+        fontStyle: 'italic',
     }
 });

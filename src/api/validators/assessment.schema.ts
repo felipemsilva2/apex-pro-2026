@@ -18,6 +18,7 @@ export const createAssessmentSchema = z.object({
     target_body_fat_percentage: z.number().min(0).max(100).optional().nullable(),
     coach_feedback: z.string().max(2000).optional().nullable(),
     coach_category: z.string().max(50).optional().nullable(),
+    basal_metabolic_rate: z.number().positive().max(10000).optional().nullable(),
     status: z.enum(['pending', 'reviewed']).default('pending'),
 });
 

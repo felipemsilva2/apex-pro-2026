@@ -118,7 +118,7 @@ export function resetBranding() {
     document.title = 'APEX PRO';
 
     // Reset favicon to default if possible
-    const defaultFavicon = '/favicon.ico';
+    const defaultFavicon = '/favicon.svg';
     updateFavicon(defaultFavicon);
 }
 

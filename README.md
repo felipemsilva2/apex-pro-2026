@@ -1,73 +1,66 @@
-# Welcome to your Lovable project
+# Apex Pro Ecosystem 🏆
 
-## Project info
+**O estado da arte em gestão de alta performance para treinadores e atletas.**
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+O **Apex Pro** é um ecossistema SaaS (Software as a Service) completo, desenhado para profissionalizar a consultoria fitness. Ele resolve o gap entre a ciência do treinamento e a tecnologia, oferecendo uma interface de elite tanto para o gestor quanto para o aluno.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🛠 Arquitetura do Sistema
 
-**Use Lovable**
+O ecossistema é composto por duas frentes integradas:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+1.  **Web Dashboard (Coach/Admin):** Painel administrativo robusto para gestão de alunos, prescrição de treinos, dietas, protocolos hormonais e análise de métricas em tempo real.
+2.  **Mobile App (Atleta):** Aplicativo nativo (iOS/Android) focado na experiência do usuário final, com visualização de cronogramas, execução de treinos com demonstrações e sistema de check-in de evolução física.
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## 🧠 Desenvolvimento Agêntico (Antigravity)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Este projeto não foi desenvolvido de forma tradicional. Ele é fruto de um **Workflow de Engenharia Agêntica** utilizando o framework **Antigravity**.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+*   **Orquestração de Inteligência:** O desenvolvimento contou com agentes especializados (Skills) para Segurança (RLS no Supabase), Design de UI Premium e Otimização de Performance.
+*   **Velocidade e Qualidade:** O uso de IA agêntica permitiu uma arquitetura modular "white-label" pronta para escala, garantindo que cada componente siga os mais altos padrões de design system e tipagem rigorosa.
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## ✨ Funcionalidades Core
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+*   **Gestão Multi-tenant:** Suporte a múltiplos treinadores com branding personalizado.
+*   **Protocolos Avançados:** Criação e acompanhamento de protocolos de treino, dieta e recursos ergogênicos.
+*   **Real-time Interaction:** Sistema de chat e notificações integrado ao banco de dados em tempo real.
+*   **Legal Compliance:** Sistema de deleção de conta e políticas de privacidade integrados conforme as normas da App Store.
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## 🚀 Tech Stack
+
+*   **Frontend Web:** React, TypeScript, Vite, Tailwind CSS, Shadcn/UI.
+*   **Mobile:** Expo, React Native, TypeScript.
+*   **Backend & DB:** Supabase (PostgreSQL, Auth, Storage, Edge Functions).
+*   **Infrastructure:** EAS (Expo Application Services).
+
+---
+
+## 📦 Como Rodar o Projeto
+
+### Pré-requisitos
+*   Node.js (v18+)
+*   npm ou bun
+
+### Web Dashboard
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Mobile App
+```bash
+cd athlete-app
+npm install
+npx expo start
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Desenvolvido com foco em **Alta Performance** e **Tecnologia Agêntica**.

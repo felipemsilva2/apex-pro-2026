@@ -13,6 +13,7 @@ export function InviteStudentDialog() {
     const [fullName, setFullName] = useState("");
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [phone, setPhone] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [open, setOpen] = useState(false);
 
@@ -29,6 +30,7 @@ export function InviteStudentDialog() {
                 fullName,
                 username,
                 password,
+                phone,
                 tenantId: profile.tenant_id
             });
 
@@ -56,6 +58,7 @@ export function InviteStudentDialog() {
             setFullName("");
             setUsername("");
             setPassword("");
+            setPhone("");
         }, 200);
     };
 
@@ -97,6 +100,21 @@ export function InviteStudentDialog() {
                                     onChange={(e) => setFullName(e.target.value)}
                                     required
                                     className="bg-white/[0.03] border-white/10 rounded-none font-display font-bold italic uppercase text-sm tracking-widest focus:border-primary focus:ring-0 transition-all h-14 pl-6 placeholder:text-white/10"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="relative group">
+                            <Label className="font-display font-black text-[10px] uppercase tracking-[0.3em] text-primary/60 mb-3 block italic">
+                                WHATSAPP (DDD + NÚMERO)
+                            </Label>
+                            <div className="relative">
+                                <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-[2px] h-8 bg-[#25D366] shadow-[0_0_10px_rgba(37,211,102,0.5)]" />
+                                <Input
+                                    placeholder="Ex: 11999999999"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    className="bg-white/[0.03] border-white/10 rounded-none font-display font-bold italic uppercase text-sm tracking-widest focus:border-[#25D366] focus:ring-0 transition-all h-14 pl-6 placeholder:text-white/10"
                                 />
                             </div>
                         </div>

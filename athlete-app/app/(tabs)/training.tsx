@@ -8,7 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useAthleteWorkouts, useAthleteProtocols } from '../../hooks/useAthleteData';
 import { format, differenceInWeeks, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getVisibleColor } from '../../lib/whitelabel';
+import { getVisibleColor, getTerminology } from '../../lib/whitelabel';
 
 const parseLocalDate = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -18,7 +18,7 @@ const parseLocalDate = (dateStr: string) => {
 type Tab = 'workouts' | 'protocols';
 
 export default function TrainingScreen() {
-    const { brandColors } = useAuth();
+    const { brandColors, tenant } = useAuth();
     const router = useRouter();
     const visiblePrimary = getVisibleColor(brandColors.primary);
     const [activeTab, setActiveTab] = useState<Tab>('workouts');
@@ -63,7 +63,7 @@ export default function TrainingScreen() {
                             styles.tabText,
                             activeTab === 'workouts' ? { color: '#FFF' } : { color: 'rgba(255,255,255,0.3)' }
                         ]}>
-                            Treinos
+                            {getTerminology(tenant, 'training', 'Treinos')}
                         </Text>
                         {workouts && workouts.length > 0 && (
                             <View style={[styles.tabBadge, { backgroundColor: activeTab === 'workouts' ? visiblePrimary : 'rgba(255,255,255,0.1)' }]}>
@@ -87,7 +87,7 @@ export default function TrainingScreen() {
                             styles.tabText,
                             activeTab === 'protocols' ? { color: '#FFF' } : { color: 'rgba(255,255,255,0.3)' }
                         ]}>
-                            Protocolos
+                            {getTerminology(tenant, 'protocols', 'Protocolos')}
                         </Text>
                     </TouchableOpacity>
                 </View>

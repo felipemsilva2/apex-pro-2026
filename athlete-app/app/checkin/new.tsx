@@ -130,12 +130,14 @@ export default function NewCheckinScreen() {
                 side_photo: photoUrls.side,
                 notes: notes,
                 created_at: new Date().toISOString(),
-            });
+            } as any);
 
             if (error) throw error;
 
             // Update Current Weight in Profile
-            await supabase.from('clients').update({ current_weight: parseFloat(weight.replace(',', '.')) }).eq('id', profile?.id);
+            if (profile?.id) {
+                await (supabase.from('clients') as any).update({ current_weight: parseFloat(weight.replace(',', '.')) }).eq('id', profile.id);
+            }
 
             // Upload Documents
             for (const doc of documents) {
@@ -165,7 +167,7 @@ export default function NewCheckinScreen() {
                     file_type: doc.mimeType?.includes('pdf') ? 'pdf' : (doc.mimeType?.includes('image') ? 'image' : 'other'),
                     category: 'bioimpedance',
                     created_at: new Date().toISOString()
-                });
+                } as any);
             }
 
             // Invalidate queries to refresh data

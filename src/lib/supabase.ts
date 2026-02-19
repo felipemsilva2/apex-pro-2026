@@ -150,6 +150,7 @@ export type MealPlan = {
     target_fats_g: number | null;
     status: 'active' | 'inactive' | 'completed';
     day_label: string | null;
+    days_of_week: number[] | null;
     created_at: string;
     updated_at: string;
 };
@@ -186,7 +187,7 @@ export type Appointment = {
     start_time: string;
     end_time: string;
     type: 'session' | 'evaluation' | 'call' | 'other';
-    status: 'pending' | 'confirmed' | 'cancelled';
+    status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
     video_link?: string | null;
     created_at: string;
     updated_at: string;

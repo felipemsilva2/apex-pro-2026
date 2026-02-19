@@ -143,12 +143,12 @@ export function CreateAppointmentDialog({ trigger, appointmentToEdit, open: cont
                 <DialogHeader className="p-8 pb-4 bg-gradient-to-b from-white/[0.02] to-transparent relative">
                     <div className="absolute top-8 right-8 w-16 h-16 bg-primary/5 -skew-x-12 blur-2xl rounded-full -z-10" />
                     <DialogTitle className="font-display font-black italic uppercase text-3xl tracking-tighter flex flex-col leading-none">
-                        <span className="text-white/40 text-[10px] tracking-[0.4em] mb-2 not-italic font-bold">CRONOGRAMA TÁTICO</span>
+                        <span className="text-white/40 text-[10px] tracking-[0.4em] mb-2 not-italic font-bold">PROGRAMAÇÃO DE AGENDA</span>
                         <span className="flex items-center gap-3">
                             {appointmentToEdit ? (
-                                <>AJUSTE DE <span className="text-primary">MISSÃO</span></>
+                                <>AJUSTE DE <span className="text-primary">SESSÃO</span></>
                             ) : (
-                                <>PROGRAMAR <span className="text-primary">MISSÃO</span></>
+                                <>AGENDAR <span className="text-primary">SESSÃO</span></>
                             )}
                         </span>
                     </DialogTitle>
@@ -186,7 +186,7 @@ export function CreateAppointmentDialog({ trigger, appointmentToEdit, open: cont
                     {/* Title */}
                     <div className="space-y-2">
                         <Label htmlFor="title" className="font-display font-bold text-[10px] uppercase tracking-widest text-muted-foreground">
-                            OBJETIVO DA SESSÃO
+                            OBJETIVO DO ATENDIMENTO
                         </Label>
                         <Input
                             id="title"
@@ -278,7 +278,7 @@ export function CreateAppointmentDialog({ trigger, appointmentToEdit, open: cont
 
                     {/* Type Selection */}
                     <div className="space-y-3">
-                        <Label className="font-display font-bold text-[10px] uppercase tracking-widest text-muted-foreground">CATEGORIA TÁTICA</Label>
+                        <Label className="font-display font-bold text-[10px] uppercase tracking-widest text-muted-foreground">TIPO DE ATENDIMENTO</Label>
                         <div className="grid grid-cols-3 gap-2">
                             {['session', 'evaluation', 'call'].map((type) => (
                                 <button

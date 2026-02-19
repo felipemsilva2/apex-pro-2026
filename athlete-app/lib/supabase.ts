@@ -22,11 +22,41 @@ if (!supabaseUrl || !supabaseAnonKey) {
     console.log('[Supabase] Key:', supabaseAnonKey ? 'Found' : 'Missing');
 }
 
+// Custom Storage Adapter for better debugging and reliability
+const AsyncStorageAdapter = {
+    getItem: async (key: string) => {
+        try {
+            const value = await AsyncStorage.getItem(key);
+            console.log(`[Supabase Storage] GET ${key}:`, value ? 'Found' : 'Not Found');
+            return value;
+        } catch (e) {
+            console.error('[Supabase Storage] GET Error:', e);
+            return null;
+        }
+    },
+    setItem: async (key: string, value: string) => {
+        try {
+            await AsyncStorage.setItem(key, value);
+            console.log(`[Supabase Storage] SET ${key}`);
+        } catch (e) {
+            console.error('[Supabase Storage] SET Error:', e);
+        }
+    },
+    removeItem: async (key: string) => {
+        try {
+            await AsyncStorage.removeItem(key);
+            console.log(`[Supabase Storage] REMOVE ${key}`);
+        } catch (e) {
+            console.error('[Supabase Storage] REMOVE Error:', e);
+        }
+    },
+};
+
 let supabaseInstance: ReturnType<typeof createClient>;
 try {
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
-            storage: AsyncStorage,
+            storage: AsyncStorageAdapter,
             autoRefreshToken: true,
             persistSession: true,
             detectSessionInUrl: false,
@@ -38,7 +68,13 @@ try {
     supabaseInstance = createClient(
         'https://placeholder.supabase.co',
         'placeholder-key',
-        { auth: { storage: AsyncStorage, persistSession: false, detectSessionInUrl: false } }
+        {
+            auth: {
+                storage: AsyncStorageAdapter,
+                persistSession: false,
+                detectSessionInUrl: false
+            }
+        }
     );
 }
 export const supabase = supabaseInstance;

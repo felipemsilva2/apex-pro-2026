@@ -14,7 +14,7 @@ module.exports = {
             backgroundColor: "#0A0A0C"
         },
         ios: {
-            supportsTablet: true,
+            supportsTablet: false,
             bundleIdentifier: "com.apexpro.app",
             infoPlist: {
                 NSCameraUsageDescription: "Precisamos de acesso à câmera para você tirar fotos da sua evolução física.",

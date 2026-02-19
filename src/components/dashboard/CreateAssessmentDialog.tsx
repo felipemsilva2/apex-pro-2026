@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateAssessment } from "@/hooks/useAssessments";
 import { Client } from "@/lib/supabase";
-import { Scale, Flame, Dumbbell, Ruler, Target } from "lucide-react";
+import { Scale, Flame, Dumbbell, Ruler, Target, Activity } from "lucide-react";
+import { calculateComposition, calculateWHR, calculateBMR, calculateBMI } from "@/lib/calculations";
 
 type CreateAssessmentDialogProps = {
     client: Client;
@@ -57,6 +58,7 @@ export function CreateAssessmentDialog({
         if (formData.target_weight_kg) numericData.target_weight_kg = parseFloat(formData.target_weight_kg);
         if (formData.target_body_fat_percentage) numericData.target_body_fat_percentage = parseFloat(formData.target_body_fat_percentage);
         if (formData.notes) numericData.notes = formData.notes;
+        if (bmr) numericData.basal_metabolic_rate = bmr;
 
         await createAssessment.mutateAsync(numericData);
         onOpenChange(false);
@@ -79,35 +81,43 @@ export function CreateAssessmentDialog({
         });
     };
 
-    // Calculate lean mass automatically
-    const calculateLeanMass = () => {
+    // Calculate Lean/Fat Mass automatically
+    const getComposition = () => {
         if (formData.weight_kg && formData.body_fat_percentage) {
             const weight = parseFloat(formData.weight_kg);
             const bf = parseFloat(formData.body_fat_percentage);
-            return (weight * (1 - bf / 100)).toFixed(2);
+            return calculateComposition(weight, bf);
         }
-        return '';
+        return null;
     };
 
-    // Calculate fat mass automatically
-    const calculateFatMass = () => {
-        if (formData.weight_kg && formData.body_fat_percentage) {
-            const weight = parseFloat(formData.weight_kg);
-            const bf = parseFloat(formData.body_fat_percentage);
-            return (weight * (bf / 100)).toFixed(2);
-        }
-        return '';
-    };
+    const comp = getComposition();
 
     // Calculate WHR automatically
-    const calculateWHR = () => {
+    const getWHR = () => {
         if (formData.waist_cm && formData.hip_cm) {
             const waist = parseFloat(formData.waist_cm);
             const hip = parseFloat(formData.hip_cm);
-            return (waist / hip).toFixed(3);
+            return calculateWHR(waist, hip);
         }
-        return '';
+        return null;
     };
+
+    const whr = getWHR();
+
+    // Calculate BMR automatically
+    const getBMR = () => {
+        if (formData.weight_kg && client.birth_date && client.gender) {
+            const weight = parseFloat(formData.weight_kg);
+            const height = client.height || 170; // fallback height if missing
+            const birth = new Date(client.birth_date);
+            const age = new Date().getFullYear() - birth.getFullYear();
+            return calculateBMR(weight, height, age, client.gender);
+        }
+        return null;
+    };
+
+    const bmr = getBMR();
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -165,19 +175,30 @@ export function CreateAssessmentDialog({
                             </div>
                         </div>
                         {/* Auto-calculated fields */}
-                        {(formData.weight_kg && formData.body_fat_percentage) && (
-                            <div className="grid grid-cols-2 gap-4 p-3 bg-muted/50 rounded-lg">
+                        {comp && (
+                            <div className="grid grid-cols-3 gap-4 p-3 bg-muted/50 rounded-lg">
                                 <div>
-                                    <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Label className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase font-bold tracking-tighter">
                                         <Dumbbell className="w-3 h-3" />
-                                        Massa Magra (auto)
+                                        Massa Magra
                                     </Label>
-                                    <p className="text-sm font-semibold">{calculateLeanMass()} kg</p>
+                                    <p className="text-sm font-semibold">{comp.leanMassKg} kg</p>
                                 </div>
                                 <div>
-                                    <Label className="text-xs text-muted-foreground">Massa Gorda (auto)</Label>
-                                    <p className="text-sm font-semibold">{calculateFatMass()} kg</p>
+                                    <Label className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase font-bold tracking-tighter">
+                                        Massa Gorda
+                                    </Label>
+                                    <p className="text-sm font-semibold">{comp.fatMassKg} kg</p>
                                 </div>
+                                {bmr && (
+                                    <div>
+                                        <Label className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase font-bold tracking-tighter">
+                                            <Activity className="w-3 h-3" />
+                                            TMB (Metab.)
+                                        </Label>
+                                        <p className="text-sm font-semibold text-primary">{bmr} kcal</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -246,10 +267,10 @@ export function CreateAssessmentDialog({
                             </div>
                         </div>
                         {/* Show WHR if available */}
-                        {(formData.waist_cm && formData.hip_cm) && (
+                        {whr && (
                             <div className="p-3 bg-muted/50 rounded-lg">
-                                <Label className="text-xs text-muted-foreground">RCQ - Relação Cintura/Quadril (auto)</Label>
-                                <p className="text-sm font-semibold">{calculateWHR()}</p>
+                                <Label className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">RCQ - Relação Cintura/Quadril</Label>
+                                <p className="text-sm font-semibold">{whr}</p>
                             </div>
                         )}
                     </div>

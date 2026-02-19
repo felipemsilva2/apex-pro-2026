@@ -5,6 +5,8 @@ export type Tenant = {
     subdomain: string;
     custom_domain: string | null;
     logo_url: string | null;
+    terminology?: Record<string, string>;
+    landing_page_config?: any;
     favicon_url: string | null;
     primary_color: string | null;
     secondary_color: string | null;
@@ -46,13 +48,15 @@ export async function getTenantBranding(tenantId: string): Promise<Tenant | null
             return null;
         }
 
+        const tenantData = data as any;
+
         console.log('[Whitelabel] Loaded tenant branding:', {
-            business_name: data.business_name,
-            primary_color: data.primary_color,
-            logo_url: data.logo_url,
+            business_name: tenantData.business_name,
+            primary_color: tenantData.primary_color,
+            logo_url: tenantData.logo_url,
         });
 
-        return data;
+        return tenantData as Tenant;
     } catch (error) {
         console.error('[Whitelabel] Exception fetching tenant:', error);
         return null;
@@ -160,3 +164,11 @@ export function getVisibleColor(hex: string): string {
     }
     return hex;
 }
+
+/**
+ * Gets a terminology value for a given key, falling back to a default
+ */
+export const getTerminology = (tenant: Tenant | null, key: string, defaultValue: string): string => {
+    if (!tenant?.terminology) return defaultValue;
+    return tenant.terminology[key] || defaultValue;
+};

@@ -26,7 +26,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const visiblePrimary = getVisibleColor(brandColors.primary);
 
-  const { data: coach } = useCoachProfile();
+  const { data: coachData } = useCoachProfile();
+  const coach = coachData as any;
   const { data: serverProfile, isLoading: loadingProfile, refetch: refetchProfile, isRefetching: isRefetchingProfile } = useAthleteProfile();
   const profile = serverProfile || contextProfile;
 
@@ -221,7 +222,7 @@ export default function HomeScreen() {
                 <Apple size={24} color={visiblePrimary} />
               </View>
               <Text style={styles.gridTitle}>DIETA</Text>
-              <Text style={styles.gridSubtitle}>{diet?.meals?.length || 0} REFEIÇÕES</Text>
+              <Text style={styles.gridSubtitle}>{diet?.[0]?.meals?.length || 0} REFEIÇÕES</Text>
               <ExternalLink size={12} color="rgba(255,255,255,0.2)" style={styles.gridCornerIcon} />
             </TouchableOpacity>
           </View>

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
     ArrowLeft, Plus, Save, Trash2, Utensils,
     Target, Search, Calculator, ChevronRight,
-    AlertTriangle, MoreVertical, Edit2, Copy, Tag
+    AlertTriangle, MoreVertical, Edit2, Copy, Tag, Clock
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -16,6 +16,8 @@ import { FeatureExplainer } from "@/components/dashboard/FeatureExplainer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { calculateMacros, roundKcal, roundMacro } from "@/lib/calculations";
+import { FITNESS_LIBRARY, formatDisplayName } from "@/lib/fitnessLibrary";
 
 export default function MealPlanEditorPage() {
     const { id } = useParams<{ id: string }>();
@@ -29,6 +31,7 @@ export default function MealPlanEditorPage() {
         { value: 'carbo_medio', label: 'CARBO MÉDIO' },
         { value: 'carbo_baixo', label: 'CARBO BAIXO' },
         { value: 'zero_carbo', label: 'ZERO CARBO' },
+        { value: 'padrao', label: 'DIETA PADRÃO' },
     ];
 
     // UI State
@@ -40,6 +43,9 @@ export default function MealPlanEditorPage() {
     const [selectedMealId, setSelectedMealId] = useState<string | null>(null);
     const [foodSearchQuery, setFoodSearchQuery] = useState("");
     const [foodResults, setFoodResults] = useState<any[]>([]);
+    const [dietDescription, setDietDescription] = useState("");
+    const [newMealTime, setNewMealTime] = useState("");
+    const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
 
     // Fetch Meal Plan Details
     const { data: plan, isLoading } = useQuery({
@@ -60,6 +66,8 @@ export default function MealPlanEditorPage() {
         if (plan) {
             setProtocolName(plan.name);
             setDayLabel(plan.day_label || null);
+            setDietDescription(plan.description || "");
+            setDaysOfWeek(plan.days_of_week || []);
         }
     }, [plan]);
 
@@ -67,35 +75,45 @@ export default function MealPlanEditorPage() {
     const totals = useMemo(() => {
         if (!plan?.meals) return { kcal: 0, protein: 0, carbs: 0, fats: 0 };
         return plan.meals.reduce((acc, meal) => {
-            const mealFoods = meal.foods || [];
+            const mealFoods = (meal.foods || []) as any[];
             mealFoods.forEach(food => {
                 acc.kcal += Number(food.kcal) || 0;
                 acc.protein += Number(food.protein) || 0;
                 acc.carbs += Number(food.carbs) || 0;
                 acc.fats += Number(food.fats) || 0;
             });
-            return acc;
+            return {
+                kcal: roundKcal(acc.kcal),
+                protein: roundMacro(acc.protein),
+                carbs: roundMacro(acc.carbs),
+                fats: roundMacro(acc.fats)
+            };
         }, { kcal: 0, protein: 0, carbs: 0, fats: 0 });
     }, [plan?.meals]);
 
     // Mutations
     const updatePlanMetaMutation = useMutation({
-        mutationFn: async ({ name, day_label }: { name: string; day_label: string | null }) => {
-            const { error } = await supabase.from('meal_plans').update({ name, day_label }).eq('id', id);
+        mutationFn: async ({ name, day_label, description, days_of_week }: { name: string; day_label: string | null; description?: string; days_of_week?: number[] }) => {
+            const { error } = await supabase.from('meal_plans').update({ name, day_label, description, days_of_week }).eq('id', id);
             if (error) throw error;
         },
         onSuccess: () => {
             toast.success("Dieta atualizada!");
             queryClient.invalidateQueries({ queryKey: ['meal-plan', id] });
             queryClient.invalidateQueries({ queryKey: ['client-meal-plans'] });
+        },
+        onError: (err: any) => {
+            console.error("Error updating plan meta:", err);
+            toast.error(`Erro ao salvar: ${err.message || 'Erro desconhecido'}`);
         }
     });
 
     const addMealMutation = useMutation({
-        mutationFn: async (name: string) => {
+        mutationFn: async ({ name, time_of_day }: { name: string, time_of_day: string }) => {
             const { data, error } = await supabase.from('meals').insert({
                 meal_plan_id: id,
                 name,
+                time_of_day: time_of_day || null,
                 order_index: (plan?.meals?.length || 0) + 1,
                 foods: []
             }).select().single();
@@ -106,6 +124,35 @@ export default function MealPlanEditorPage() {
             toast.success("Refeição adicionada!");
             setIsAddMealOpen(false);
             setNewMealName("");
+            setNewMealTime("");
+            queryClient.invalidateQueries({ queryKey: ['meal-plan', id] });
+        }
+    });
+
+    const duplicateMealMutation = useMutation({
+        mutationFn: async (meal: Meal) => {
+            const { data, error } = await supabase.from('meals').insert({
+                meal_plan_id: id,
+                name: `${meal.name} - Cópia`,
+                time_of_day: meal.time_of_day,
+                order_index: (plan?.meals?.length || 0) + 1,
+                foods: meal.foods || []
+            }).select().single();
+            if (error) throw error;
+            return data;
+        },
+        onSuccess: () => {
+            toast.success("Refeição duplicada com sucesso!");
+            queryClient.invalidateQueries({ queryKey: ['meal-plan', id] });
+        }
+    });
+
+    const updateMealMutation = useMutation({
+        mutationFn: async ({ mealId, name, time_of_day }: { mealId: string, name: string, time_of_day: string | null }) => {
+            const { error } = await supabase.from('meals').update({ name, time_of_day }).eq('id', mealId);
+            if (error) throw error;
+        },
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['meal-plan', id] });
         }
     });
@@ -124,17 +171,20 @@ export default function MealPlanEditorPage() {
     const updateMealFoodsMutation = useMutation({
         mutationFn: async ({ mealId, foods }: { mealId: string, foods: any[] }) => {
             console.log("Updating meal foods:", { mealId, foods });
-            const totalKcal = Math.round(foods.reduce((sum, f) => sum + Number(f.kcal || 0), 0));
-            const totalProtein = Math.round(foods.reduce((sum, f) => sum + Number(f.protein || 0), 0));
-            const totalCarbs = Math.round(foods.reduce((sum, f) => sum + Number(f.carbs || 0), 0));
-            const totalFats = Math.round(foods.reduce((sum, f) => sum + Number(f.fats || 0), 0));
+            const results = foods.reduce((acc, f) => {
+                acc.kcal += Number(f.kcal || 0);
+                acc.protein += Number(f.protein || 0);
+                acc.carbs += Number(f.carbs || 0);
+                acc.fats += Number(f.fats || 0);
+                return acc;
+            }, { kcal: 0, protein: 0, carbs: 0, fats: 0 });
 
             const { data, error } = await supabase.from('meals').update({
                 foods,
-                total_calories: totalKcal,
-                total_protein_g: totalProtein,
-                total_carbs_g: totalCarbs,
-                total_fats_g: totalFats
+                total_calories: roundKcal(results.kcal),
+                total_protein_g: roundMacro(results.protein),
+                total_carbs_g: roundMacro(results.carbs),
+                total_fats_g: roundMacro(results.fats)
             }).eq('id', mealId).select();
 
             if (error) {
@@ -156,16 +206,53 @@ export default function MealPlanEditorPage() {
     // Food Search Logic
     useEffect(() => {
         const timer = setTimeout(async () => {
-            if (foodSearchQuery.length < 2) {
+            if (!foodSearchQuery.trim()) {
                 setFoodResults([]);
                 return;
             }
-            const { data, error } = await supabase
+
+            const searchLower = foodSearchQuery.toLowerCase();
+
+            // 1. Search in local Fitness Library first
+            const libraryMatches = FITNESS_LIBRARY.filter(f =>
+                f.name.toLowerCase().includes(searchLower) ||
+                f.category.toLowerCase().includes(searchLower)
+            ).map(f => ({
+                id: `lib-${f.name}`,
+                name: f.name,
+                protein_g: f.protein,
+                carbs_g: f.carbs,
+                fats_g: f.fats,
+                kcal: f.kcal,
+                serving_size: 100,
+                serving_unit: 'g',
+                is_premium: true
+            }));
+
+            // 2. Search in Supabase (Global TACO)
+            const { data: dbData, error } = await supabase
                 .from('foods')
                 .select('*')
                 .ilike('name', `%${foodSearchQuery}%`)
-                .limit(10);
-            if (!error && data) setFoodResults(data);
+                .limit(50);
+
+            if (!error && dbData) {
+                const cleanedDbData = dbData.map(f => ({
+                    ...f,
+                    name: formatDisplayName(f.name),
+                    is_premium: false
+                }));
+
+                // Combine: Library first, then DB
+                // Filter out DB duplicates if they have the same name as library items
+                const filteredDbData = cleanedDbData.filter(df =>
+                    !libraryMatches.some(lf => lf.name.toLowerCase() === df.name.toLowerCase())
+                );
+
+                setFoodResults([...libraryMatches, ...filteredDbData].slice(0, 50));
+            } else {
+                setFoodResults(libraryMatches);
+            }
         }, 300);
         return () => clearTimeout(timer);
     }, [foodSearchQuery]);
@@ -214,10 +301,19 @@ export default function MealPlanEditorPage() {
         const ratio = qtyNum / baseServing;
 
         food.qty = newQty;
-        food.kcal = (food.base_kcal * ratio).toFixed(1);
-        food.protein = (food.base_protein * ratio).toFixed(1);
-        food.carbs = (food.base_carbs * ratio).toFixed(1);
-        food.fats = (food.base_fats * ratio).toFixed(1);
+        const result = calculateMacros(
+            qtyNum,
+            food.base_kcal,
+            food.base_protein,
+            food.base_carbs,
+            food.base_fats,
+            food.base_serving_size
+        );
+
+        food.kcal = result.kcal;
+        food.protein = result.protein;
+        food.carbs = result.carbs;
+        food.fats = result.fats;
 
         updateMealFoodsMutation.mutate({ mealId: meal.id, foods });
     };
@@ -289,7 +385,7 @@ export default function MealPlanEditorPage() {
                                     onClick={() => {
                                         const newLabel = dayLabel === opt.value ? null : opt.value;
                                         setDayLabel(newLabel);
-                                        updatePlanMetaMutation.mutate({ name: protocolName, day_label: newLabel });
+                                        updatePlanMetaMutation.mutate({ name: protocolName, day_label: newLabel, description: dietDescription });
                                     }}
                                     className={`px-3 py-1.5 text-[10px] font-display font-black italic uppercase tracking-widest border transition-all ${dayLabel === opt.value
                                         ? 'bg-primary text-black border-primary'
@@ -299,6 +395,72 @@ export default function MealPlanEditorPage() {
                                     {opt.label}
                                 </button>
                             ))}
+                        </div>
+
+                        {/* Weekly Schedule - Agenda Semanal */}
+                        <div className="flex items-center gap-3 flex-wrap pt-4 border-t border-white/5">
+                            <Clock size={14} className="text-white/30" />
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-white/30">AGENDA SEMANAL:</span>
+                            <div className="flex items-center gap-1.5">
+                                {[
+                                    { id: 1, label: 'S' },
+                                    { id: 2, label: 'T' },
+                                    { id: 3, label: 'Q' },
+                                    { id: 4, label: 'Q' },
+                                    { id: 5, label: 'S' },
+                                    { id: 6, label: 'S' },
+                                    { id: 0, label: 'D' },
+                                ].map((day) => {
+                                    const isActive = daysOfWeek.includes(day.id);
+                                    return (
+                                        <button
+                                            key={day.id}
+                                            onClick={() => {
+                                                const newDays = isActive
+                                                    ? daysOfWeek.filter(d => d !== day.id)
+                                                    : [...daysOfWeek, day.id].sort();
+                                                setDaysOfWeek(newDays);
+                                                updatePlanMetaMutation.mutate({
+                                                    name: protocolName,
+                                                    day_label: dayLabel,
+                                                    description: dietDescription,
+                                                    days_of_week: newDays
+                                                });
+                                            }}
+                                            className={`w-8 h-8 rounded-none border font-display text-[10px] font-black transition-all ${isActive
+                                                ? 'bg-primary border-primary text-secondary'
+                                                : 'bg-white/5 border-white/10 text-white/40 hover:border-white/20'
+                                                }`}
+                                        >
+                                            {day.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <FeatureExplainer
+                                title="Agenda Semanal"
+                                description="Selecione os dias da semana em que esta estratégia deve ser aplicada. No app do aluno, a dieta configurada para o dia atual será aberta automaticamente por padrão."
+                            />
+                        </div>
+
+                        {/* General Instructions Section */}
+                        <div className="space-y-3 pt-4 border-t border-white/5">
+                            <div className="flex items-center gap-2">
+                                <Label className="text-[10px] font-bold uppercase tracking-widest text-primary/70">
+                                    Instruções Gerais (Água, Temperos, Suplementos, Observações)
+                                </Label>
+                                <FeatureExplainer
+                                    title="Instruções para o Aluno"
+                                    description="Este campo é ideal para orientações que valem para a dieta toda, como quantidade de água diária, sugestão de temperos, restrições ou dicas de preparo."
+                                />
+                            </div>
+                            <Textarea
+                                placeholder="Ex: Beber 3.5L de água por dia. Usar apenas temperos naturais (alho, cebola, ervas). Evitar frituras..."
+                                value={dietDescription}
+                                onChange={(e) => setDietDescription(e.target.value)}
+                                onBlur={() => updatePlanMetaMutation.mutate({ name: protocolName, day_label: dayLabel, description: dietDescription })}
+                                className="bg-white/5 border-white/10 text-white placeholder:text-white/20 min-h-[100px] focus-visible:ring-primary/30 rounded-none italic"
+                            />
                         </div>
                     </div>
 
@@ -346,7 +508,27 @@ export default function MealPlanEditorPage() {
                                 <div className="w-10 h-10 bg-primary/10 flex items-center justify-center border border-primary/20">
                                     <span className="text-primary font-display font-black italic">{meal.order_index}</span>
                                 </div>
-                                <h3 className="text-lg font-display font-bold uppercase italic text-white">{meal.name}</h3>
+                                <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 flex-1">
+                                    <Input
+                                        defaultValue={meal.name}
+                                        onBlur={(e) => {
+                                            if (e.target.value !== meal.name) {
+                                                updateMealMutation.mutate({ mealId: meal.id, name: e.target.value, time_of_day: meal.time_of_day });
+                                            }
+                                        }}
+                                        className="bg-transparent border-none text-lg font-display font-bold uppercase italic text-white leading-none focus-visible:ring-0 p-0 h-auto w-fit min-w-[150px]"
+                                        placeholder="NOME DA REFEIÇÃO"
+                                    />
+                                    <div className="flex items-center gap-2 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-sm">
+                                        <span className="text-[10px] font-black text-primary/60 italic uppercase tracking-widest">Horário:</span>
+                                        <input
+                                            type="time"
+                                            value={meal.time_of_day || ""}
+                                            onChange={(e) => updateMealMutation.mutate({ mealId: meal.id, name: meal.name, time_of_day: e.target.value })}
+                                            className="bg-transparent border-none text-xs font-bold text-primary focus:ring-0 p-0 w-16"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Button
@@ -360,6 +542,15 @@ export default function MealPlanEditorPage() {
                                 >
                                     <Search size={14} className="mr-2" />
                                     Buscar Alimento
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-white/40 hover:text-primary hover:bg-primary/5 uppercase text-[10px] font-bold tracking-widest"
+                                    onClick={() => duplicateMealMutation.mutate(meal)}
+                                >
+                                    <Copy size={14} className="mr-2" />
+                                    Duplicar
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -380,8 +571,16 @@ export default function MealPlanEditorPage() {
                             ) : (
                                 meal.foods?.map((food, idx) => (
                                     <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-white/[0.01] hover:bg-white/[0.03] transition-colors gap-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-bold text-white uppercase tracking-tight">{food.name}</span>
+                                        <div className="flex flex-col flex-1">
+                                            <Input
+                                                value={food.name}
+                                                onChange={(e) => {
+                                                    const newFoods = [...meal.foods];
+                                                    (newFoods[idx] as any).name = e.target.value;
+                                                    updateMealFoodsMutation.mutate({ mealId: meal.id, foods: newFoods });
+                                                }}
+                                                className="bg-transparent border-none p-0 h-auto text-sm font-bold text-white uppercase tracking-tight focus-visible:ring-0 w-full"
+                                            />
                                             <div className="flex gap-3 mt-1">
                                                 <span className="text-[10px] text-white/40 uppercase">P: <span className="text-primary/70">{food.protein}g</span></span>
                                                 <span className="text-[10px] text-white/40 uppercase">C: <span className="text-primary/70">{food.carbs}g</span></span>
@@ -468,12 +667,21 @@ export default function MealPlanEditorPage() {
                                 className="bg-white/5 border-white/10 rounded-none focus:border-primary/50 h-12"
                             />
                         </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-primary/70">Horário (Opcional)</Label>
+                            <Input
+                                type="time"
+                                value={newMealTime}
+                                onChange={(e) => setNewMealTime(e.target.value)}
+                                className="bg-white/5 border-white/10 rounded-none focus:border-primary/50 h-12 text-white"
+                            />
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button
                             className="w-full btn-athletic rounded-none"
                             disabled={!newMealName || addMealMutation.isPending}
-                            onClick={() => addMealMutation.mutate(newMealName)}
+                            onClick={() => addMealMutation.mutate({ name: newMealName, time_of_day: newMealTime })}
                         >
                             Criar Refeição
                         </Button>
@@ -510,7 +718,12 @@ export default function MealPlanEditorPage() {
                                         className="w-full text-left p-6 hover:bg-primary/5 flex items-center justify-between group transition-colors"
                                     >
                                         <div className="space-y-1">
-                                            <span className="text-lg font-bold text-white uppercase italic tracking-tight">{food.name}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-lg font-bold text-white uppercase italic tracking-tight">{food.name}</span>
+                                                {food.is_premium && (
+                                                    <span className="px-1.5 py-0.5 bg-primary/20 text-primary text-[8px] font-black uppercase tracking-widest border border-primary/30">PREMIUM</span>
+                                                )}
+                                            </div>
                                             <div className="flex gap-4">
                                                 <span className="text-[10px] font-bold text-white/40">P: {food.protein_g}g</span>
                                                 <span className="text-[10px] font-bold text-white/40">C: {food.carbs_g}g</span>
@@ -522,16 +735,16 @@ export default function MealPlanEditorPage() {
                                     </button>
                                 ))}
                             </div>
-                        ) : foodSearchQuery.length >= 2 ? (
+                        ) : foodSearchQuery.length > 0 ? (
                             <div className="p-12 text-center text-white/20 italic">Nenhum alimento encontrado.</div>
                         ) : (
-                            <div className="p-12 text-center text-white/20 italic">Digite pelo menos 2 caracteres para buscar.</div>
+                            <div className="p-12 text-center text-white/20 italic">Carregando lista de alimentos...</div>
                         )}
                     </div>
                 </DialogContent>
             </Dialog>
 
             <Toaster />
-        </div>
+        </div >
     );
 }

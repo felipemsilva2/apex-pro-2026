@@ -53,10 +53,6 @@ const DashboardHome = () => {
           </p>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <div className="flex items-center gap-4 text-[9px] font-black text-white/40 mb-2">
-            <span className="flex items-center gap-1"><Activity size={10} className="text-primary" /> SISTEMA: OK</span>
-            <span className="flex items-center gap-1"><Zap size={10} className="text-primary" /> CONEXÃO: ESTÁVEL</span>
-          </div>
           <button
             data-tour="quick-actions"
             onClick={() => navigate('/dashboard/plans')}
@@ -64,9 +60,6 @@ const DashboardHome = () => {
           >
             NOVO PLANO
           </button>
-          <span className="text-[10px] font-display font-bold uppercase text-white/40 italic">
-            LOC: SÃO PAULO, BR // {tenant?.business_name || 'APEX PRO'}
-          </span>
         </div>
       </div>
 
@@ -128,7 +121,7 @@ const DashboardHome = () => {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

@@ -20,7 +20,7 @@ export function useAthleteProfile() {
                 .maybeSingle();
 
             if (error) throw error;
-            return data;
+            return data as any;
         },
         enabled: !!user?.id,
     });
@@ -35,7 +35,7 @@ export function useAthleteWorkouts() {
     return useQuery({
         queryKey: ['athlete-workouts', profile?.id],
         queryFn: async () => {
-            if (!profile?.id) return [];
+            if (!profile?.id) return [] as any[];
 
             const { data, error } = await supabase
                 .from('workouts')
@@ -50,7 +50,7 @@ export function useAthleteWorkouts() {
                 .order('scheduled_date', { ascending: false });
 
             if (error) throw error;
-            return data;
+            return data as any[];
         },
         enabled: !!profile?.id,
     });
@@ -63,7 +63,7 @@ export function useWorkoutDetail(workoutId: string) {
     return useQuery({
         queryKey: ['workout-detail', workoutId],
         queryFn: async () => {
-            if (!workoutId) return null;
+            if (!workoutId) return null as any;
 
             const { data, error } = await supabase
                 .from('workouts')
@@ -78,7 +78,7 @@ export function useWorkoutDetail(workoutId: string) {
                 .single();
 
             if (error) throw error;
-            return data;
+            return data as any;
         },
         enabled: !!workoutId,
     });
@@ -93,7 +93,7 @@ export function useAthleteDiet() {
     return useQuery({
         queryKey: ['athlete-diet', profile?.id],
         queryFn: async () => {
-            if (!profile?.id) return [];
+            if (!profile?.id) return [] as any[];
 
             const { data, error } = await supabase
                 .from('meal_plans')
@@ -106,7 +106,7 @@ export function useAthleteDiet() {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            return data || [];
+            return (data || []) as any[];
         },
         enabled: !!profile?.id,
     });
@@ -121,7 +121,7 @@ export function useAthleteProtocols() {
     return useQuery({
         queryKey: ['athlete-protocols', profile?.id],
         queryFn: async () => {
-            if (!profile?.id) return [];
+            if (!profile?.id) return [] as any[];
 
             const { data, error } = await supabase
                 .from('hormonal_protocols')
@@ -134,7 +134,7 @@ export function useAthleteProtocols() {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            return data;
+            return data as any[];
         },
         enabled: !!profile?.id,
     });
@@ -154,8 +154,8 @@ export function useUpdateAthleteProfile() {
                 throw new Error('Perfil de atleta não carregado. Você está logado como atleta?');
             }
 
-            const { data, error } = await supabase
-                .from('clients')
+            const { data, error } = await (supabase
+                .from('clients') as any)
                 .update(updates)
                 .eq('id', profile.id)
                 .select()
@@ -165,7 +165,7 @@ export function useUpdateAthleteProfile() {
                 console.error('[useUpdateAthleteProfile] Supabase error:', error);
                 throw error;
             }
-            return data;
+            return data as any;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['athlete-profile'] });
@@ -183,7 +183,7 @@ export function useAthleteAssessments() {
     return useQuery({
         queryKey: ['athlete-assessments', profile?.id],
         queryFn: async () => {
-            if (!profile?.id) return [];
+            if (!profile?.id) return [] as any[];
 
             const { data, error } = await supabase
                 .from('body_assessments')
@@ -193,7 +193,7 @@ export function useAthleteAssessments() {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            return data;
+            return data as any[];
         },
         enabled: !!profile?.id,
     });
@@ -209,7 +209,7 @@ export function useAthleteAppointments() {
     return useQuery({
         queryKey: ['athlete-appointments', profile?.id],
         queryFn: async () => {
-            if (!profile?.id || !tenant?.id) return [];
+            if (!profile?.id || !tenant?.id) return [] as any[];
 
             const { data, error } = await supabase
                 .from('appointments')
@@ -220,7 +220,7 @@ export function useAthleteAppointments() {
                 .order('start_time', { ascending: true });
 
             if (error) throw error;
-            return data;
+            return data as any[];
         },
         enabled: !!profile?.id && !!tenant?.id,
     });
@@ -238,14 +238,18 @@ export function useCoachProfile() {
             if (!tenant?.id) return null;
 
             // 1. If the logged in user is a COACH, show their own profile
-            const { data: ownProfile } = await supabase
-                .from('profiles')
-                .select('id, full_name, avatar_url, cref, specialty, bio, education, instagram, website, spotify_playlist_url')
-                .eq('id', user?.id)
-                .eq('role', 'coach')
-                .maybeSingle();
+            let ownProfile = null;
+            if (user?.id) {
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, avatar_url, cref, specialty, bio, education, instagram, website, spotify_playlist_url')
+                    .eq('id', user.id)
+                    .eq('role', 'coach')
+                    .maybeSingle();
+                ownProfile = data;
+            }
 
-            if (ownProfile) return ownProfile;
+            if (ownProfile) return ownProfile as any;
 
             // 2. Try fetching the ASSIGNED coach
             if (profile?.assigned_coach_id) {
@@ -255,7 +259,7 @@ export function useCoachProfile() {
                     .eq('id', profile.assigned_coach_id)
                     .maybeSingle();
 
-                if (assignedCoach) return assignedCoach;
+                if (assignedCoach) return assignedCoach as any;
             }
 
             // 3. Fallback: Find any coach in the tenant who actually has content (bio or specialty)
@@ -268,7 +272,7 @@ export function useCoachProfile() {
                 .limit(1)
                 .maybeSingle();
 
-            if (activeCoach) return activeCoach;
+            if (activeCoach) return activeCoach as any;
 
             // 4. Last resort: Just pick the first coach available
             const { data: firstCoach } = await supabase
@@ -279,7 +283,7 @@ export function useCoachProfile() {
                 .limit(1)
                 .maybeSingle();
 
-            return firstCoach;
+            return firstCoach as any;
         },
         enabled: !!tenant?.id,
         staleTime: 1000 * 60 * 5, // 5 minutes

@@ -30,21 +30,21 @@ export default function ProgressScreen() {
     // Prepare chart data
     const weightData = assessments
         ?.filter(a => a.weight_kg)
-        .map(a => ({
+        .map((a: any) => ({
             date: a.assessment_date,
             value: a.weight_kg,
         })) || [];
 
     const bodyFatData = assessments
         ?.filter(a => a.body_fat_percentage)
-        .map(a => ({
+        .map((a: any) => ({
             date: a.assessment_date,
             value: a.body_fat_percentage,
         })) || [];
 
     const leanMassData = assessments
         ?.filter(a => a.lean_mass_kg)
-        .map(a => ({
+        .map((a: any) => ({
             date: a.assessment_date,
             value: a.lean_mass_kg,
         })) || [];
@@ -192,7 +192,7 @@ export default function ProgressScreen() {
                                         </View>
                                     </View>
 
-                                    {assessments?.map((assessment, index) => (
+                                    {assessments?.map((assessment: any, index) => (
                                         <AssessmentRow
                                             key={assessment.id}
                                             assessment={assessment}

@@ -71,7 +71,7 @@ export function useDocuments() {
                 file_url: publicUrl,
                 file_type: fileType,
                 category: category
-            });
+            } as any);
 
         if (dbError) throw dbError;
     };

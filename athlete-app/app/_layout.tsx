@@ -113,30 +113,33 @@ function RootLayoutNav() {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('[RootLayout] Auth State Update:', {
-      hasUser: !!user,
-      loading,
-      status: profile?.status,
-      segments: segments
-    });
+
 
     if (loading) return;
 
     const segments_array = Array.isArray(segments) ? segments : [];
     const inAuthGroup = segments_array[0] === '(auth)';
     const inBlockedPage = segments_array[0] === 'blocked';
+    const inLegalPage = segments_array[0] === 'terms' || segments_array[0] === 'privacy';
+    const inAcceptancePage = segments_array[0] === 'terms-acceptance';
     const isSuspended = profile?.status === 'suspended' || profile?.status === 'cancelled';
 
-    console.log('[RootLayout] Routing Decision:', { inAuthGroup, inBlockedPage, isSuspended });
+    // Check if terms are accepted (if user is logged in and profile loaded)
+    const needsToAcceptTerms = user && profile && !profile.terms_accepted_at;
 
-    if (!user && !inAuthGroup) {
-      console.log('[RootLayout] Redirecting to Login');
+
+
+    if (!user && !inAuthGroup && !inLegalPage) {
+
       router.replace('/(auth)/login');
     } else if (user && isSuspended && !inBlockedPage) {
-      console.log('[RootLayout] Redirecting to Blocked');
+
       router.replace('/blocked');
-    } else if (user && !isSuspended && (inAuthGroup || inBlockedPage)) {
-      console.log('[RootLayout] Redirecting to Tabs');
+    } else if (user && !isSuspended && needsToAcceptTerms && !inAcceptancePage && !inLegalPage) {
+
+      router.replace('/terms-acceptance');
+    } else if (user && !isSuspended && !needsToAcceptTerms && (inAuthGroup || inBlockedPage || inAcceptancePage)) {
+
       router.replace('/(tabs)');
     }
   }, [user, profile?.status, segments, loading]);
@@ -158,6 +161,9 @@ function RootLayoutNav() {
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="terms" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="privacy" options={{ presentation: 'modal', headerShown: false }} />
+          <Stack.Screen name="terms-acceptance" options={{ headerShown: false, gestureEnabled: false }} />
         </Stack>
       </ThemeProvider>
     </View>

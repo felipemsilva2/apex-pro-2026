@@ -22,6 +22,7 @@ export type Assessment = {
     side_photo: string | null;
     coach_feedback: string | null;
     coach_category: string | null;
+    basal_metabolic_rate: number | null;
     status: 'pending' | 'reviewed';
     created_at: string;
     updated_at: string;
@@ -43,6 +44,7 @@ export type CreateAssessmentInput = {
     target_body_fat_percentage?: number | null;
     coach_feedback?: string | null;
     coach_category?: string | null;
+    basal_metabolic_rate?: number | null;
     status?: 'pending' | 'reviewed';
 };
 

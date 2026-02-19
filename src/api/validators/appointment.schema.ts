@@ -7,7 +7,7 @@ export const appointmentSchema = z.object({
     description: z.string().optional(),
     start_time: z.string().datetime(),
     end_time: z.string().datetime(),
-    status: z.enum(['pending', 'confirmed', 'cancelled']).default('pending'),
+    status: z.enum(['pending', 'confirmed', 'cancelled', 'completed']).default('pending'),
     type: z.enum(['session', 'evaluation', 'call', 'other']).default('session'),
     video_link: z.string().optional().nullable(),
 });

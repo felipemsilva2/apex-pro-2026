@@ -35,8 +35,38 @@ export default function SettingsScreen() {
     };
 
     const handleDeleteAccount = () => {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        setDeleteModalVisible(true);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        Alert.alert(
+            "Excluir Conta",
+            "Esta ação é permanente. Todos os seus dados de treino e evolução serão removidos. Deseja prosseguir?",
+            [
+                { text: "Cancelar", style: "cancel" },
+                {
+                    text: "Excluir",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            const { error } = await deleteAccount();
+                            if (error) throw error;
+
+                            Alert.alert(
+                                "Conta Excluída",
+                                "Sua solicitação foi processada com sucesso. Seus dados serão removidos em breve.",
+                                [
+                                    {
+                                        text: "OK", onPress: async () => {
+                                            await signOut();
+                                        }
+                                    }
+                                ]
+                            );
+                        } catch (error) {
+                            Alert.alert("Erro", "Não foi possível excluir a conta. Tente novamente.");
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const confirmLogout = async () => {
@@ -44,10 +74,7 @@ export default function SettingsScreen() {
         await signOut();
     };
 
-    const confirmDelete = async () => {
-        setDeleteModalVisible(false);
-        await deleteAccount();
-    };
+
 
     const SettingItem = ({ icon: Icon, label, onPress, subLabel, isLast }: any) => (
         <TouchableOpacity
@@ -232,16 +259,7 @@ export default function SettingsScreen() {
                 brandColors={brandColors}
             />
 
-            <ConfirmationModal
-                visible={deleteModalVisible}
-                title="Excluir Conta"
-                message="Esta ação é permanente. Todos os seus dados de treino e evolução serão removidos. Deseja prosseguir?"
-                type="warning"
-                onConfirm={confirmDelete}
-                onCancel={() => setDeleteModalVisible(false)}
-                confirmText="Excluir"
-                brandColors={brandColors}
-            />
+
         </Container>
     );
 }

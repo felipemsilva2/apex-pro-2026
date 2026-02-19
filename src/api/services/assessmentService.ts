@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { Assessment, AssessmentDelta, CreateAssessmentInput, UpdateAssessmentInput } from '@/types/assessment';
 import { createAssessmentSchema, updateAssessmentSchema } from '@/api/validators/assessment.schema';
+import { calculateBMI, calculateComposition, calculateWHR, roundMacro } from '@/lib/calculations';
 
 export class AssessmentService {
     /**
@@ -15,19 +16,14 @@ export class AssessmentService {
 
         // Calculate fat mass and lean mass if we have weight and body fat %
         if (validated.weight_kg && validated.body_fat_percentage) {
-            calculatedData.fat_mass_kg = parseFloat(
-                (validated.weight_kg * (validated.body_fat_percentage / 100)).toFixed(2)
-            );
-            calculatedData.lean_mass_kg = parseFloat(
-                (validated.weight_kg - calculatedData.fat_mass_kg).toFixed(2)
-            );
+            const comp = calculateComposition(validated.weight_kg, validated.body_fat_percentage);
+            calculatedData.fat_mass_kg = comp.fatMassKg;
+            calculatedData.lean_mass_kg = comp.leanMassKg;
         }
 
         // Calculate waist-hip ratio
         if (validated.waist_cm && validated.hip_cm) {
-            calculatedData.waist_hip_ratio = parseFloat(
-                (validated.waist_cm / validated.hip_cm).toFixed(3)
-            );
+            calculatedData.waist_hip_ratio = calculateWHR(validated.waist_cm, validated.hip_cm);
         }
 
         // Note: BMI calculation requires height which should come from client profile
@@ -67,8 +63,9 @@ export class AssessmentService {
             const fatPerc = validated.body_fat_percentage !== undefined ? validated.body_fat_percentage : current.body_fat_percentage;
 
             if (weight !== null && fatPerc !== null) {
-                calculatedData.fat_mass_kg = parseFloat((weight * (fatPerc / 100)).toFixed(2));
-                calculatedData.lean_mass_kg = parseFloat((weight - calculatedData.fat_mass_kg).toFixed(2));
+                const comp = calculateComposition(weight, fatPerc);
+                calculatedData.fat_mass_kg = comp.fatMassKg;
+                calculatedData.lean_mass_kg = comp.leanMassKg;
             }
         }
 
@@ -170,6 +167,6 @@ export class AssessmentService {
      * Calculate BMI given weight and height
      */
     static calculateBMI(weightKg: number, heightM: number): number {
-        return parseFloat((weightKg / (heightM ** 2)).toFixed(2));
+        return calculateBMI(weightKg, heightM);
     }
 }

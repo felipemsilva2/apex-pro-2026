@@ -4,6 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname } from 'expo-router';
 import { Home, Dumbbell, Apple, TrendingUp } from 'lucide-react-native';
 import { TabButton } from './TabButton';
+import { useAuth } from '../../contexts/AuthContext';
+import { getTerminology } from '../../lib/whitelabel';
 
 /**
  * Custom bottom navigation bar with tactical HUD styling
@@ -13,6 +15,7 @@ export const CustomBottomNav: React.FC = () => {
     const router = useRouter();
     const pathname = usePathname();
     const insets = useSafeAreaInsets();
+    const { tenant } = useAuth();
 
     const tabs = [
         {
@@ -24,20 +27,20 @@ export const CustomBottomNav: React.FC = () => {
         {
             name: '/(tabs)/training',
             displayName: 'training',
-            label: 'Treinos',
+            label: getTerminology(tenant, 'training', 'Treinos'),
             icon: Dumbbell,
             badge: 0, // TODO: Connect to real data
         },
         {
             name: '/(tabs)/nutrition',
             displayName: 'nutrition',
-            label: 'Dieta',
+            label: getTerminology(tenant, 'nutrition', 'Dieta'),
             icon: Apple,
         },
         {
             name: '/(tabs)/progress',
             displayName: 'progress',
-            label: 'Progresso',
+            label: getTerminology(tenant, 'progress', 'Progresso'),
             icon: TrendingUp,
         },
     ];

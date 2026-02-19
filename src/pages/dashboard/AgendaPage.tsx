@@ -9,12 +9,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CreateAppointmentDialog } from "@/components/dashboard/CreateAppointmentDialog";
 import { type Appointment } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
+import { AppointmentContextSheet } from "@/components/dashboard/AppointmentContextSheet";
 
 const AgendaPage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"week" | "month">("week");
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isContextOpen, setIsContextOpen] = useState(false);
+  const [contextApt, setContextApt] = useState<Appointment | null>(null);
   const navigate = useNavigate();
 
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -65,6 +68,12 @@ const AgendaPage = () => {
 
   const handleAppointmentClick = (e: React.MouseEvent, appointment: Appointment) => {
     e.stopPropagation();
+    setContextApt(appointment);
+    setIsContextOpen(true);
+  };
+
+  const handleEditFromContext = (appointment: Appointment) => {
+    setIsContextOpen(false);
     setSelectedAppointment(appointment);
     setIsDialogOpen(true);
   };
@@ -99,10 +108,10 @@ const AgendaPage = () => {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl lg:text-6xl font-display font-black italic uppercase leading-tight tracking-tighter">
-            AGENDA <span className="text-primary text-blur-sm">PRO</span>
+            AGENDA DE <span className="text-primary text-blur-sm">ATENDIMENTO</span>
           </h1>
           <p className="font-display font-bold uppercase italic text-xs tracking-[0.3em] text-primary/60 mt-2">
-            GESTÃO DE SESSÕES E CRONOGRAMA
+            GESTÃO DE HORÁRIOS E CONSULTAS
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -111,7 +120,7 @@ const AgendaPage = () => {
             className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-[10px] font-display font-black italic uppercase tracking-widest hover:bg-white/10 transition-all"
           >
             <CalendarIcon size={14} className="text-primary" />
-            SINCRONIZAR GOOGLE
+            CONECTAR CALENDAR
           </button>
 
           <CreateAppointmentDialog
@@ -342,9 +351,9 @@ const AgendaPage = () => {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-6 bg-primary -skew-x-12" />
-            <h3 className="text-xl font-display font-black italic uppercase tracking-tighter">Próximas Sessões</h3>
+            <h3 className="text-xl font-display font-black italic uppercase tracking-tighter">PRÓXIMOS ATENDIMENTOS</h3>
           </div>
-          <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">STATUS EM TEMPO REAL: ATIVO</p>
+          <p className="text-[10px] font-black text-primary/60 uppercase tracking-widest">Sincronização em tempo real</p>
         </div>
 
         <div className="space-y-3">
@@ -360,16 +369,36 @@ const AgendaPage = () => {
               <div
                 key={apt.id}
                 onClick={(e) => handleAppointmentClick(e, apt)}
-                className="group flex items-center gap-6 p-5 bg-white/5 border border-white/5 hover:border-primary/40 transition-all relative overflow-hidden cursor-pointer"
+                className={cn(
+                  "group flex items-center gap-6 p-5 border transition-all relative overflow-hidden cursor-pointer",
+                  apt.status === "completed"
+                    ? "bg-green-500/10 border-green-500/20 hover:border-green-500/40"
+                    : "bg-white/5 border-white/5 hover:border-primary/40"
+                )}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="absolute top-0 right-0 w-24 h-full bg-primary/5 -skew-x-[30deg] translate-x-12 transition-transform duration-500 group-hover:translate-x-8" />
 
-                <div className="flex flex-col items-center justify-center min-w-[70px] border-r border-white/10 pr-6">
-                  <p className="text-xl font-display font-black text-primary italic leading-none">
-                    {new Date(apt.start_time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                  </p>
-                  <div className="text-[9px] font-bold text-muted-foreground uppercase mt-1 italic tracking-widest">INÍCIO</div>
+                <div className="flex items-center gap-4 border-r border-white/10 pr-6">
+                  {/* @ts-ignore */}
+                  {apt.client?.avatar_url ? (
+                    <img
+                      /* @ts-ignore */
+                      src={apt.client.avatar_url}
+                      className="w-10 h-10 rounded-none border border-primary/20 -skew-x-6 object-cover"
+                      alt="Avatar"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-primary/10 flex items-center justify-center border border-primary/20 -skew-x-6">
+                      <User size={16} className="text-primary" />
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center justify-center min-w-[70px]">
+                    <p className="text-xl font-display font-black text-primary italic leading-none">
+                      {new Date(apt.start_time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                    <div className="text-[9px] font-bold text-muted-foreground uppercase mt-1 italic tracking-widest">INÍCIO</div>
+                  </div>
                 </div>
 
                 <div className="flex-1 min-w-0 relative z-10">
@@ -381,9 +410,13 @@ const AgendaPage = () => {
                     <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">{apt.title}</span>
                     <div className={cn(
                       "text-[8px] font-black uppercase italic px-2 py-0.5 -skew-x-12",
-                      apt.status === "confirmed" ? "bg-primary text-primary-foreground" : "bg-white/10 text-white/40"
+                      apt.status === "confirmed" ? "bg-primary text-primary-foreground" :
+                        apt.status === "completed" ? "bg-green-500 text-white" :
+                          "bg-white/10 text-white/40"
                     )}>
-                      {apt.status === "confirmed" ? "CONFIRMADO" : "PENDENTE"}
+                      {apt.status === "confirmed" ? "CONFIRMADO" :
+                        apt.status === "completed" ? "REALIZADO" :
+                          "PENDENTE"}
                     </div>
                   </div>
                 </div>
@@ -481,7 +514,7 @@ const AgendaPage = () => {
                     onClick={(e) => handleStartProtocol(e, apt)}
                     className="btn-athletic px-6 py-2 text-[10px] shadow-lg shadow-primary/5"
                   >
-                    INICIAR PLANO
+                    VER PERFIL
                   </button>
                 </div>
               </div>
@@ -489,6 +522,13 @@ const AgendaPage = () => {
           )}
         </div>
       </div>
+
+      <AppointmentContextSheet
+        appointment={contextApt}
+        open={isContextOpen}
+        onOpenChange={setIsContextOpen}
+        onEdit={handleEditFromContext}
+      />
     </div >
   );
 };

@@ -130,7 +130,7 @@ export class TenantService {
     /**
      * Manages direct athlete/coach registration via Edge Function.
      */
-    async manageAthlete(input: { fullName: string, username: string, password: string, tenantId: string, role?: 'client' | 'coach', email?: string }) {
+    async manageAthlete(input: { fullName: string, username: string, password: string, tenantId: string, phone?: string, role?: 'client' | 'coach', email?: string }) {
         const { data, error } = await supabase.functions.invoke('manage-athlete', {
             body: input
         });
