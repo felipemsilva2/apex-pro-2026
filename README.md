@@ -40,6 +40,20 @@ Este projeto não foi desenvolvido de forma tradicional. Ele é fruto de um **Wo
 *   **Backend & DB:** Supabase (PostgreSQL, Auth, Storage, Edge Functions).
 *   **Infrastructure:** EAS (Expo Application Services).
 
+Demonstração Apex Pro Web: https://youtu.be/BNqWDANhnD0
+
+Demonstração Apex Pro Mobile: 
+
+<img width="590" height="1278" alt="IMG_2573" src="https://github.com/user-attachments/assets/ba4a5c38-5040-466e-95b0-e71ee12ffc56" />
+<img width="590" height="1278" alt="IMG_2572" src="https://github.com/user-attachments/assets/0e7d1e85-f6ae-4ea0-af02-8cc1406ea562" />
+<img width="590" height="1278" alt="IMG_2571" src="https://github.com/user-attachments/assets/7103e624-9817-47c4-b6ee-42335763b0f5" />
+<img width="590" height="1278" alt="IMG_2570" src="https://github.com/user-attachments/assets/d92fa6a3-2155-46de-b01a-a3bd06b4dc6a" />
+<img width="590" height="1278" alt="IMG_2577" src="https://github.com/user-attachments/assets/f8aa97dd-7798-4f90-8e79-8f20055de1f8" />
+<img width="590" height="1278" alt="IMG_2576" src="https://github.com/user-attachments/assets/fc6666d0-564a-4ebb-8a76-18ac1b650ea9" />
+<img width="590" height="1278" alt="IMG_2575" src="https://github.com/user-attachments/assets/bcc45629-f2e5-43ea-aeb1-8a29ea9b127f" />
+<img width="590" height="1278" alt="IMG_2574" src="https://github.com/user-attachments/assets/1536c4d4-4a12-4ede-9beb-e19a2f9c3b18" />
+<img width="1905" height="511" alt="image" src="https://github.com/user-attachments/assets/66cdfe32-19d1-48fd-a600-1b460c5f3ba9" />
+
 ---
 
 ## 📦 Como Rodar o Projeto
